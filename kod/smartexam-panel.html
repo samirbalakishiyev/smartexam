@@ -482,6 +482,7 @@ const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.
 const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
 const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||defSec(i,exType(ex));
 const qTag=(ex,i)=>String(ex?.qmeta?.[i]?.tag||'').trim();
+const dispAns=v=>{v=String(v??'');if(/^[TF-]{4}$/.test(v))return v==='----'?'boş':v.replace(/T/g,'A').replace(/F/g,'B').replace(/-/g,'–');return !v||v==='-'?'boş':v};
 const normTF=v=>/^[TF-]{4}$/.test(v||'')?v:'----';
 function pointsFor(i,v,k){
   if(/^[TF]{4}$/.test(k||'')){const s=normTF(v);let n=0;for(let j=0;j<4;j++)if(s[j]!=='-'&&s[j]===(k||'')[j])n++;return n===4?1:n===3?.5:0}
@@ -583,8 +584,8 @@ function gridHTML(g,arr,opt={}){
   const flags=new Set(opt.flags||[]);
   return `<div class="grid25">`+arr.map((v,i)=>{
     const n=i+1,tf=(opt.tf||TF).includes(i),ms=(opt.ms||[]).includes(i);let mark='',body;
-    if(opt.key){const k=opt.key[i],p=pointsFor(i,v,k);mark=`<span class="mk ${p===1?'ok':p>0?'half':'bad'}">${p===1?'✓':p>0?'½':'✗'}${p<1?`<span class="kh">${esc(k)}</span>`:''}</span>`}
-    if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t}" aria-label="${n}${'abcd'[j]} ${t}">${t}</button>`).join('')}</span>`).join('')+`</div>`}
+    if(opt.key){const k=opt.key[i],p=pointsFor(i,v,k);mark=`<span class="mk ${p===1?'ok':p>0?'half':'bad'}">${p===1?'✓':p>0?'½':'✗'}${p<1?`<span class="kh">${esc(dispAns(k))}</span>`:''}</span>`}
+    if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t}" aria-label="${n}.${j+1} ${t==='T'?'A':'B'}">${t==='T'?'A':'B'}</button>`).join('')}</span>`).join('')+`</div>`}
     else if(ms){const sv=normMS(v);body=['1','2','3','4','5'].map(L=>`<button type="button" class="bub${sv.includes(L)?' on':''}" data-bub="${g}" data-q="${i}" data-m="1" data-v="${L}" aria-pressed="${sv.includes(L)}" aria-label="${n} ${L}">${L}</button>`).join('')+`<span class="muted" style="font-size:12px">bir neçə</span>`}
     else body=['A','B','C','D','E'].map(L=>`<button type="button" class="bub${v===L?' on':''}" data-bub="${g}" data-q="${i}" data-v="${L}" aria-pressed="${v===L}" aria-label="${n} ${L}">${L}</button>`).join('');
     return `<div class="row${flags.has(n)?' flag':''}${tf?' tf':''}"><span class="qn">${n}</span><div class="opts">${body}</div>${mark}</div>`;
@@ -639,8 +640,8 @@ async function aiFront(ex,blob){
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
-2) Read which option the student marked for each question. The sheet has sections ${exType(ex)==='9'?'LISTENING 1–4, SHORT PASSAGES 5–7, GRAMMAR 8–20, READING 21–25':'LISTENING 1–4, GRAMMAR 5–17, READING 1 18–21, READING 2 22–25'}. ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are True/False blocks: four statements numbered 1) to 4), each marked in the True (T) or False (F) column; give them as a 4-letter string in order, e.g. "TFFT". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the "DOLDURMA QAYDASI" box and the teacher's "NƏTİCƏ" box.
-A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same True/False row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for True/False put "?" only in the unclear position, e.g. "TF?T"). Do not guess.
+2) Read which option the student marked for each question. The sheet has sections ${exType(ex)==='9'?'LISTENING 1–4, SHORT PASSAGES 5–7, GRAMMAR 8–20, READING 21–25':'LISTENING 1–4, GRAMMAR 5–17, READING 1 18–21, READING 2 22–25'}. ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the "DOLDURMA QAYDASI" box and the teacher's "NƏTİCƏ" box.
+A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same two-column row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for two-column put "?" only in the unclear position, e.g. "AB?A"). Do not guess.
 Reply with only JSON:
 {"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
   const r=await sample.json(prompt,{images:[blob]});
@@ -650,7 +651,7 @@ Reply with only JSON:
   for(let i=0;i<N;i++){
     let v=String(a[i]??'-').toUpperCase().replace(/\s/g,'');
     if(mss.includes(i)){if(v.includes('?'))flags.add(i+1);v=normMS(v)}
-    else if(tfs.includes(i)){v=v.replace(/[^TF?\-]/g,'');if(v.length!==4){flags.add(i+1);v=(v+'????').slice(0,4)}if(v.includes('?'))flags.add(i+1);v=v.replace(/\?/g,'-')}
+    else if(tfs.includes(i)){v=v.replace(/A/g,'T').replace(/B/g,'F').replace(/[^TF?\-]/g,'');if(v.length!==4){flags.add(i+1);v=(v+'????').slice(0,4)}if(v.includes('?'))flags.add(i+1);v=v.replace(/\?/g,'-')}
     else if(v==='?'||!/^[A-E-]$/.test(v)){flags.add(i+1);v='-'}
     out.push(v);
   }
@@ -810,10 +811,10 @@ async function drawCard(ex){
       RR(x,x0+3,y,bw,bh,1.2,INK,.3);
       Ln(x,x0+13,y,x0+13,y+bh,.3);
       T(x,String(r.n),x0+8,y+bh/2,4.6,800,'center',INK);
-      const lx=x0+16,tx=lx+9+3.4,fx2=tx+9.6;
-      T(x,'True',tx,y+3.5,2.6,700,'center','#4a5568');T(x,'False',fx2,y+3.5,2.6,700,'center','#4a5568');
-      for(let i=0;i<4;i++){const cy=y+6+4+i*8;T(x,(i+1)+')',lx,cy,3.3,700,'left',INK);Bub(x,tx,cy,6.8,'T');Bub(x,fx2,cy,6.8,'F')}
-      T(x,'4 düz — tam bal',x0+w-5,y+9,2.4,400,'right','#5b6577');T(x,'3 düz — yarım bal',x0+w-5,y+12.4,2.4,400,'right','#5b6577');
+      const lx=x0+15.5,tx=lx+12+3.4,fx2=tx+9.6;
+      
+      for(let i=0;i<4;i++){const cy=y+6.6+i*8.7;T(x,n+'.'+(i+1),lx,cy,3.3,700,'left',INK);Bub(x,tx,cy,6.8,'A');Bub(x,fx2,cy,6.8,'B')}
+      T(x,'4 düz — tam bal',x0+w-5,y+5.4,2.4,400,'right','#5b6577');T(x,'3 düz — yarım bal',x0+w-5,y+8.8,2.4,400,'right','#5b6577');
       y+=bh;prevMc=false;
     });
     RR(x,x0,y0,w,h,1.6,INK,.4);
@@ -1050,7 +1051,7 @@ function examCard(r){
   const ph=waPhone(studentById(r.studentId)?.phone);
   return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25, ${wName(ex).toLocaleLowerCase('az')} ${es===null?'–':fmt(es)}/5${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
   <div class="acts"><button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
-  ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(q.v==='-'||q.v==='----'?'boş':q.v)}</span>, düzgün: <span class="c">${esc(q.k)}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
+  ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
   ${e?essayHTML(e):''}`:''}</div>`;
 }
 function essayHTML(e){
@@ -1065,7 +1066,7 @@ function examMsg(r){
   const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),e=r.essay,es=resEssay(r);
   const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`];
   if(t!==null){L.push(`Test: ${fmt(t)}/25`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
-    const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${q.v==='-'||q.v==='----'?'boş':q.v}, düzgün: ${q.k}`))}}
+    const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${dispAns(q.v)}, düzgün: ${dispAns(q.k)}`))}}
   if(es!==null){L.push('',`${wName(ex)}: ${fmt(es)}/5`);if(e&&e.status==='ok')L.push(e.kind==='9'?`  Məzmun ${fmt(e.A)}/2, Ardıcıllıq ${e.B===null?'–':fmt(e.B)}/1, Qrammatika ${e.C===null?'–':fmt(e.C)}/1, Söz ehtiyatı ${e.D===null?'–':fmt(e.D)}/1, cərimə −${fmt(e.pen||0)}`:`  A ${fmt(e.A)}/1, B ${e.B===null?'–':fmt(e.B)}/2, C ${e.C===null?'–':fmt(e.C)}/1, D ${e.D===null?'–':fmt(e.D)}/1`);if(e?.feedback)L.push(e.feedback)}
   L.push('',S.settings.sign||S.settings.teacherName||'');
   return L.join('\n').trim();
@@ -1117,9 +1118,9 @@ VIEWS.sinaqlar=()=>{
   <label class="l">Sınağın növü</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün növü dəyişmək olmaz.</p>':''}
   <label class="l">Qruplar</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}
   <h3>Cavab açarı (1–25) <span class="muted" style="font-weight:500">${filled}/25</span></h3>
-  <p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün T və ya F seçin. 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün T və ya F seçin.'}</p>
+  <p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin. 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin.'}</p>
   ${gridHTML('key',d.key,{tf:LAYOUT[d.type].tf,ms:LAYOUT[d.type].ms})}
-  <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A TFFT C … 13 … 245 (25 cavab)':'B, D, A, TFFT, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>
+  <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>
   ${d.type==='9'?`<label class="l" style="margin-top:18px">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartının arxa üzünə çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l" style="margin-top:18px">26. Paraqrafın mövzusu</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
   <h3>Sualların mövzuları <span class="muted" style="font-weight:500">(istəyə görə, il boyu zəif mövzuları izləmək üçün)</span></h3>
   <div class="acts"><label class="btn ghost sm${d.tagging?' off':''}" style="position:relative">📄 Testin şəklindən təyin et<input type="file" accept="image/*" ${maxImages>1?'multiple':''} data-file="tagphotos" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn ghost sm" data-act="toggleMeta">${d.showMeta?'Gizlət':'Əl ilə yaz'}</button></div>
@@ -1213,7 +1214,7 @@ const ACT={
   toggleMeta(){examDraft.showMeta=!examDraft.showMeta;render()},
   setExamType(el){const d=examDraft,t=el.dataset.t;if(t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, növü dəyişmək olmaz.','err');for(let i=0;i<N;i++){if(kindAt(d.type,i)!==kindAt(t,i))d.key[i]='-';d.qmeta[i].sec=defSec(i,t)}d.type=t;render()},
   delPics(){examDraft.pics='';render()},
-  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';const kd=kindAt(examDraft.type,i);examDraft.key[i]=kd==='tf'?(/^[TF]{4}$/.test(v)?v:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
+  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';const kd=kindAt(examDraft.type,i);const vt=kd==='tf'&&/^[AB]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
   async saveExam(){
     const d=examDraft;if(!d.name.trim())return toast('Sınağın adını yazın.','err');
     if(!d.groupIds.length)return toast('Ən azı bir qrup seçin.','err');
