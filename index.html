@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartExam — Müəllim paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F3F5F9;--card:#FFFFFF;--ink:#17233B;--muted:#5D6880;--line:#DBE1EB;--soft:#EBEFF6;--accent:#2346A6;--accent-ink:#FFFFFF;--pen:#C2362F;--ok:#1F7246;--amber:#A86A00;--hl:#E8C33A;--hl-bg:#FFF6CF;--ok-bg:#E4F2E9;--pen-bg:#FBE8E6;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0F131B;--card:#171E2C;--ink:#E4E9F2;--muted:#9AA5BA;--line:#2B3548;--soft:#202A3C;--accent:#86A2FF;--accent-ink:#0F131B;--pen:#FF7A6E;--ok:#64CB92;--amber:#E9B44C;--hl:#C9A62B;--hl-bg:#3A3214;--ok-bg:#15301F;--pen-bg:#3B1D1B;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#0F131B;--card:#171E2C;--ink:#E4E9F2;--muted:#9AA5BA;--line:#2B3548;--soft:#202A3C;--accent:#86A2FF;--accent-ink:#0F131B;--pen:#FF7A6E;--ok:#64CB92;--amber:#E9B44C;--hl:#C9A62B;--hl-bg:#3A3214;--ok-bg:#15301F;--pen-bg:#3B1D1B;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 10px;background:var(--card)}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.brand small{display:block;font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.cloud{background:var(--ok-bg);color:var(--ok)}
+.pill.local{background:var(--hl-bg);color:var(--amber)}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:4px;overflow-x:auto;padding:6px 10px 10px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex:none;border:0;background:none;padding:8px 13px;border-radius:999px;color:var(--muted);font-weight:600;cursor:pointer}
+.nav button.on{background:var(--ink);color:var(--card)}
+main{max-width:980px;margin:0 auto;padding:16px 14px 30px}
+h1{font-size:24px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
+h3{font-size:15px;margin:14px 0 8px}
+p{margin:0 0 10px}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 10px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.hero{padding:22px 18px;border-left:5px solid var(--pen)}
+label.l{display:block;font-size:13px;font-weight:600;margin:12px 0 5px;color:var(--muted)}
+input[type=text],input[type=tel],input[type=date],input[type=number],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:var(--card);max-width:100%}
+textarea{resize:vertical}
+.inline{display:flex;gap:8px;align-items:center}
+.inline>input,.inline>select{flex:1;min-width:0}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:10px 15px;font-weight:650;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;white-space:nowrap}
+.btn.ghost{background:var(--soft);color:var(--ink)}
+.btn.danger{background:var(--pen-bg);color:var(--pen)}
+.btn.wa{background:#1F9D55;color:#fff}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn[disabled],.btn.off{opacity:.45;pointer-events:none}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:24px;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.pen{font-family:Caveat,"Comic Sans MS",cursive;color:var(--pen);font-weight:700;font-size:26px;line-height:1;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--pen);border-radius:52% 46% 50% 47%;padding:3px 10px 1px;transform:rotate(-4deg);white-space:nowrap}
+.pen.big{font-size:40px;padding:4px 16px 2px;border-width:2.5px}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li .grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .grow small{color:var(--muted);font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:14px}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--card)}
+details.grp{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;background:var(--card)}
+details.grp>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+details.grp[open]>summary::after{content:"▴"}
+details.grp .inner{padding:0 14px 12px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;white-space:nowrap}
+.grid25{display:grid;grid-template-columns:1fr}
+@media (min-width:780px){.grid25{grid-template-columns:1fr 1fr;column-gap:22px}}
+.row{display:flex;align-items:center;gap:8px;padding:6px 6px;border-bottom:1px dashed var(--line);border-radius:6px}
+.row.flag{background:var(--hl-bg);box-shadow:inset 4px 0 0 var(--hl)}
+.qn{width:24px;flex:none;text-align:right;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.opts{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.bub{width:36px;height:36px;flex:none;border-radius:50%;border:1.6px solid var(--muted);background:var(--card);color:var(--ink);font-weight:700;font-size:13px;padding:0;cursor:pointer}
+.bub.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.tfwrap{display:grid;grid-template-columns:auto auto;gap:6px 16px}
+.tfi{display:flex;align-items:center;gap:5px}
+.tfi i{font-style:normal;color:var(--muted);min-width:30px;font-weight:600;font-size:13px}
+.tf .bub{width:32px;height:32px}
+.mk{flex:none;min-width:30px;text-align:center;font-weight:800;font-size:15px}
+.mk.ok{color:var(--ok)}.mk.bad{color:var(--pen)}.mk.half{color:var(--amber)}
+.kh{display:block;font-size:11px;font-weight:700;color:var(--ok);line-height:1}
+.scorebar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 0 14px}
+.secs{display:flex;flex-wrap:wrap;gap:6px}
+.sec{background:var(--soft);border-radius:8px;padding:5px 9px;font-size:13px}
+.sec b{font-variant-numeric:tabular-nums}
+.filebtn{display:inline-flex;align-items:center;gap:8px;border:1.5px dashed var(--muted);border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:650;background:var(--soft)}
+.filebtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:70vh;background:var(--soft)}
+.preview img{display:block;width:100%;height:auto}
+.preview.zoom img{width:200%;max-width:none}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumbs div{position:relative}
+.thumbs img{width:96px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.thumbs button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:var(--pen);color:#fff;cursor:pointer;font-weight:700;line-height:1}
+.status{margin-top:10px;font-size:14px;padding:9px 12px;border-radius:10px;background:var(--soft)}
+.status.err{background:var(--pen-bg);color:var(--pen)}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.notice{background:var(--hl-bg);border-left:4px solid var(--hl);padding:10px 12px;border-radius:8px;margin:0 0 12px;font-size:14px}
+.savebar{position:sticky;bottom:0;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:14px 14px 0 0;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -6px 18px rgba(15,25,45,.08)}
+.savebar .grow{flex:1;font-size:14px}
+.crit{border-left:3px solid var(--accent);padding:4px 0 4px 10px;margin:8px 0}
+.mist{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mist s{color:var(--pen)}
+.mist ins{color:var(--ok);text-decoration:none;font-weight:600}
+.bar{height:8px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar.red i{background:var(--pen)}
+.arow{margin:10px 0}
+.arow .t{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.empty{color:var(--muted);text-align:center;padding:18px 8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:10px;font-weight:600;z-index:100;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.err{background:var(--pen);color:#fff}
+.ov{position:fixed;inset:0;background:rgba(10,15,25,.5);z-index:90;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.dlg{background:var(--card);width:100%;max-width:620px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.ov{align-items:center}.dlg{border-radius:18px}}
+.dlg h2{margin-bottom:8px}
+footer{text-align:center;padding:20px 14px 30px;color:var(--muted);font-size:13px}
+footer a{color:var(--muted)}
+#printArea{display:none}
+@media print{body::before{display:none}body>*:not(#printArea){display:none!important}#printArea{display:block}:root{padding:0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.top .who{font-size:12px;color:var(--muted);text-align:right}
+.search{position:relative;margin:0 0 12px}
+.search input{padding-left:38px}
+.search::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6}
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.big2{grid-template-columns:1fr}}
+.shoot{position:relative;display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:16px;border-radius:14px;border:1.5px dashed var(--muted);background:var(--soft);cursor:pointer;font-weight:700;font-size:16px}
+.shoot small{font-weight:500;font-size:13px;color:var(--muted)}
+.shoot input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.qitem{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:0}
+.qitem img{width:52px;height:66px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
+.qitem .grow{flex:1;min-width:0;font-size:14px}
+.qitem .grow b{display:block}
+.qitem select{margin-top:6px;padding:7px 9px}
+.badge{display:inline-block;font-size:12px;font-weight:650;border-radius:999px;padding:2px 9px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--hl-bg);color:var(--amber)}
+.badge.err{background:var(--pen-bg);color:var(--pen)}
+.badge.busy{background:var(--soft);color:var(--accent)}
+.pct{font-weight:800;font-variant-numeric:tabular-nums;font-size:17px;min-width:62px;text-align:right}
+.rank{width:24px;flex:none;color:var(--muted);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.li.click{cursor:pointer}
+.li.click:hover .grow b{text-decoration:underline}
+.excard{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px}
+.excard .hd{display:flex;align-items:center;gap:10px}
+.excard .hd .grow{flex:1;min-width:0}
+.wq{font-size:14px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.wq:last-child{border-bottom:0}
+.wq b{display:inline-block;min-width:34px}
+.wq .y{color:var(--pen);font-weight:700}
+.wq .c{color:var(--ok);font-weight:700}
+.crit4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.crit4 div{background:var(--soft);border-radius:10px;padding:8px;text-align:center}
+.crit4 b{display:block;font-size:18px}
+.crit4 span{font-size:12px;color:var(--muted)}
+.qmeta{display:grid;grid-template-columns:30px 120px 1fr;gap:6px;align-items:center;margin:4px 0}
+.qmeta span{font-weight:700;color:var(--muted);text-align:right}
+.qmeta select,.qmeta input{padding:7px 8px;font-size:14px}
+.cardprev{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cardprev img{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
+.cardprev p{margin:4px 0 0;font-size:12px;color:var(--muted);text-align:center}
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--accent);font-weight:650;padding:0;margin:0 0 12px;cursor:pointer}
+.tagrow{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">SmartExam<small>Müəllim paneli</small></div><span id="status" class="pill">Yüklənir…</span></div>
+<nav class="nav" id="nav" aria-label="Bölmələr"></nav>
+<main id="view"></main>
+<footer>Created by Samir Balakişiyev<br>WhatsApp: <a href="https://wa.me/994557958625" target="_blank" rel="noopener">055-795-8625</a></footer>
+<script type="text/plain" id="rubric-src">Sən 11-ci sinif şagirdlərinin ingilis dilində esse və paraqraflarını yoxlayan təcrübəli müəllimsən. Yazını yalnız aşağıdakı meyarlarla qiymətləndir. Maksimum ümumi bal 5-dir.
+Özündən əlavə meyar, səhv sayına əsaslanan cərimə sistemi və ya bal çıxma qaydası yaratma. Ədalətli qiymətləndir: kiçik səhvlərə görə həddindən artıq bal azaltma, meyarlarda nəzərdə tutulmayan əlavə bal vermə.
+
+1. İlkin yoxlama
+Əvvəl təqdim edilmiş mövzunun adını və şagirdin yazısını müəyyən et. Mövzu şəkildə və ya istifadəçinin mesajında verilə bilər.
+Şagirdin xəttini diqqətlə nəzərdən keçir. Oxuna bilən ifadəni səhv oxuyaraq qrammatik və ya leksik səhv yaratma. Oxuya bilmədiyin sözləri özündən uydurma.
+Aşağıdakı hallarda ümumi nəticə 0/5-dir:
+- Şagird verilən mövzu əvəzinə başqa mövzuda yazıb.
+- Yazı ingilis dilindən başqa dildədir.
+- Yazı oxunmur.
+Bu hallarda A=0 göstər, B, C və D yoxlanılmır. Oxunmayan yazıda söz sayını uydurma.
+
+2. Söz sayının hesablanması
+Şagirdin mətnindəki sözləri diqqətlə və dəqiq say. Mövzunun adını və tapşırığın mətnini şagirdin yazısının söz sayına daxil etmə.
+
+3. Qiymətləndirmə meyarları
+A. TAPŞIRIĞIN YERİNƏ YETİRİLMƏSİ — maksimum 1 bal
+1 bal:
+- Yazı mövzuya uyğundur.
+- Minimum 100 sözdür.
+- Aydın topic sentence, onu dəstəkləyən fikirlər və yekun fikir var.
+- Paraqrafın tərkib hissələri arasında əlaqə tamamilə gözlənilib və mətn axıcıdır.
+0.5 bal:
+- Mövzu qismən əhatə olunub.
+- Yazı 70–99 sözdür.
+- Struktur elementləri qismən mövcuddur (tərkib hissələrindən biri yazılıb, məsələn, ya əsas cümlə, ya da dəstəkləyən cümlələr).
+- Hissələr arasındakı əlaqə qismən gözlənilib.
+100 və daha çox söz olması təkbaşına 1 bal üçün kifayət etmir. Tam balın digər şərtləri tam ödənilmirsə, əsas hissəsinin ödənilməsinə uyğun aşağı səviyyəni seç.
+0 bal:
+- Fikirlər anlaşılmır və/və ya mövzuya uyğun deyil.
+- Yazı 70 sözdən azdır.
+- Topic sentence, dəstəkləyici fikirlər və yekun fikir yoxdur.
+- Yazı tamamilə şablon və ya əzbər cümlələrdən ibarətdir.
+Dayandırma qaydası: A=0 olarsa, B, C və D-ni yoxlama. Ümumi nəticə 0/5-dir.
+
+B. MÖVZUNUN ƏHATƏ EDİLMƏSİ VƏ MƏNTİQİ ARDICILLIQ — maksimum 2 bal
+2 bal:
+- Ən azı 2 aydın fikir və ya arqument var.
+- Fikirlər nümunə və ya ümumi izahla əsaslandırılıb.
+- Birləşdirici vasitələrlə cümlələr arasında əlaqə yaradılıb.
+- Həm müsbət/lehinə, həm də mənfi/əleyhinə tərəf qeyd olunub.
+- Fikirlər arasında məntiqi rabitə var.
+1 bal:
+- Mövzu əsasən əhatə olunub, lakin arqumentlər məhduddur.
+- Ən azı 1 əsaslandırıcı nümunə və ya sübut var.
+- Ardıcıllıq var, lakin birləşdirici vasitələr məhduddur.
+- Yalnız bir tərəf təqdim olunub və/və ya müəyyən məntiqi kənaraçıxmalar var.
+0 bal:
+- Yazı 1 balın tələblərinə belə cavab vermir.
+Dayandırma qaydası: B=0 olarsa, C və D-ni yoxlama. Ümumi nəticəni yalnız A meyarından alınan bal əsasında göstər.
+
+C. QRAMMATİK QAYDALARA ƏMƏL OLUNMASI — maksimum 1 bal
+1 bal:
+- Müxtəlif qrammatik forma və sintaktik strukturlardan, sadə və mürəkkəb cümlələrdən düzgün və yerində istifadə olunub.
+0.5 bal:
+- Yazı əsasən sadə cümlələrdən ibarətdir.
+- Qısa, şablon və yarımçıq cümlələr mövcuddur.
+- Qrammatik səhvlər bəzən məzmunun çatdırılmasına mane olur.
+0 bal:
+- Cümlə qurmaqda çətinlik var, yazı əsasən söz yığınından ibarətdir.
+- Yazı 0.5 balın tələblərinə cavab vermir.
+Qrammatikanın yoxlanması qaydaları:
+- Eyni dil qaydasına aid təkrarlanan eyni tip səhvi yalnız 1 səhv hesab et.
+
+D. SÖZ EHTİYATININ MÜXTƏLİFLİYİ VƏ İŞLƏDİLMƏSİ — maksimum 1 bal
+1 bal:
+- Mövzuya uyğun zəngin söz ehtiyatı var.
+- Sözlər düzgün və yerində işlənib.
+- Gərəksiz leksik təkrar yoxdur.
+- Sinonim, parafraz və söz birləşmələrindən istifadə edilir.
+0.5 bal:
+- Söz ehtiyatı kifayət qədər müxtəlif deyil.
+- Bəzən gərəksiz leksik təkrar var.
+0 bal:
+- Yazı 0.5 balın tələblərinə cavab vermir.
+- Həddindən artıq gərəksiz leksik təkrar var.
+Leksikanın yoxlanması qaydaları:
+- Sadəcə hərf təkrarını leksik təkrar hesab etmə.
+- Yalnız gərəksiz şəkildə təkrarlanan söz və ifadələri leksik təkrar say.
+- Şagirdin yazdığı ifadənin həmin kontekstdə işlənməsi mümkündürsə, onu səhv hesab etmə.
+- Məsələn, “get a good experience” ifadəsini yalnız “gain valuable experience” daha yaxşı səslənir deyə avtomatik səhv sayma.
+- Üslubi təkmilləşdirmə təklifini leksik səhvlə qarışdırma.
+
+Bütün meyarlar üçün ümumi qayda: Hər səviyyənin maksimum balını yalnız həmin səviyyənin şərtləri tam ödənildikdə ver. Şərtlərin əsas hissəsi ödənildikdə uyğun aşağı balı seç. Açıq şəkildə göstərilmiş dayandırma qaydalarını mütləq tətbiq et.
+
+4. Nəticənin hesablanması
+Ümumi bal = A + B + C + D. A=0 → ümumi bal 0. B=0 → ümumi bal yalnız A-dan ibarətdir. Yekun bal 0-dan aşağı və 5-dən yuxarı ola bilməz.
+Faiz = (100/30) × ümumi bal.</script>
+<script>
+'use strict';
+const N=25, TF=[3,20,24];
+const tfOf=ex=>(ex?.key||[]).map((k,i)=>/^[TF]{4}$/.test(k||'')?i:-1).filter(i=>i>=0);
+const SECS=['Dinləmə','Oxu','Qrammatika','Leksika'];
+const ERR_TYPES=['Zaman','Uzlaşma','Artikl','Sözönü','Söz sırası','Cümlə quruluşu','Söz seçimi','Orfoqrafiya','Digər'];
+const DEFAULT_RUBRIC=document.getElementById('rubric-src').textContent.trim();
+const DEF_SET={teacherName:'',rubric:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',sign:''};
+const TABS=[['home','Panel'],['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['sinaqlar','Sınaqlar'],['parametrler','Parametrlər']];
+const $=s=>document.querySelector(s);
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const azCmp=(a,b)=>String(a).localeCompare(String(b),'az');
+const fmt=n=>{n=Math.round(n*100)/100;return String(n).replace('.',',')};
+const norm=s=>String(s||'').toLocaleLowerCase('az').replace(/[əäçğıöşüİI]/g,c=>({'ə':'e','ä':'e','ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','i̇':'i','I':'i','İ':'i'}[c]||c)).replace(/\s+/g,' ').trim();
+const clean=o=>JSON.parse(JSON.stringify(o));
+const defSec=i=>i<4?'Dinləmə':i<17?'Qrammatika':'Oxu';
+
+let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
+let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,downloads=null;
+let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
+const forms={group:'',sGroup:'',bulk:'',newTeacher:'',api:'',pass:''};
+const rf={examId:'',groupId:''};
+let setDraft=null,examDraft=freshExam(),ed=null;
+const Q={examId:'',items:[],running:false,paused:false};
+function freshExam(){return {id:null,name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
+
+/* ---------- lookups & scoring ---------- */
+const groupById=i=>S.groups.find(g=>g.id===i);
+const studentById=i=>S.students.find(s=>s.id===i);
+const examById=i=>S.exams.find(e=>e.id===i);
+const gName=i=>groupById(i)?.name||'—';
+const sName=i=>studentById(i)?.name||'Silinmiş şagird';
+const eName=i=>examById(i)?.name||'Silinmiş sınaq';
+const examsSorted=()=>S.exams.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||azCmp(a.name,b.name));
+const groupsSorted=()=>S.groups.slice().sort((a,b)=>azCmp(a.name,b.name));
+const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.name,b.name));
+const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
+const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||defSec(i);
+const qTag=(ex,i)=>String(ex?.qmeta?.[i]?.tag||'').trim();
+const normTF=v=>/^[TF-]{4}$/.test(v||'')?v:'----';
+function pointsFor(i,v,k){
+  if(/^[TF]{4}$/.test(k||'')){const s=normTF(v);let n=0;for(let j=0;j<4;j++)if(s[j]!=='-'&&s[j]===(k||'')[j])n++;return n===4?1:n===3?.5:0}
+  return v&&v!=='-'&&v===k?1:0;
+}
+const testScore=(ans,key)=>ans.reduce((s,v,i)=>s+pointsFor(i,v,key[i]),0);
+function resTest(r){if(!Array.isArray(r.answers))return null;const ex=examById(r.examId);return ex?testScore(r.answers,ex.key):(r.score??null)}
+function resEssay(r){if(r.essay&&typeof r.essay.total==='number')return r.essay.total;if(r.essayScore!==null&&r.essayScore!==undefined&&r.essayScore!=='')return Number(r.essayScore);return null}
+const resTotal=r=>(resTest(r)||0)+(resEssay(r)||0);
+const resPct=r=>Math.round(resTotal(r)*100/30*100)/100;
+function wrongQs(r){const ex=examById(r.examId);if(!ex||!Array.isArray(r.answers))return [];return r.answers.map((v,i)=>({i,v,k:ex.key[i],p:pointsFor(i,v,ex.key[i]),sec:qSec(ex,i),tag:qTag(ex,i)})).filter(x=>x.p<1)}
+function secScores(r){const ex=examById(r.examId);const m={};if(!ex||!Array.isArray(r.answers))return m;r.answers.forEach((v,i)=>{const s=qSec(ex,i);m[s]=m[s]||{got:0,max:0};m[s].got+=pointsFor(i,v,ex.key[i]);m[s].max++});return m}
+function essayTotal(e){
+  if(!e)return null;
+  if(e.status&&e.status!=='ok')return 0;
+  const A=+e.A||0;if(A===0)return 0;
+  const B=+e.B||0;if(B===0)return A;
+  return Math.min(5,A+B+(+e.C||0)+(+e.D||0));
+}
+function waPhone(p){let d=String(p||'').replace(/\D/g,'');if(!d)return '';if(d.startsWith('00'))d=d.slice(2);if(d.startsWith('994'))return d;if(d.startsWith('0'))d=d.slice(1);return d.length===9?'994'+d:d}
+const findResult=(examId,sid)=>S.results.find(r=>r.examId===examId&&r.studentId===sid);
+
+/* ---------- toast & modal ---------- */
+let toastT;
+function toast(msg,kind){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.className='toast'+(kind==='err'?' err':'');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3500)}
+function modal({title,html='',fields=[],ok='Yadda saxla',cancel='Ləğv et',danger=false,okOnly=false}){
+  return new Promise(res=>{
+    const ov=document.createElement('div');ov.className='ov';
+    ov.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><h2>${esc(title)}</h2>${html}${fields.map((f,i)=>`<label class="l" for="mf${i}">${esc(f.label)}</label>${f.type==='select'?`<select id="mf${i}">${f.options.map(o=>`<option value="${esc(o.value)}"${o.value===f.value?' selected':''}>${esc(o.label)}</option>`).join('')}</select>`:`<input id="mf${i}" type="${f.type||'text'}" value="${esc(f.value||'')}">`}`).join('')}<div class="acts" style="justify-content:flex-end">${okOnly?'':`<button class="btn ghost" data-x="0">${esc(cancel)}</button>`}<button class="btn${danger?' danger':''}" data-x="1">${esc(ok)}</button></div></div>`;
+    const close=v=>{ov.remove();res(v)};
+    ov.addEventListener('click',e=>{if(e.target===ov)return close(null);const b=e.target.closest('[data-x]');if(!b)return;if(b.dataset.x==='0')return close(null);if(b.dataset.x!=='1')return;if(fields.length)close(fields.map((f,i)=>ov.querySelector('#mf'+i).value.trim()));else close(true)});
+    document.body.appendChild(ov);
+    const fi=ov.querySelector('.dlg input,.dlg select');if(fi)fi.focus();else{const d=ov.querySelector('.dlg');d.tabIndex=-1;d.focus({preventScroll:true})}
+  });
+}
+const confirmBox=(title,text,ok='Sil')=>modal({title,html:`<p class="muted">${esc(text)}</p>`,ok,danger:true});
+
+/* ---------- storage ---------- */
+const LKEY='smartexam_v2_local';
+function readLocal(){try{return JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){return null}}
+function writeLocal(){try{localStorage.setItem(LKEY,JSON.stringify(S));return true}catch(e){return false}}
+/* ---------- Google Cədvəl skripti (Apps Script) ---------- */
+/* Skript linkini bura yaza bilərsiniz; yazmasanız, Parametrlər bölməsindən daxil edilir. */
+const DEFAULT_API='';
+const AKEY='smartexam_api',PKEY='smartexam_pass';
+const lsGet=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+const lsSet=(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}};
+const apiUrl=()=>lsGet(AKEY)||DEFAULT_API;
+const CKEY='smartexam_cache';
+function cacheSave(){try{localStorage.setItem(CKEY,JSON.stringify(S))}catch(e){}}
+function cacheRead(){try{return JSON.parse(localStorage.getItem(CKEY)||'null')}catch(e){return null}}
+let lastErr='';
+async function api(o,tries=1){
+  const url=apiUrl();if(!url)throw {code:'noapi'};
+  let res;
+  try{res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...o,p:lsGet(PKEY)})})}
+  catch(e){if(tries>0){await new Promise(r=>setTimeout(r,1500));return api(o,tries-1)}throw {code:'network'}}
+  let j;try{j=await res.json()}catch(e){throw {code:'network'}}
+  if(!j||j.ok===false)throw {code:j?.error||'api',left:j?.left};
+  return j;
+}
+const blobB64=b=>new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(',')[1]);fr.onerror=()=>no(fr.error);fr.readAsDataURL(b)});
+const apiSample={
+  limits:async()=>({images:{maxCount:4}}),
+  async json(prompt,opts={}){
+    const images=[];for(const b of (opts.images||[]))images.push({type:b.type||'image/jpeg',data:await blobB64(b)});
+    const r=await api({a:'ai',prompt,images,big:opts.modelTier==='complex'},0);
+    return r.json;
+  }
+};
+const apiDownloads={async save({filename,data}){
+  const blob=data instanceof Blob?data:new Blob([data],{type:/\.csv$/i.test(filename)?'text/csv;charset=utf-8':/\.json$/i.test(filename)?'application/json':'application/octet-stream'});
+  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);
+}};
+async function initStore(){
+  downloads=apiDownloads;
+  if(!apiUrl()||!lsGet(PKEY)){
+    mode='local';store=null;sample=null;canImages=false;const loc=readLocal();
+    if(loc)S={groups:loc.groups||[],students:loc.students||[],exams:loc.exams||[],results:loc.results||[],settings:{...DEF_SET,...(loc.settings||{})}};
+    render();return;
+  }
+  mode='loading';render();
+  const timer=setTimeout(()=>{if(mode==='loading'){mode='slow';render()}},12000);
+  try{
+    const j=await api({a:'load'});clearTimeout(timer);
+    const d=j.data||{};
+    S={groups:d.groups||[],students:d.students||[],exams:d.exams||[],results:d.results||[],settings:{...DEF_SET,...(d.settings||{})}};
+    store={remote:true};sample=apiSample;canImages=true;maxImages=4;essayTier='complex';mode='cloud';lastErr='';cacheSave();
+  }catch(e){
+    clearTimeout(timer);store=null;sample=null;canImages=false;mode='offline';lastErr=e?.code||'';
+    const loc=cacheRead();if(loc)S={groups:loc.groups||[],students:loc.students||[],exams:loc.exams||[],results:loc.results||[],settings:{...DEF_SET,...(loc.settings||{})}};
+    toast(e?.code==='nopass'?'Skriptdə PASS şifrəsi yazılmayıb.':e?.code==='pass'?'Şifrə səhvdir. Parametrlərdən yenidən daxil edin.':e?.code==='wait'?'Çox səhv cəhd. 15 dəqiqə gözləyin.':'Cədvələ qoşulmaq alınmadı.','err');
+  }
+  render();
+}
+function resView(r){
+  const st=studentById(r.studentId),ex=examById(r.examId),t=resTest(r),e=resEssay(r);
+  return [ex?.name||'',ex?.date||'',st?.name||'',gName(st?.groupId),t===null?'':t,e===null?'':e,resPct(r),(r.flags||[]).length?r.flags.join(' '):''];
+}
+async function put(c,obj){
+  obj=clean(obj);
+  const i=S[c].findIndex(x=>x.id===obj.id);if(i>=0)S[c][i]=obj;else S[c].push(obj);
+  if(store){try{await api({a:'put',c,obj,view:c==='results'?resView(obj):null});cacheSave()}catch(e){toast(e?.code==='pass'?'Şifrə səhvdir.':'Cədvələ yazılmadı. İnterneti yoxlayıb yenidən cəhd edin.','err');throw e}}
+  else if(mode==='offline'){toast('Cədvələ qoşulmayıb. Dəyişiklik saxlanmadı.','err');throw {code:'offline'}}
+  else if(!writeLocal())toast('Brauzer yaddaşına yazılmadı.','err');
+}
+async function del(c,id){
+  S[c]=S[c].filter(x=>x.id!==id);
+  if(store){try{await api({a:'del',c,id});cacheSave()}catch(e){toast('Silinmədi. Yenidən cəhd edin.','err')}}else if(mode!=='offline')writeLocal();
+}
+async function saveSettings(s){
+  S.settings={...DEF_SET,...clean(s)};
+  if(store){try{await api({a:'set',settings:S.settings})}catch(e){toast('Parametrlər saxlanmadı.','err');return false}}else if(mode!=='offline')writeLocal();
+  return true;
+}
+const rubric=()=>(S.settings.rubric||'').trim()||DEFAULT_RUBRIC;
+
+/* ---------- render ---------- */
+function isEditing(){const a=document.activeElement;return a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='file'}
+function scheduleRender(){if(isEditing()){pendingRender=true;return}render()}
+document.addEventListener('focusout',()=>setTimeout(()=>{if(pendingRender&&!isEditing()){pendingRender=false;render()}},60));
+function render(){
+  const el=$('#status');
+  if(mode==='cloud'){el.className='pill cloud';el.textContent=S.settings.teacherName||'Cədvəldə saxlanılır'}
+  else if(mode==='local'){el.className='pill local';el.textContent='Cədvələ qoşulmayıb'}
+  else if(mode==='offline'){el.className='pill local';el.textContent='Bağlantı yoxdur'}
+  else if(mode==='slow'){el.className='pill local';el.textContent='Bağlantı gecikir'}
+  else{el.className='pill';el.textContent='Yüklənir…'}
+  const navTab=(tab==='profile'||tab==='edit')?prevTab:tab;
+  $('#nav').innerHTML=TABS.map(([k,n])=>`<button type="button" data-tab="${k}" class="${k===navTab?'on':''}" aria-current="${k===navTab?'page':'false'}">${n}</button>`).join('');
+  $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.home)();
+  if(tab==='neticeler'||tab==='sagirdler'){const s=$('[data-search]');if(s&&s.value)applySearch(s)}
+}
+function go(t){if(t!=='profile'&&t!=='edit')prevTab=t;tab=t;render();window.scrollTo(0,0)}
+
+/* ---------- answer grid ---------- */
+function gridHTML(g,arr,opt={}){
+  const flags=new Set(opt.flags||[]);
+  return `<div class="grid25">`+arr.map((v,i)=>{
+    const n=i+1,tf=(opt.tf||TF).includes(i);let mark='',body;
+    if(opt.key){const k=opt.key[i],p=pointsFor(i,v,k);mark=`<span class="mk ${p===1?'ok':p>0?'half':'bad'}">${p===1?'✓':p>0?'½':'✗'}${p<1?`<span class="kh">${esc(k)}</span>`:''}</span>`}
+    if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t}" aria-label="${n}${'abcd'[j]} ${t}">${t}</button>`).join('')}</span>`).join('')+`</div>`}
+    else body=['A','B','C','D','E'].map(L=>`<button type="button" class="bub${v===L?' on':''}" data-bub="${g}" data-q="${i}" data-v="${L}" aria-pressed="${v===L}" aria-label="${n} ${L}">${L}</button>`).join('');
+    return `<div class="row${flags.has(n)?' flag':''}${tf?' tf':''}"><span class="qn">${n}</span><div class="opts">${body}</div>${mark}</div>`;
+  }).join('')+`</div>`;
+}
+function tapBubble(b){
+  const g=b.dataset.bub,i=+b.dataset.q,v=b.dataset.v;
+  const arr=g==='key'?examDraft.key:ed.answers;
+  if(b.dataset.j!==undefined){const j=+b.dataset.j;const s=normTF(arr[i]).split('');s[j]=s[j]===v?'-':v;arr[i]=s.join('')}
+  else arr[i]=arr[i]===v?'-':v;
+  if(g==='ans')ed.flags=ed.flags.filter(n=>n!==i+1);
+  render();
+}
+
+/* ---------- images ---------- */
+function loadImg(blob){return new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>ok(im);im.onerror=()=>no(new Error('img'));im.src=fr.result};fr.onerror=()=>no(fr.error);fr.readAsDataURL(blob)})}
+async function shrink(blob,max=1900){
+  const im=await loadImg(blob);let w=im.naturalWidth,h=im.naturalHeight,s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
+  const out=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.88));
+  const t=document.createElement('canvas');const ts=Math.min(1,160/Math.max(w,h));t.width=Math.round(w*ts);t.height=Math.round(h*ts);t.getContext('2d').drawImage(c,0,0,t.width,t.height);
+  return {blob:out,thumb:t.toDataURL('image/jpeg',.7)};
+}
+const SERR={not_granted:'Claude-a müraciət üçün icazə verilmədi.',rate_limited:'Çox sorğu göndərildi. Bir az gözləyib «Davam et» basın.',images_unavailable:'Bu görünüşdə şəkil göndərmək mümkün deyil.',image_rejected:'Şəkil qəbul edilmədi. Başqa foto çəkin.',invalid_json:'Cavab düzgün formatda gəlmədi. Yenidən cəhd edin.',prompt_too_large:'Mətn çox uzundur.',session_expired:'Sessiyanın vaxtı bitib. Səhifəni yeniləyin.',refused:'Sorğu rədd edildi.',sampling_disabled:'Claude bu görünüşdə əlçatan deyil.',noapi:'Skript linki yazılmayıb (Parametrlər).',network:'İnternet və ya skript cavab vermədi. Yenidən cəhd edin.',pass:'Şifrə səhvdir (Parametrlər).',wait:'Çox səhv cəhd. 15 dəqiqə gözləyin.',nokey:'Skriptdə CLAUDE_KEY yazılmayıb.',badkey:'Claude API açarı səhvdir.',credit:'Claude API balansı bitib.',json:'Cavab düzgün formatda gəlmədi. Yenidən cəhd edin.',api429:'Çox sorğu göndərildi. Bir az gözləyib «Davam et» basın.',api529:'Claude hazırda məşğuldur. Bir az sonra «Yenidən» basın.',noimg:'Şəkil skriptə çatmadı.',nopass:'Skriptdə PASS şifrəsi yazılmayıb.'};
+const sErr=e=>SERR[e?.code]||'Claude-dan cavab alınmadı. Yenidən cəhd edin.';
+
+/* ---------- AI prompts ---------- */
+function rosterText(ex){return examStudents(ex).map((s,i)=>`${i+1}. ${s.name} (${gName(s.groupId)})`).join('\n')||'(no students)'}
+function pickStudent(ex,idx,written){
+  const list=examStudents(ex);
+  const n=Number(idx);if(Number.isInteger(n)&&n>=1&&n<=list.length)return list[n-1];
+  const w=norm(written);if(!w)return null;
+  const wt=w.split(' ');
+  const tiers=[s=>norm(s.name)===w,s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.includes(x))},s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.some(y=>y.startsWith(x)||x.startsWith(y)))}];
+  for(const f of tiers){const h=list.filter(f);if(h.length===1)return h[0];if(h.length>1)return null}
+  return null;
+}
+async function aiFront(ex,blob){
+  const tfs=tfOf(ex);
+  const prompt=`This photo shows the FRONT side of a student's answer sheet for a 25-question English exam.
+Tasks:
+1) Read the student's first name (AD box) and surname (SOYAD box) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
+${rosterText(ex)}
+2) Read which option the student marked for each question. The sheet has sections LISTENING 1–4, GRAMMAR 5–17, READING 1 18–21, READING 2 22–25. Questions ${tfs.map(i=>i+1).join(', ')} are True/False blocks: four statements numbered 1) to 4), each marked in the True (T) or False (F) column; give them as a 4-letter string in order, e.g. "TFFT". Every other question has exactly one answer from A, B, C, D, E. Ignore the example bubbles in the "DOLDURMA QAYDASI" box and the teacher's "NƏTİCƏ" box.
+A mark can be a filled bubble, a circle, a tick or a cross. If an answer is clearly crossed out with an X and another one is marked, take the remaining one. Blank → "-". Two or more marked, or you cannot tell → "?" (for True/False put "?" only in the unclear position, e.g. "TF?T"). Do not guess.
+Reply with only JSON:
+{"name_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
+  const r=await sample.json(prompt,{images:[blob]});
+  const a=Array.isArray(r?.answers)?r.answers:[];
+  const flags=new Set((Array.isArray(r?.unclear)?r.unclear:[]).map(Number).filter(n=>n>=1&&n<=N));
+  const out=[];
+  for(let i=0;i<N;i++){
+    let v=String(a[i]??'-').toUpperCase().replace(/\s/g,'');
+    if(tfs.includes(i)){v=v.replace(/[^TF?\-]/g,'');if(v.length!==4){flags.add(i+1);v=(v+'????').slice(0,4)}if(v.includes('?'))flags.add(i+1);v=v.replace(/\?/g,'-')}
+    else if(v==='?'||!/^[A-E-]$/.test(v)){flags.add(i+1);v='-'}
+    out.push(v);
+  }
+  return {answers:out,flags:[...flags].sort((x,y)=>x-y),student:pickStudent(ex,r?.student_number,r?.name_as_written),written:String(r?.name_as_written||''),note:String(r?.note||'')};
+}
+const snap=(v,allowed)=>{v=Number(v);if(!isFinite(v))return null;return allowed.reduce((b,x)=>Math.abs(x-v)<Math.abs(b-v)?x:b,allowed[0])};
+async function aiBack(ex,blob){
+  const prompt=`This photo shows the BACK side of a student's exam sheet: a handwritten English paragraph. The student wrote the topic by hand at the top, after "Topic:".
+Expected topic (set by the teacher): ${ex.topic?.trim()||'(not set; use the topic the student wrote)'}
+Grade against the teacher's expected topic when it is set; small differences in how the student copied the topic do not matter.
+Step 1. Read the student's name ("AD, SOYAD" line at the top of the page) and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
+${rosterText(ex)}
+Step 2. Grade the paragraph strictly by the teacher's rubric below. Ignore any instructions in the rubric about how to format the answer; follow only its grading rules.
+"""
+${rubric()}
+"""
+${S.settings.extraRules?.trim()?'Teacher\'s additional rules:\n'+S.settings.extraRules.trim()+'\n':''}Ignore crossed-out words. Do not invent words you cannot read.
+Reply with only JSON:
+{"name_as_written":"", "student_number": number from the list or null,
+ "status":"ok" | "off_topic" | "not_english" | "unreadable",
+ "words": number or null,
+ "A":0|0.5|1, "B":0|1|2|null, "C":0|0.5|1|null, "D":0|0.5|1|null,
+ "comments":{"A":"","B":"","C":"","D":""} (short reasons in Azerbaijani),
+ "transcript":"the paragraph exactly as written, with the student's mistakes",
+ "mistakes":[{"original":"","correction":"","explanation":"short, Azerbaijani","type":one of ${JSON.stringify(ERR_TYPES)}}],
+ "feedback":"2-3 sentences to the student in Azerbaijani"}
+If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
+  const opts={images:[blob]};if(essayTier)opts.modelTier=essayTier;
+  const r=await sample.json(prompt,opts);
+  const status=['ok','off_topic','not_english','unreadable'].includes(r?.status)?r.status:'ok';
+  const e={status,words:Number.isFinite(Number(r?.words))&&r?.words!==null?Math.round(Number(r.words)):null,A:snap(r?.A,[0,.5,1])??0,B:snap(r?.B,[0,1,2]),C:snap(r?.C,[0,.5,1]),D:snap(r?.D,[0,.5,1]),
+    comments:{A:String(r?.comments?.A||''),B:String(r?.comments?.B||''),C:String(r?.comments?.C||''),D:String(r?.comments?.D||'')},
+    transcript:String(r?.transcript||'').slice(0,6000),
+    mistakes:(Array.isArray(r?.mistakes)?r.mistakes:[]).slice(0,40).map(m=>({original:String(m?.original||''),correction:String(m?.correction||''),explanation:String(m?.explanation||''),type:ERR_TYPES.includes(m?.type)?m.type:'Digər'})),
+    feedback:String(r?.feedback||'')};
+  if(status!=='ok'){e.A=0}
+  if(e.A===0){e.B=e.C=e.D=null}else if(e.B===0){e.C=e.D=null}
+  e.total=essayTotal(e);
+  return {essay:e,student:pickStudent(ex,r?.student_number,r?.name_as_written),written:String(r?.name_as_written||'')};
+}
+
+/* ---------- queue ---------- */
+async function addToQueue(kind,files){
+  const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
+  if(kind==='back'&&!ex.topic?.trim())toast('Bu sınaqda paraqraf mövzusu yazılmayıb. Mövzu şəkildən oxunacaq.');
+  for(const f of files){try{const r=await shrink(f,kind==='back'?2100:1900);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
+  render();runQueue();
+}
+async function runQueue(){
+  if(Q.running)return;Q.running=true;Q.paused=false;
+  let it;
+  while(!Q.paused&&(it=Q.items.find(x=>x.state==='wait'))){
+    it.state='busy';it.msg=it.kind==='front'?'Cavablar oxunur…':'Paraqraf yoxlanılır…';render();
+    try{await processItem(it)}catch(e){it.state='err';it.msg=sErr(e);if(['rate_limited','not_granted','api429','pass','wait','nokey','badkey','credit','noapi'].includes(e?.code)){Q.paused=true}}
+    render();
+  }
+  Q.running=false;render();
+}
+async function processItem(it){
+  const ex=examById(it.examId);if(!ex)throw new Error('exam');
+  if(!sample||!canImages){it.state='err';it.msg='Foto oxuma bu görünüşdə işləmir.';return}
+  if(it.kind==='front'){const p=await aiFront(ex,it.blob);it.payload={answers:p.answers,flags:p.flags,note:p.note};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
+  else{const p=await aiBack(ex,it.blob);it.payload={essay:p.essay};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
+}
+async function saveItem(it,sid){
+  const ex=examById(it.examId);const old=findResult(ex.id,sid);const now=new Date().toISOString();
+  const r=old?clean(old):{id:newId(),examId:ex.id,studentId:sid,answers:null,flags:[],essay:null,created:now};
+  if(it.kind==='front'){r.answers=it.payload.answers;r.flags=it.payload.flags}else{r.essay=it.payload.essay;delete r.essayScore}
+  r.updated=now;
+  await put('results',r);
+  it.studentId=sid;it.resultId=r.id;it.state='done';
+  if(it.kind==='front'){const t=testScore(r.answers,ex.key);it.msg=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(old&&Array.isArray(old.answers)?' (yeniləndi)':'')+(it.payload.note?'. '+it.payload.note:'')}
+  else{const e=r.essay;it.msg=e.status!=='ok'?`Paraqraf: 0/5 (${{off_topic:'mövzudan kənar',not_english:'ingiliscə deyil',unreadable:'oxunmur'}[e.status]})`:`Paraqraf: ${fmt(e.total)}/5 (A ${fmt(e.A)}, B ${e.B===null?'–':fmt(e.B)}, C ${e.C===null?'–':fmt(e.C)}, D ${e.D===null?'–':fmt(e.D)}), ${e.words??'?'} söz`}
+}
+
+/* ---------- PDF answer card ---------- */
+function initials(n){const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?w.slice(0,3).map(x=>x[0].toLocaleUpperCase('az')+'.').join(''):'S.E.'}
+async function drawCard(ex){
+  try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('700 40px Inter')])}catch(e){}
+  const W=1654,H=2339,k=W/210,F='Inter, Arial, sans-serif',INK='#1f3a68',SOFT='#8a9bb8',FILL='#eef2f9';
+  const tfs=tfOf(ex).length?tfOf(ex):TF;
+  const mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);return [c,x]};
+  const T=(x,t,px,py,size,weight=400,align='left',color='#111',font=F,ls=0)=>{x.font=`${weight} ${size*k}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';if('letterSpacing' in x)x.letterSpacing=(ls*k)+'px';x.fillText(t,px*k,py*k);if('letterSpacing' in x)x.letterSpacing='0px'};
+  const RR=(x,x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
+  const Ln=(x,x1,y1,x2,y2,w,col=INK,dash)=>{x.save();x.strokeStyle=col;x.lineWidth=w*k;if(dash)x.setLineDash(dash.map(d=>d*k));x.beginPath();x.moveTo(x1*k,y1*k);x.lineTo(x2*k,y2*k);x.stroke();x.restore()};
+  const Bub=(x,cx,cy,d,label)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle=INK;x.lineWidth=.35*k;x.stroke();T(x,label,cx,cy+.1,3,700,'center',SOFT)};
+  const ini=initials(S.settings.teacherName);
+  const Logo=(x,cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.7*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-1)*k,0,Math.PI*2);x.lineWidth=.25*k;x.stroke();T(x,ini,cx,cy+.2,ini.length>4?fs*.75:fs,700,'center',INK,'Georgia, "Noto Serif", serif',.2)};
+  // section box; returns bottom y
+  const Sec=(x,x0,y0,w,title,range,rows)=>{
+    const hh=6.6;let h=hh+2;rows.forEach(r=>h+=typeof r==='object'?40.6:9.2);h+=2.2;
+    RR(x,x0,y0,w,h,1.6,null,0,'#fff');
+    x.save();x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,1.6*k):x.rect(x0*k,y0*k,w*k,h*k);x.clip();x.fillStyle=INK;x.fillRect(x0*k,y0*k,w*k,hh*k);x.restore();
+    T(x,title,x0+3,y0+hh/2,3.2,700,'left','#fff',F,.35);T(x,range,x0+w-3,y0+hh/2,2.8,600,'right','#dfe6f2');
+    let y=y0+hh+2,prevMc=false;
+    rows.forEach(r=>{
+      if(typeof r!=='object'){
+        if(prevMc)Ln(x,x0+3,y,x0+w-3,y,.2,'#d3dae6',[1,1]);
+        const cy=y+4.6;T(x,String(r),x0+3,cy,4,800,'left',INK);
+        for(let j=0;j<5;j++)Bub(x,x0+13+3.4+j*9.6,cy,6.8,'ABCDE'[j]);
+        y+=9.2;prevMc=true;return;
+      }
+      // tf block
+      const n=r.n||0;
+      y+=1.4;const bh=39.2,bw=w-6;
+      RR(x,x0+3,y,bw,bh,1.2,null,0,FILL);
+      x.save();x.fillStyle='#fff';x.fillRect((x0+13)*k,y*k,(bw-10)*k,bh*k);x.restore();
+      RR(x,x0+3,y,bw,bh,1.2,INK,.3);
+      Ln(x,x0+13,y,x0+13,y+bh,.3);
+      T(x,String(r.n),x0+8,y+bh/2,4.6,800,'center',INK);
+      const lx=x0+16,tx=lx+9+3.4,fx2=tx+9.6;
+      T(x,'True',tx,y+3.5,2.6,700,'center','#4a5568');T(x,'False',fx2,y+3.5,2.6,700,'center','#4a5568');
+      for(let i=0;i<4;i++){const cy=y+6+4+i*8;T(x,(i+1)+')',lx,cy,3.3,700,'left',INK);Bub(x,tx,cy,6.8,'T');Bub(x,fx2,cy,6.8,'F')}
+      T(x,'4 düz — tam bal',x0+w-5,y+9,2.4,400,'right','#5b6577');T(x,'3 düz — yarım bal',x0+w-5,y+12.4,2.4,400,'right','#5b6577');
+      y+=bh;prevMc=false;
+    });
+    RR(x,x0,y0,w,h,1.6,INK,.4);
+    return y0+h;
+  };
+  const rowsFor=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(tfs.includes(i-1)?'tf'+i:i);return o};
+  const SecX=(x,x0,y0,w,title,rng,a,b)=>Sec(x,x0,y0,w,title,rng,rowsFor(a,b).map(v=>typeof v==='string'?{n:+v.slice(2)}:v));
+  // page 1
+  const [p1,x1]=mk();
+  Logo(x1,20.5,19.5,17,6);
+  T(x1,'CAVAB KARTI',105,16.5,6.2,800,'center',INK,F,.6);
+  T(x1,(ex.name||'ENGLISH')+' · 25 SUAL',105,23.8,3.2,600,'center','#4a5568',F,.2);
+  Ln(x1,12,31,198,31,.6);
+  T(x1,'AD',12,36.3,2.9,700,'left',INK,F,.2);RR(x1,12,38,90,9,1.2,INK,.4);
+  T(x1,'SOYAD',108,36.3,2.9,700,'left',INK,F,.2);RR(x1,108,38,90,9,1.2,INK,.4);
+  let ya=SecX(x1,12,52,90,'LISTENING','1 – 4',1,4);
+  SecX(x1,12,ya+4.5,90,'GRAMMAR','5 – 17',5,17);
+  let yb=SecX(x1,108,52,90,'READING 1','18 – 21',18,21);
+  yb=SecX(x1,108,yb+4.5,90,'READING 2','22 – 25',22,25);
+  // fill rule
+  let y=yb+4.5;const sh=34;
+  RR(x1,108,y,90,sh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,sh*k,1.6*k):x1.rect(108*k,y*k,90*k,sh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
+  T(x1,'DOLDURMA QAYDASI',111,y+3.3,3.2,700,'left','#fff',F,.35);
+  T(x1,'Düzgün cavabın dairəsini tam qaraldın.',111,y+10,2.8,400,'left','#2d3748');
+  T(x1,'Hər suala yalnız bir cavab.',111,y+14,2.8,400,'left','#2d3748');
+  const exb=(cx,cy,l,mode)=>{x1.beginPath();x1.arc(cx*k,cy*k,2.7*k,0,Math.PI*2);x1.fillStyle=mode==='on'?'#1b1f27':'#fff';x1.fill();x1.strokeStyle=mode==='on'?'#1b1f27':INK;x1.lineWidth=(mode==='thick'?.6:.35)*k;x1.stroke();if(mode!=='on')T(x1,l,cx,cy+.1,2.6,700,'center',SOFT);if(mode==='x'){Ln(x1,cx-2.7,cy-2.7,cx+2.7,cy+2.7,.4,'#1b1f27');Ln(x1,cx-2.7,cy+2.7,cx+2.7,cy-2.7,.4,'#1b1f27')}};
+  T(x1,'Düzgün:',111,y+20.5,2.8,700,'left','#2d3748');['A','B','C','D','E'].forEach((l,j)=>exb(128+j*7.9,y+20.5,l,j===1?'on':''));
+  T(x1,'Yanlış:',111,y+28,2.8,700,'left','#2d3748');exb(128,y+28,'A','x');exb(135.9,y+28,'✓','');exb(143.8,y+28,'C','thick');
+  RR(x1,108,y,90,sh,1.6,INK,.4);
+  // result
+  y+=sh+4.5;const rh=26;
+  RR(x1,108,y,90,rh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,rh*k,1.6*k):x1.rect(108*k,y*k,90*k,rh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
+  T(x1,'NƏTİCƏ',111,y+3.3,3.2,700,'left','#fff',F,.35);T(x1,'müəllim doldurur',195,y+3.3,2.8,600,'right','#dfe6f2');
+  ['Düzgün','Bal','İmza'].forEach((l,j)=>{const cx=111+j*28.3;T(x1,l,cx,y+10.2,2.6,700,'left',INK);RR(x1,cx,y+12.5,26,9,1,INK,.35)});
+  RR(x1,108,y,90,rh,1.6,INK,.4);
+  // page 2
+  const [p2,x2]=mk();
+  Logo(x2,18.5,17.5,13,4.6);
+  T(x2,'AD, SOYAD:',29,13,3.2,700,'left',INK,F,.3);Ln(x2,52,15,198,15,.35);
+  T(x2,'TOPIC / MÖVZU:',29,23,3.6,700,'left',INK,F,.3);Ln(x2,65,25,198,25,.35);
+  RR(x2,12,30,186,255,2,INK,.6);
+  for(let ly=41;ly<283;ly+=9.5)Ln(x2,18,ly,192,ly,.3,'#b9c3d4');
+  return [p1,p2];
+}
+function buildPdf(imgs){
+  const enc=new TextEncoder(),parts=[],offs=[];let off=0;
+  const add=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);off+=b.length};
+  const obj=(num,body)=>{offs[num]=off;add(`${num} 0 obj\n`);body();add('\nendobj\n')};
+  add('%PDF-1.4\n');add(new Uint8Array([37,226,227,207,211,10]));
+  obj(1,()=>add('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>add(`<< /Type /Pages /Kids [${imgs.map((_,i)=>`${3+3*i} 0 R`).join(' ')}] /Count ${imgs.length} >>`));
+  imgs.forEach((im,i)=>{const p=3+3*i;
+    obj(p,()=>add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im${i} ${p+2} 0 R >> >> /Contents ${p+1} 0 R >>`));
+    const cs=`q 595.28 0 0 841.89 0 0 cm /Im${i} Do Q`;
+    obj(p+1,()=>add(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`));
+    obj(p+2,()=>{add(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`);add(im.bytes);add('\nendstream')});
+  });
+  const total=3+3*imgs.length,xref=off;
+  let x=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  add(x);add(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const out=new Uint8Array(off);let p=0;for(const b of parts){out.set(b,p);p+=b.length}return out;
+}
+async function cardPdfBlob(pages){
+  const imgs=await Promise.all(pages.map(c=>new Promise((ok,no)=>c.toBlob(b=>b?b.arrayBuffer().then(ab=>ok({bytes:new Uint8Array(ab),w:c.width,h:c.height}),no):no(new Error('blob')),'image/jpeg',.92))));
+  return new Blob([buildPdf(imgs)],{type:'application/pdf'});
+}
+async function showCard(ex){
+  if(!ex)return;
+  toast('Kart hazırlanır…');
+  let pages;try{pages=await drawCard(ex)}catch(e){return toast('Kart hazırlanmadı.','err')}
+  const prev=pages.map(c=>{const t=document.createElement('canvas');t.width=420;t.height=594;t.getContext('2d').drawImage(c,0,0,420,594);return t.toDataURL('image/jpeg',.8)});
+  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev"><div><img src="${prev[0]}" alt="Ön üz"><p>Ön üz</p></div><div><img src="${prev[1]}" alt="Arxa üz"><p>Arxa üz</p></div></div><p class="hint">A4, 2 səhifə. Çap edəndə «iki tərəfli» (double-sided) seçin ki, bir vərəqin iki üzünə düşsün.</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
+  setTimeout(()=>{const b=document.querySelector('.ov [data-x="pdf"]');if(b)b.onclick=async e=>{e.stopPropagation();try{const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(err){toast('PDF hazırlanmadı.','err')}}},0);
+}
+async function saveFile(name,data){
+  if(!downloads)return toast('Fayl yükləmə bu görünüşdə mümkün deyil.','err');
+  try{await downloads.save({filename:name,data})}catch(e){if(e?.code!=='declined')toast(e?.code==='rate_limited'?'Bir az gözləyib yenidən cəhd edin.':'Fayl yüklənmədi.','err')}
+}
+
+/* ---------- AI: question topics ---------- */
+async function tagFromPhotos(files){
+  if(!sample||!canImages)return toast('Şəkil göndərmək bu görünüşdə mümkün deyil.','err');
+  const d=examDraft;d.tagging=true;d.tagMsg='Claude test suallarını oxuyur…';render();
+  try{
+    const blobs=[];for(const f of files.slice(0,maxImages))blobs.push((await shrink(f,2000)).blob);
+    const prompt=`The attached photo(s) show the question pages of a 25-question English exam for school students. Default layout: questions 1–4 listening, 5–17 grammar and vocabulary, 18–21 reading text 1, 22–25 reading text 2; questions 4, 21 and 25 are True/False sets.
+For each question 1–25, give its section and a short topic tag that a teacher can use to track student weaknesses over the year.
+Section must be one of: "Dinləmə", "Oxu", "Qrammatika", "Leksika" (Leksika = vocabulary, word choice, phrasal verbs, collocations, word formation).
+Topic: 1–4 words in English, consistent naming, e.g. "Present Perfect", "Passive Voice", "Conditionals", "Prepositions", "Articles", "Phrasal Verbs", "Word Formation", "Reported Speech", "Detail", "Main Idea", "True/False", "Vocabulary in context". For listening questions you cannot hear, use "Listening".
+Reply with only JSON: {"questions":[{"n":1,"section":"Dinləmə","topic":"Listening"}, ...25 items]}`;
+    const r=await sample.json(prompt,{images:blobs});
+    let cnt=0;for(const q of (Array.isArray(r?.questions)?r.questions:[])){const i=Number(q?.n)-1;if(i>=0&&i<N){if(SECS.includes(q.section))d.qmeta[i].sec=q.section;if(q.topic)d.qmeta[i].tag=String(q.topic).slice(0,40);cnt++}}
+    d.tagMsg=`${cnt} sualın mövzusu təyin edildi. Yoxlayın və lazım olsa düzəldin.`;d.showMeta=true;
+  }catch(e){d.tagMsg=sErr(e)}
+  finally{d.tagging=false;render()}
+}
+
+/* ---------- views ---------- */
+const VIEWS={};
+VIEWS.home=()=>{
+  const t=S.settings.teacherName;
+  const recent=S.results.slice().sort((a,b)=>(b.updated||'').localeCompare(a.updated||'')).slice(0,6);
+  const steps=[];
+  if(!S.groups.length)steps.push(['sagirdler','Qrup yaradın və şagirdləri əlavə edin']);
+  if(!S.exams.length)steps.push(['sinaqlar','Sınaq yaradın: cavab açarı və paraqraf mövzusu']);
+  return `${!t?`<section class="box hero"><h1>Xoş gəlmisiniz!</h1><p class="muted">Adınızı yazın. Bu tətbiqdə yalnız sizin qruplarınız, sınaqlarınız və nəticələriniz görünəcək.</p><div class="inline"><input type="text" data-bind="forms.newTeacher" value="${esc(forms.newTeacher)}" placeholder="Ad və soyad" aria-label="Müəllimin adı"><button class="btn" data-act="saveTeacher">Davam et</button></div></section>`:''}
+  ${mode==='local'?`<div class="notice">Google Cədvələ qoşulmayıb: foto yoxlama işləmir, məlumatlar yalnız bu brauzerdə qalır. <button type="button" class="back" style="margin:0;display:inline" data-act="go" data-to="parametrler">Parametrlərdə</button> skript linkini və şifrəni yazın.</div>`:''}${mode==='offline'?`<div class="notice">Cədvələ qoşulmaq alınmadı${lastErr==='pass'?' (şifrə səhvdir)':''}. Son yüklənmiş məlumatlar göstərilir, dəyişiklik saxlanmır. <button type="button" class="back" style="margin:0;display:inline" data-act="reconnect">Yenidən qoşul</button></div>`:''}${mode==='slow'?`<div class="notice">Bağlantı gecikir. Bir az gözləyin və ya səhifəni yeniləyin.</div>`:''}
+  ${t?`<section class="box hero"><h1>Salam, ${esc(t.split(' ')[0])} müəllim!</h1><p class="muted">Sınağı seçin, vərəqlərin şəklini çəkin. Cavablar və paraqraf avtomatik yoxlanıb şagirdin adına yazılır.</p><div class="acts"><button class="btn" data-act="go" data-to="yoxla">Sınağı yoxla</button><button class="btn ghost" data-act="go" data-to="neticeler">Nəticələr</button></div></section>`:''}
+  <div class="stats"><div class="stat"><b>${S.groups.length}</b><span>Qrup</span></div><div class="stat"><b>${S.students.length}</b><span>Şagird</span></div><div class="stat"><b>${S.exams.length}</b><span>Sınaq</span></div><div class="stat"><b>${S.results.length}</b><span>Yoxlanmış iş</span></div></div>
+  ${steps.length?`<section class="box"><h2>Başlamaq üçün</h2><div class="list">${steps.map(([to,x],i)=>`<div class="li"><span class="rank">${i+1}</span><div class="grow">${x}</div><button class="btn sm ghost" data-act="go" data-to="${to}">Aç</button></div>`).join('')}</div></section>`:''}
+  <section class="box"><h2>Son yoxlanan işlər</h2>${recent.length?`<div class="list">${recent.map(r=>resRow(r)).join('')}</div>`:`<p class="empty">Hələ yoxlanmış iş yoxdur.</p>`}</section>`;
+};
+function resRow(r,i){
+  const st=studentById(r.studentId),t=resTest(r),e=resEssay(r);
+  const badges=[t===null?'<span class="badge warn">test yoxdur</span>':'',e===null?'<span class="badge">paraqraf yoxdur</span>':'',(r.flags||[]).length?`<span class="badge warn">⚠ ${r.flags.length} sual</span>`:''].join(' ');
+  return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. Test ${t===null?'–':fmt(t)}/25, paraqraf ${e===null?'–':fmt(e)}/5</small><div>${badges}</div></div><span class="pct">${fmt(resPct(r))}%</span></div>`;
+}
+
+VIEWS.yoxla=()=>{
+  const exs=examsSorted();
+  if(!exs.length)return `<section class="box"><h2>Sınağı yoxla</h2><p class="muted">Əvvəl cavab açarı ilə sınaq yaradın.</p><button class="btn" data-act="go" data-to="sinaqlar">Sınaq yarat</button></section>`;
+  if(!Q.examId||!examById(Q.examId))Q.examId=exs[0].id;
+  const ex=examById(Q.examId),sts=examStudents(ex);
+  const items=Q.items.filter(x=>x.examId===ex.id).slice().reverse();
+  const doneF=new Set(S.results.filter(r=>r.examId===ex.id&&Array.isArray(r.answers)).map(r=>r.studentId));
+  const doneB=new Set(S.results.filter(r=>r.examId===ex.id&&resEssay(r)!==null).map(r=>r.studentId));
+  const busy=Q.items.some(x=>x.state==='busy'||x.state==='wait');
+  return `<section class="box"><h2>Hansı sınağı yoxlayırıq?</h2><select data-bind="Q.examId" data-rr="1">${exs.map(x=>`<option value="${x.id}"${x.id===Q.examId?' selected':''}>${esc(x.name)}${x.date?' ('+esc(x.date)+')':''}</option>`).join('')}</select>
+  <p class="hint">${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup seçilməyib'}. Cavablar: ${doneF.size}/${sts.length}, paraqraf: ${doneB.size}/${sts.length}.</p>
+  ${!sts.length?`<div class="notice">Bu sınağın qruplarında şagird yoxdur. Şagirdlər bölməsindən əlavə edin.</div>`:''}
+  ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
+  <div class="big2"><label class="shoot">📷 Ön üz<small>Cavablar. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>Paraqraf. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="back"></label></div>
+  <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
+  <div class="acts"><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
+  ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər ${busy?'<span class="badge busy">işlənir…</span>':''}</h2><div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
+};
+function qItemHTML(it,ex,sts){
+  const b={wait:'<span class="badge">növbədə</span>',busy:'<span class="badge busy">işlənir</span>',done:'<span class="badge ok">saxlanıldı</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'}[it.state];
+  return `<div class="qitem"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):(it.kind==='front'?'Ön üz':'Arxa üz')} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':'Paraqraf'}. ${esc(it.msg)}</span>
+  ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}</div>
+  ${it.state==='done'?`<button class="btn sm ghost" data-act="editResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
+}
+
+VIEWS.neticeler=()=>{
+  const exs=examsSorted();
+  if(!exs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Hələ sınaq yoxdur.</p></section>`;
+  if(!examById(rf.examId))rf.examId=exs[0].id;
+  const ex=examById(rf.examId),gs=(ex.groupIds||[]).map(groupById).filter(Boolean);
+  if(rf.groupId&&!gs.find(g=>g.id===rf.groupId))rf.groupId='';
+  const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
+  const inScope=examStudents(ex).filter(s=>!rf.groupId||s.groupId===rf.groupId);
+  const missing=inScope.filter(s=>!rs.find(r=>r.studentId===s.id));
+  const n=rs.length,withT=rs.filter(r=>resTest(r)!==null);
+  const avgPct=n?rs.reduce((s,r)=>s+resPct(r),0)/n:0;
+  const secs={};withT.forEach(r=>{const m=secScores(r);for(const k in m){secs[k]=secs[k]||{got:0,max:0};secs[k].got+=m[k].got;secs[k].max+=m[k].max}});
+  const hard=Array.from({length:N},(_,i)=>{const w=withT.filter(r=>pointsFor(i,r.answers[i],ex.key[i])<1).length;return {i,w,p:withT.length?Math.round(w*100/withT.length):0}}).filter(q=>q.w).sort((a,b)=>b.w-a.w).slice(0,5);
+  return `<section class="box"><h2>Nəticələr</h2><label class="l">Sınaq</label><select data-bind="rf.examId" data-rr="1">${exs.map(e=>`<option value="${e.id}"${e.id===rf.examId?' selected':''}>${esc(e.name)}${e.date?' ('+esc(e.date)+')':''}</option>`).join('')}</select>
+  ${gs.length>1?`<div class="chips" style="margin-top:10px"><button class="chip${!rf.groupId?' on':''}" data-act="rfGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${rf.groupId===g.id?' on':''}" data-act="rfGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div>`:''}</section>
+  ${n?`<div class="stats"><div class="stat"><b>${n}</b><span>Yoxlanmış iş</span></div><div class="stat"><b>${fmt(Math.round(avgPct*10)/10)}%</b><span>Orta nəticə</span></div><div class="stat"><b>${fmt(Math.round(resPct(rs[0])*10)/10)}%</b><span>Ən yüksək</span></div><div class="stat"><b>${missing.length}</b><span>Yoxlanmayıb</span></div></div>`:''}
+  <section class="box"><div class="search"><input type="search" data-search="1" placeholder="Şagird axtar" aria-label="Şagird axtar"></div>
+  ${n?`<div class="list">${rs.map((r,i)=>resRow(r,i)).join('')}</div>`:`<p class="empty">Bu sınaq üzrə hələ nəticə yoxdur.</p>`}
+  ${missing.length?`<h3>Yoxlanmayanlar (${missing.length})</h3><p class="muted" style="font-size:14px">${missing.map(s=>esc(s.name)).join(', ')}</p>`:''}
+  <div class="acts"><button class="btn ghost sm${n?'':' off'}" data-act="csv">CSV yüklə</button></div></section>
+  ${withT.length?`<section class="box"><h2>Sınağın təhlili</h2>${SECS.filter(s=>secs[s]).map(s=>{const p=Math.round(secs[s].got*100/secs[s].max);return `<div class="arow"><div class="t"><span>${s}</span><b>${p}%</b></div><div class="bar${p<50?' red':''}"><i style="width:${p}%"></i></div></div>`}).join('')}
+  <h3>Ən çox səhv edilən suallar</h3>${hard.map(q=>`<div class="arow"><div class="t"><span>${q.i+1}-ci sual <span class="muted">(${esc(qSec(ex,q.i))}${qTag(ex,q.i)?': '+esc(qTag(ex,q.i)):''})</span></span><b>${q.w} nəfər, ${q.p}%</b></div><div class="bar red"><i style="width:${q.p}%"></i></div></div>`).join('')||'<p class="muted">Səhv yoxdur.</p>'}</section>`:''}`;
+};
+
+VIEWS.sagirdler=()=>{
+  const gs=groupsSorted();
+  if(!forms.sGroup&&gs[0])forms.sGroup=gs[0].id;
+  const last=sid=>{const rs=S.results.filter(r=>r.studentId===sid).sort((a,b)=>(examById(b.examId)?.date||'').localeCompare(examById(a.examId)?.date||''));return rs[0]};
+  return `<section class="box"><div class="search" style="margin:0"><input type="search" data-search="1" placeholder="Şagird axtar (bütün qruplarda)" aria-label="Şagird axtar"></div></section>
+  ${gs.map(g=>{const st=studentsOf(g.id);return `<details class="grp"><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
+  ${st.length?`<div class="list">${st.map(s=>{const l=last(s.id);return `<div class="li click srow" data-act="profile" data-id="${s.id}" data-n="${esc(norm(s.name))}"><div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`<span class="pct">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
+  <div class="acts"><button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
+  <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, A1" aria-label="Qrup adı"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
+  <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
+  <label class="l">Şagirdlər (hər sətirdə bir nəfər)</label><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67&#10;Tofiq Əliyev, 055 765 43 21">${esc(forms.bulk)}</textarea>
+  <p class="hint">Telefon nömrəsi WhatsApp ilə hesabat göndərmək üçündür. Nömrəsiz də yazmaq olar.</p><button class="btn" data-act="addStudents">Əlavə et</button>`:`<p class="muted">Əvvəl qrup yaradın.</p>`}</section>`;
+};
+
+function profileData(sid){
+  const rs=S.results.filter(r=>r.studentId===sid&&examById(r.examId)).sort((a,b)=>(examById(a.examId).date||'').localeCompare(examById(b.examId).date||''));
+  const secs={},tags={},crit={A:[],B:[],C:[],D:[]},errs={};
+  for(const r of rs){
+    const ex=examById(r.examId);
+    if(Array.isArray(r.answers))r.answers.forEach((v,i)=>{const s=qSec(ex,i),p=pointsFor(i,v,ex.key[i]);secs[s]=secs[s]||{got:0,max:0};secs[s].got+=p;secs[s].max++;const t=qTag(ex,i);if(t){const k=s+'|'+t.toLowerCase();tags[k]=tags[k]||{sec:s,tag:t,got:0,max:0,wrong:0};tags[k].got+=p;tags[k].max++;if(p<1)tags[k].wrong++}});
+    const e=r.essay;if(e&&e.status==='ok'){for(const c of ['A','B','C','D'])if(e[c]!==null&&e[c]!==undefined)crit[c].push(+e[c]);(e.mistakes||[]).forEach(m=>{errs[m.type]=(errs[m.type]||0)+1})}
+  }
+  const weak=Object.values(tags).filter(t=>t.wrong>0).sort((a,b)=>(a.got/a.max)-(b.got/b.max)||b.wrong-a.wrong).slice(0,8);
+  return {rs,secs,weak,crit,errs};
+}
+VIEWS.profile=()=>{
+  const s=studentById(profileId);if(!s)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Şagird tapılmadı.</div>`;
+  const P=profileData(s.id),rs=P.rs.slice().reverse();
+  const avg=rs.length?rs.reduce((a,r)=>a+resPct(r),0)/rs.length:0;
+  const cAvg=c=>P.crit[c].length?fmt(Math.round(P.crit[c].reduce((a,b)=>a+b,0)/P.crit[c].length*100)/100):'–';
+  const errList=Object.entries(P.errs).sort((a,b)=>b[1]-a[1]);
+  const ph=waPhone(s.phone);
+  return `<button class="back" data-act="back">← Geri</button>
+  <section class="box"><h1>${esc(s.name)}</h1><p class="muted">${esc(gName(s.groupId))}${s.phone?', '+esc(s.phone):''}</p>
+  <div class="acts">${ph&&rs.length?`<a class="btn wa" href="https://wa.me/${ph}?text=${encodeURIComponent(reportMsg(s.id))}" target="_blank" rel="noopener">Ümumi hesabat (WhatsApp)</a>`:''}<button class="btn ghost sm" data-act="editStudent" data-id="${s.id}">Düzəlt</button><button class="btn danger sm" data-act="delStudent" data-id="${s.id}">Sil</button></div>
+  ${!ph?`<p class="hint">WhatsApp üçün «Düzəlt» düyməsi ilə telefon nömrəsi əlavə edin.</p>`:''}</section>
+  ${rs.length?`<div class="stats"><div class="stat"><b>${rs.length}</b><span>Sınaq</span></div><div class="stat"><b>${fmt(Math.round(avg*10)/10)}%</b><span>Orta nəticə</span></div><div class="stat"><b>${fmt(resPct(rs[0]))}%</b><span>Son sınaq</span></div><div class="stat"><b>${cAvg('A')==='–'?'–':fmt(Math.round(rs.filter(r=>resEssay(r)!==null).reduce((a,r)=>a+resEssay(r),0)/Math.max(1,rs.filter(r=>resEssay(r)!==null).length)*100)/100)}</b><span>Orta paraqraf / 5</span></div></div>
+  <section class="box"><h2>Bölmələr üzrə</h2>${SECS.filter(k=>P.secs[k]).map(k=>{const p=Math.round(P.secs[k].got*100/P.secs[k].max);return `<div class="arow"><div class="t"><span>${k} <span class="muted">(${P.secs[k].max} sual)</span></span><b>${p}%</b></div><div class="bar${p<50?' red':''}"><i style="width:${p}%"></i></div></div>`}).join('')||'<p class="muted">Test nəticəsi yoxdur.</p>'}
+  <h3>Zəif mövzular</h3>${P.weak.length?P.weak.map(t=>`<div class="arow"><div class="tagrow"><span>${esc(t.tag)} <span class="muted">(${esc(t.sec)})</span></span><b>${t.wrong}/${t.max} səhv</b></div><div class="bar red"><i style="width:${Math.round((1-t.got/t.max)*100)}%"></i></div></div>`).join(''):`<p class="muted" style="font-size:14px">${Object.keys(P.secs).length?'Sualların mövzusu təyin edilməyib və ya səhv yoxdur. Sınaqlar bölməsində suallara mövzu verin.':'—'}</p>`}</section>
+  <section class="box"><h2>Paraqraf</h2><div class="crit4"><div><b>${cAvg('A')}</b><span>A / 1</span></div><div><b>${cAvg('B')}</b><span>B / 2</span></div><div><b>${cAvg('C')}</b><span>C / 1</span></div><div><b>${cAvg('D')}</b><span>D / 1</span></div></div>
+  ${errList.length?`<h3>Tez-tez edilən səhvlər</h3>${errList.map(([k,v])=>`<div class="tagrow"><span>${esc(k)}</span><b>${v}</b></div>`).join('')}`:''}</section>
+  <section class="box"><h2>Sınaqlar</h2>${rs.map(r=>examCard(r)).join('')}</section>`:`<section class="box"><p class="empty">Bu şagirdin hələ nəticəsi yoxdur.</p></section>`}`;
+};
+function examCard(r){
+  const ex=examById(r.examId),t=resTest(r),e=r.essay,es=resEssay(r),open=profileOpen.has(r.id),wq=wrongQs(r);
+  const ph=waPhone(studentById(r.studentId)?.phone);
+  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25, paraqraf ${es===null?'–':fmt(es)}/5${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
+  <div class="acts"><button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
+  ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(q.v==='-'||q.v==='----'?'boş':q.v)}</span>, düzgün: <span class="c">${esc(q.k)}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
+  ${e?essayHTML(e):''}`:''}</div>`;
+}
+function essayHTML(e){
+  if(e.status&&e.status!=='ok')return `<h3>Paraqraf: 0/5</h3><p class="muted">${{off_topic:'Mövzudan kənar yazılıb.',not_english:'İngilis dilində deyil.',unreadable:'Yazı oxunmur.'}[e.status]||''}</p>`;
+  const cr=[['A','Tapşırığın yerinə yetirilməsi',1],['B','Mövzunun əhatə edilməsi',2],['C','Qrammatika',1],['D','Söz ehtiyatı',1]];
+  return `<h3>Paraqraf: ${fmt(e.total??0)}/5${e.words?`, ${e.words} söz`:''}</h3>${cr.map(([k,n,m])=>`<div class="crit"><b>${k}. ${n}: ${e[k]===null||e[k]===undefined?'yoxlanılmadı':fmt(e[k])+'/'+m}</b>${e.comments?.[k]?`<div class="muted" style="font-size:14px">${esc(e.comments[k])}</div>`:''}</div>`).join('')}
+  ${(e.mistakes||[]).length?`<h3>Səhvlər</h3>${e.mistakes.map(m=>`<div class="mist"><s>${esc(m.original)}</s> → <ins>${esc(m.correction)}</ins> <span class="badge">${esc(m.type)}</span><div class="muted">${esc(m.explanation)}</div></div>`).join('')}`:''}
+  ${e.feedback?`<h3>Rəy</h3><p>${esc(e.feedback)}</p>`:''}`;
+}
+function examMsg(r){
+  const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),e=r.essay,es=resEssay(r);
+  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`];
+  if(t!==null){L.push(`Test: ${fmt(t)}/25`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
+    const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${q.v==='-'||q.v==='----'?'boş':q.v}, düzgün: ${q.k}`))}}
+  if(es!==null){L.push('',`Paraqraf: ${fmt(es)}/5`);if(e&&e.status==='ok')L.push(`  A ${fmt(e.A)}/1, B ${e.B===null?'–':fmt(e.B)}/2, C ${e.C===null?'–':fmt(e.C)}/1, D ${e.D===null?'–':fmt(e.D)}/1`);if(e?.feedback)L.push(e.feedback)}
+  L.push('',S.settings.sign||S.settings.teacherName||'');
+  return L.join('\n').trim();
+}
+function reportMsg(sid){
+  const st=studentById(sid),P=profileData(sid);
+  const L=[`Salam! ${st?.name} — ümumi hesabat`,'','Sınaqlar:'];
+  P.rs.forEach(r=>L.push(`  ${examById(r.examId).name}: ${fmt(resPct(r))}%`));
+  const sk=SECS.filter(k=>P.secs[k]);if(sk.length){L.push('','Bölmələr:');sk.forEach(k=>L.push(`  ${k}: ${Math.round(P.secs[k].got*100/P.secs[k].max)}%`))}
+  if(P.weak.length){L.push('','Üzərində işləmək lazım olan mövzular:');P.weak.slice(0,6).forEach(t=>L.push(`  ${t.tag} (${t.sec}): ${t.max} sualdan ${t.wrong}-i səhv`))}
+  const er=Object.entries(P.errs).sort((a,b)=>b[1]-a[1]).slice(0,4);if(er.length){L.push('','Paraqrafda tez-tez edilən səhvlər:');er.forEach(([k,v])=>L.push(`  ${k}: ${v}`))}
+  L.push('',S.settings.sign||S.settings.teacherName||'');
+  return L.join('\n').trim();
+}
+
+VIEWS.edit=()=>{
+  const ex=examById(ed.examId);if(!ex)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Sınaq tapılmadı.</div>`;
+  const sts=examStudents(ex),e=ed.essay;
+  const sel=(k,vals)=>`<select data-bind="ed.essay.${k}" data-rr="1" aria-label="${k}"><option value=""${e[k]===null?' selected':''}>–</option>${vals.map(v=>`<option value="${v}"${e[k]!==null&&+e[k]===v?' selected':''}>${fmt(v)}</option>`).join('')}</select>`;
+  const t=ed.answers?testScore(ed.answers,ex.key):null;
+  const et=ed.hasEssay?essayTotal(normEssay(e)):null;
+  return `<button class="back" data-act="back">← Geri</button>
+  <section class="box"><h2>${ed.id?'Nəticəni düzəlt':'Yeni nəticə'}: ${esc(ex.name)}</h2><label class="l">Şagird</label><select data-bind="ed.studentId"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}"${s.id===ed.studentId?' selected':''}>${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select></section>
+  <section class="box"><h2>Test ${t!==null?`<span class="pen" style="margin-left:8px">${fmt(t)}/25</span>`:''}</h2>
+  ${ed.answers?`<p class="hint">Sarı sətirlər yoxlanmalıdır. ✓ düzgün, ½ yarım bal, ✗ səhv (altında düzgün cavab). Basmaqla dəyişin.</p>${gridHTML('ans',ed.answers,{key:ex.key,tf:tfOf(ex),flags:ed.flags})}`:`<p class="muted">Test cavabları yoxdur.</p><button class="btn ghost sm" data-act="edAddTest">Cavabları əl ilə daxil et</button>`}</section>
+  <section class="box"><h2>Paraqraf ${et!==null?`<span class="pen" style="margin-left:8px">${fmt(et)}/5</span>`:''}</h2>
+  ${ed.hasEssay?`<div class="crit4"><div>${sel('A',[0,.5,1])}<span>A / 1</span></div><div>${sel('B',[0,1,2])}<span>B / 2</span></div><div>${sel('C',[0,.5,1])}<span>C / 1</span></div><div>${sel('D',[0,.5,1])}<span>D / 1</span></div></div>
+  <p class="hint">A=0 olarsa ümumi bal 0, B=0 olarsa yalnız A sayılır.</p>
+  <label class="l">Şagirdə rəy</label><textarea rows="3" data-bind="ed.essay.feedback">${esc(e.feedback||'')}</textarea>
+  <div class="acts"><button class="btn ghost sm" data-act="edNoEssay">Paraqrafı sil</button></div>`:`<p class="muted">Paraqraf balı yoxdur.</p><button class="btn ghost sm" data-act="edAddEssay">Paraqraf balını əl ilə yaz</button>`}</section>
+  <div class="savebar"><div class="grow"><b>${fmt(Math.round(((t||0)+(et||0))*100/30*100)/100)}%</b><br><span class="muted">${ed.studentId?esc(sName(ed.studentId)):'Şagird seçilməyib'}</span></div>${ed.id?`<button class="btn danger" data-act="edDelete">Sil</button>`:''}<button class="btn" data-act="edSave">Yadda saxla</button></div>`;
+};
+function normEssay(e){const o={...e,status:e.status||'ok'};for(const k of ['A','B','C','D'])o[k]=o[k]===''||o[k]===null||o[k]===undefined?null:Number(o[k]);if(o.A===null)o.A=0;return o}
+function openEditor(r,examId){
+  if(r){const e=r.essay?clean(r.essay):(resEssay(r)!==null?{status:'ok',A:null,B:null,C:null,D:null,feedback:'',legacy:resEssay(r)}:null);
+    ed={id:r.id,examId:r.examId,studentId:r.studentId,answers:Array.isArray(r.answers)?r.answers.slice():null,flags:(r.flags||[]).slice(),hasEssay:!!e,essay:e||{status:'ok',A:null,B:null,C:null,D:null,feedback:''}}}
+  else ed={id:null,examId,studentId:'',answers:Array(N).fill('-'),flags:[],hasEssay:false,essay:{status:'ok',A:null,B:null,C:null,D:null,feedback:''}};
+  go('edit');
+}
+
+VIEWS.sinaqlar=()=>{
+  const d=examDraft,gs=groupsSorted(),filled=d.key.filter((v,i)=>TF.includes(i)?/^[TF]{4}$/.test(v):v!=='-').length;
+  const list=examsSorted();
+  return `<section class="box"><h2>${d.id?'Sınağı düzəlt':'Yeni sınaq'}</h2>
+  <div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
+  <label class="l">Qruplar</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}
+  <h3>Cavab açarı (1–25) <span class="muted" style="font-weight:500">${filled}/25</span></h3>
+  <p class="hint">4, 21 və 25-ci suallarda 1–4 bəndləri üçün T və ya F seçin.</p>
+  ${gridHTML('key',d.key)}
+  <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="B, D, A, TFFT, C, … (25 cavab)" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>
+  <label class="l" style="margin-top:18px">26. Paraqrafın mövzusu</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">
+  <h3>Sualların mövzuları <span class="muted" style="font-weight:500">(istəyə görə, il boyu zəif mövzuları izləmək üçün)</span></h3>
+  <div class="acts"><label class="btn ghost sm${d.tagging?' off':''}" style="position:relative">📄 Testin şəklindən təyin et<input type="file" accept="image/*" ${maxImages>1?'multiple':''} data-file="tagphotos" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn ghost sm" data-act="toggleMeta">${d.showMeta?'Gizlət':'Əl ilə yaz'}</button></div>
+  ${maxImages>1?`<p class="hint">Test səhifələrinin şəkli (ən çox ${maxImages}).</p>`:''}
+  ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
+  ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}
+  <div class="acts" style="margin-top:16px"><button class="btn" data-act="saveExam">${d.id?'Dəyişiklikləri saxla':'Sınağı yarat'}</button>${d.id?`<button class="btn ghost" data-act="cancelExam">Ləğv et</button>`:''}</div></section>
+  <section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li"><div class="grow"><b>${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${e.topic?'':', mövzu yoxdur'}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">PDF</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`;
+};
+
+VIEWS.parametrler=()=>{
+  if(!setDraft)setDraft={...S.settings,rubric:S.settings.rubric||DEFAULT_RUBRIC};
+  const d=setDraft;
+  return `<section class="box"><h2>Google Cədvəl bağlantısı ${mode==='cloud'?'<span class="badge ok">qoşulub</span>':'<span class="badge warn">qoşulmayıb</span>'}</h2>
+  <p class="hint">Apps Script-in «Web app» linki (…/exec) və skriptdə yazdığınız şifrə. Məlumatlar Cədvəldə saxlanır, foto yoxlama sizin Claude API açarınızla işləyir.</p>
+  <label class="l">Skript linki</label><input type="text" data-bind="forms.api" value="${esc(forms.api)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" spellcheck="false">
+  <label class="l">Şifrə</label><input type="text" data-bind="forms.pass" value="${esc(forms.pass)}" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc">
+  <div class="acts"><button class="btn" data-act="connect">Qoşul</button>${apiUrl()&&lsGet(PKEY)?`<button class="btn ghost" data-act="disconnect">Bu cihazda çıxış</button>`:''}</div>
+  ${mode==='cloud'&&S.results.length===0&&readLocal()?.results?.length?`<p class="hint">Bu brauzerdə əvvəlki ${readLocal().results.length} nəticə var. <button type="button" class="back" style="margin:0;display:inline" data-act="pushLocal">Cədvələ köçür</button></p>`:''}</section>
+  <section class="box"><h2>Müəllim</h2><label class="l">Adınız</label><input type="text" data-bind="setDraft.teacherName" value="${esc(d.teacherName)}">
+  <label class="l">WhatsApp mesajının sonunda imza</label><input type="text" data-bind="setDraft.sign" value="${esc(d.sign)}" placeholder="${esc(d.teacherName||'Adınız')}"></section>
+  <section class="box"><h2>Paraqraf meyarları</h2><p class="hint">Claude paraqrafı bu mətnə görə qiymətləndirir. Dəyişsəniz, yeni yoxlamalar yeni mətnlə aparılacaq.</p>
+  <textarea rows="12" data-bind="setDraft.rubric">${esc(d.rubric)}</textarea>
+  <label class="l">Əlavə qaydalar</label><textarea rows="3" data-bind="setDraft.extraRules">${esc(d.extraRules)}</textarea>
+  <div class="acts"><button class="btn" data-act="saveSettings">Yadda saxla</button><button class="btn ghost" data-act="resetRubric">Meyarları ilkin vəziyyətə qaytar</button></div></section>
+  <section class="box"><h2>Ehtiyat nüsxə</h2><p class="hint">Bütün qruplar, şagirdlər, sınaqlar və nəticələr JSON faylı kimi yüklənir və bərpa edilə bilər.</p>
+  <div class="acts"><button class="btn ghost" data-act="exportJson">JSON yüklə</button><label class="btn ghost" style="position:relative">JSON-dan bərpa et<input type="file" accept=".json,application/json" data-file="import" style="position:absolute;width:1px;height:1px;opacity:0"></label></div>
+  <p class="hint">${mode==='cloud'?'Məlumatlar sizin Google Cədvəlinizdə saxlanır. Şifrəni bilməyən heç kim onları görə bilməz.':'Məlumatlar yalnız bu brauzerdə saxlanır.'}</p></section>`;
+};
+
+/* ---------- search ---------- */
+function applySearch(inp){
+  const q=norm(inp.value);
+  document.querySelectorAll('.srow').forEach(el=>{el.hidden=!!q&&!el.dataset.n.includes(q)});
+  document.querySelectorAll('details.grp').forEach(d=>{if(q){const any=[...d.querySelectorAll('.srow')].some(r=>!r.hidden);d.hidden=!any;d.open=any}else d.hidden=false});
+}
+
+/* ---------- actions ---------- */
+const ACT={
+  go:el=>go(el.dataset.to),
+  back:()=>go(prevTab),
+  async saveTeacher(){const n=forms.newTeacher.trim();if(!n)return toast('Adınızı yazın.','err');await saveSettings({...S.settings,teacherName:n});render()},
+  profile:el=>{profileId=el.dataset.id;profileOpen=new Set();go('profile')},
+  toggleOpen:el=>{const id=el.dataset.id;profileOpen.has(id)?profileOpen.delete(id):profileOpen.add(id);render()},
+  rfGroup:el=>{rf.groupId=el.dataset.id;render()},
+  manual:()=>openEditor(null,Q.examId),
+  resume:()=>runQueue(),
+  retry:el=>{const it=Q.items.find(x=>x.id===el.dataset.id);if(it){it.state='wait';it.msg='Növbədədir';runQueue()}},
+  clearQueue:()=>{Q.items=Q.items.filter(x=>x.state==='wait'||x.state==='busy');render()},
+  editResult:el=>{const r=S.results.find(x=>x.id===el.dataset.id);if(r)openEditor(r)},
+  edAddTest:()=>{ed.answers=Array(N).fill('-');render()},
+  edAddEssay:()=>{ed.hasEssay=true;render()},
+  edNoEssay:()=>{ed.hasEssay=false;render()},
+  async edSave(){
+    if(!ed.studentId)return toast('Şagird seçin.','err');
+    const ex=examById(ed.examId),now=new Date().toISOString();
+    const other=findResult(ex.id,ed.studentId);
+    if(other&&other.id!==ed.id&&!await modal({title:'Bu şagirdin nəticəsi var',html:'<p class="muted">Köhnə nəticə bununla əvəz olunsun?</p>',ok:'Əvəz et'}))return;
+    const old=ed.id?S.results.find(r=>r.id===ed.id):null;
+    const r={...(old?clean(old):{}),id:ed.id||newId(),examId:ex.id,studentId:ed.studentId,answers:ed.answers,flags:ed.flags,created:old?.created||now,updated:now};
+    delete r.essayScore;
+    if(ed.hasEssay){const e=normEssay(ed.essay);delete e.legacy;e.total=essayTotal(e);r.essay=e}else r.essay=null;
+    try{if(other&&other.id!==r.id)await del('results',other.id);await put('results',r)}catch(e){return}
+    toast(`${sName(r.studentId)}: ${fmt(resPct(r))}% saxlanıldı.`);go(prevTab);
+  },
+  async edDelete(){if(!await confirmBox('Nəticə silinsin?',sName(ed.studentId)))return;await del('results',ed.id);go(prevTab)},
+  async addGroup(){const n=forms.group.trim();if(!n)return toast('Qrup adını yazın.','err');if(S.groups.some(g=>norm(g.name)===norm(n)))return toast('Bu adda qrup var.','err');const g={id:newId(),name:n};forms.group='';forms.sGroup=g.id;await put('groups',g).catch(()=>{});render();toast('Qrup əlavə olundu.')},
+  async addStudents(){
+    const gid=forms.sGroup;if(!groupById(gid))return toast('Qrup seçin.','err');
+    const lines=forms.bulk.split('\n').map(x=>x.trim()).filter(Boolean);if(!lines.length)return toast('Şagirdlərin adını yazın.','err');
+    let added=0;
+    for(const ln of lines){let s=ln.replace(/^\d+[.)]\s*/,'');let phone='';const m=s.match(/(\+?\d[\d\s\-()]{6,}\d)\s*$/);if(m){phone=m[1].trim();s=s.slice(0,m.index)}const name=s.replace(/[,;\t\-–]+\s*$/,'').trim();if(!name)continue;await put('students',{id:newId(),groupId:gid,name,phone}).catch(()=>{});added++}
+    forms.bulk='';render();toast(added+' şagird əlavə olundu.');
+  },
+  async editStudent(el){const s=studentById(el.dataset.id);if(!s)return;const v=await modal({title:'Şagirdi düzəlt',fields:[{label:'Ad və soyad',value:s.name},{label:'Telefon',value:s.phone||'',type:'tel'},{label:'Qrup',type:'select',value:s.groupId,options:groupsSorted().map(g=>({value:g.id,label:g.name}))}]});if(!v)return;if(!v[0])return toast('Ad boş ola bilməz.','err');await put('students',{...s,name:v[0],phone:v[1],groupId:v[2]}).catch(()=>{});render()},
+  async delStudent(el){const s=studentById(el.dataset.id);if(!s)return;const rs=S.results.filter(r=>r.studentId===s.id);if(!await confirmBox('Şagird silinsin?',`${s.name} və onun ${rs.length} nəticəsi silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('students',s.id);if(tab==='profile')go(prevTab);else render()},
+  async renameGroup(el){const g=groupById(el.dataset.id);if(!g)return;const v=await modal({title:'Qrupun adı',fields:[{label:'Ad',value:g.name}]});if(!v||!v[0])return;await put('groups',{...g,name:v[0]}).catch(()=>{});render()},
+  async delGroup(el){const g=groupById(el.dataset.id);if(!g)return;const st=studentsOf(g.id);if(!await confirmBox('Qrup silinsin?',`${g.name} qrupu, ${st.length} şagird və onların nəticələri silinəcək.`))return;for(const s of st){for(const r of S.results.filter(r=>r.studentId===s.id))await del('results',r.id);await del('students',s.id)}await del('groups',g.id);render()},
+  toggleExamGroup(el){const a=examDraft.groupIds,i=a.indexOf(el.dataset.id);if(i>=0)a.splice(i,1);else a.push(el.dataset.id);render()},
+  toggleMeta(){examDraft.showMeta=!examDraft.showMeta;render()},
+  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]?/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';examDraft.key[i]=TF.includes(i)?(/^[TF]{4}$/.test(v)?v:'----'):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
+  async saveExam(){
+    const d=examDraft;if(!d.name.trim())return toast('Sınağın adını yazın.','err');
+    if(!d.groupIds.length)return toast('Ən azı bir qrup seçin.','err');
+    const miss=d.key.map((v,i)=>(TF.includes(i)?/^[TF]{4}$/.test(v):/^[A-E]$/.test(v))?0:i+1).filter(Boolean);
+    if(miss.length)return toast('Açar tam deyil: '+miss.join(', ')+'-ci suallar.','err');
+    if(!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
+    const old=d.id&&examById(d.id);
+    const ex={id:d.id||newId(),name:d.name.trim(),date:d.date,groupIds:d.groupIds.slice(),topic:d.topic.trim(),key:d.key.slice(),qmeta:d.qmeta.map(m=>({sec:m.sec,tag:String(m.tag||'').trim()})),created:old?.created||new Date().toISOString()};
+    await put('exams',ex).catch(()=>{});
+    examDraft=freshExam();render();window.scrollTo(0,0);
+    toast(old?'Sınaq yeniləndi.':'Sınaq yaradıldı. İndi PDF kartı yükləyə bilərsiniz.');
+  },
+  editExam(el){const e=examById(el.dataset.id);if(!e)return;examDraft={...freshExam(),id:e.id,name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:(e.qmeta||[]).some(m=>m.tag)};render();window.scrollTo(0,0)},
+  cancelExam(){examDraft=freshExam();render()},
+  async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);render()},
+  card:el=>showCard(examById(el.dataset.id)),
+  csv(){
+    const ex=examById(rf.examId);if(!ex)return;
+    const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
+    const rows=[['Şagird','Qrup','Telefon','Test (25)',...SECS,'A','B','C','D','Paraqraf (5)','Faiz','Səhv suallar']];
+    for(const r of rs){const st=studentById(r.studentId),m=secScores(r),e=r.essay||{};rows.push([sName(r.studentId),gName(st?.groupId),st?.phone||'',resTest(r)===null?'':fmt(resTest(r)),...SECS.map(k=>m[k]?fmt(m[k].got)+'/'+m[k].max:''),...['A','B','C','D'].map(k=>e[k]===null||e[k]===undefined?'':fmt(e[k])),resEssay(r)===null?'':fmt(resEssay(r)),fmt(resPct(r)),wrongQs(r).map(q=>q.i+1).join(' ')])}
+    saveFile('netice-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.csv','\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'));
+  },
+  async saveSettings(){if(await saveSettings(setDraft)){setDraft=null;render();toast('Yadda saxlanıldı.')}},
+  resetRubric(){setDraft.rubric=DEFAULT_RUBRIC;render()},
+  async connect(){
+    const u=forms.api.trim()||apiUrl(),p=forms.pass.trim();
+    if(!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(u))return toast('Skript linki düzgün deyil (…/exec).','err');
+    if(!p)return toast('Şifrəni yazın.','err');
+    lsSet(AKEY,u);lsSet(PKEY,p);forms.pass='';forms.api='';setDraft=null;
+    await initStore();
+    if(mode==='cloud'){toast('Cədvələ qoşuldu.');if(tab==='parametrler')render()}
+  },
+  async disconnect(){if(!await confirmBox('Çıxış edilsin?','Bu cihazda skript linki və şifrə silinəcək. Cədvəldəki məlumatlar qalır.','Çıxış'))return;lsSet(AKEY,'');lsSet(PKEY,'');try{localStorage.removeItem(CKEY)}catch(e){}S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};setDraft=null;await initStore()},
+  reconnect:()=>initStore(),
+  async pushLocal(){const v=readLocal();if(!v)return;if(!await modal({title:'Cədvələ köçürülsün?',html:`<p class="muted">Bu brauzerdəki ${v.groups.length} qrup, ${v.students.length} şagird, ${v.exams.length} sınaq və ${v.results.length} nəticə Cədvələ yazılacaq.</p>`,ok:'Köçür'}))return;await importData(v)},
+  exportJson(){saveFile('smartexam-ehtiyat-'+today()+'.json',JSON.stringify({app:'SmartExam',version:3,exported:new Date().toISOString(),groups:S.groups,students:S.students,exams:S.exams,results:S.results,settings:S.settings},null,1))},
+};
+async function importData(v){
+  const exams=(v.exams||[]).map(e=>({id:e.id,name:e.name,date:e.date||(e.created||'').slice(0,10)||today(),groupIds:e.groupIds||(e.groupId?[e.groupId]:[]),topic:e.topic||'',key:e.key,qmeta:e.qmeta||Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),created:e.created||''})).filter(e=>Array.isArray(e.key)&&e.key.length===N);
+  const results=(v.results||[]).map(r=>({...r,answers:Array.isArray(r.answers)?r.answers:(Array.isArray(r.detail)?r.detail.map(d=>String(d.answer||'-')):null),flags:r.flags||[],essay:r.essay&&typeof r.essay.total==='number'?r.essay:null,essayScore:r.essay&&typeof r.essay.total==='number'?undefined:(r.essayScore??undefined)}));
+  const all=[['groups',(v.groups||[]).map(g=>({id:g.id,name:g.name}))],['students',(v.students||[]).map(s=>({id:s.id,groupId:s.groupId,name:s.name,phone:s.phone||''}))],['exams',exams],['results',results]];
+  const total=all.reduce((s,[,a])=>s+a.length,0);let k=0;
+  try{for(const [c,arr] of all)for(const o of arr){if(!o.id)continue;await put(c,o);k++;if(k%10===0)toast(`Bərpa olunur: ${k}/${total}`)}toast(`Bərpa olundu: ${k} qeyd.`)}
+  catch(e){toast(`Bərpa yarımçıq qaldı: ${k}/${total}.`,'err')}
+  render();
+}
+
+/* ---------- events ---------- */
+function setBind(path,val){const p=path.split('.');const roots={forms,rf,examDraft,ed,setDraft,Q};let o=roots[p[0]];if(!o)return;for(let i=1;i<p.length-1;i++){o=o[p[i]];if(o==null)return}o[p[p.length-1]]=val}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]');if(t){if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
+  const b=e.target.closest('[data-bub]');if(b){tapBubble(b);return}
+  const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
+});
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.search){applySearch(el);return}if(el.dataset.bind&&el.tagName!=='SELECT')setBind(el.dataset.bind,el.value)});
+document.addEventListener('change',async e=>{
+  const el=e.target;
+  if(el.dataset.qitem){const it=Q.items.find(x=>x.id===el.dataset.qitem);if(it&&el.value){try{await saveItem(it,el.value)}catch(err){}render()}return}
+  if(el.dataset.bind&&el.tagName==='SELECT'){setBind(el.dataset.bind,el.value);if(el.dataset.rr)render();return}
+  if(!el.dataset.file)return;
+  const files=[...(el.files||[])];el.value='';if(!files.length)return;
+  const k=el.dataset.file;
+  if(k==='front'||k==='back')addToQueue(k,files);
+  else if(k==='tagphotos')tagFromPhotos(files);
+  else if(k==='import'){try{const v=JSON.parse(await files[0].text());if(!['groups','students','exams','results'].every(x=>Array.isArray(v[x])))throw new Error('format');if(!await modal({title:'Bərpa edilsin?',html:`<p class="muted">${v.groups.length} qrup, ${v.students.length} şagird, ${v.exams.length} sınaq və ${v.results.length} nəticə əlavə olunacaq. Eyni qeydlər yenilənəcək.</p>`,ok:'Bərpa et'}))return;await importData(v)}catch(err){toast('Fayl uyğun deyil.','err')}}
+});
+render();
+initStore();
+
+</script>
+</body>
+</html>
