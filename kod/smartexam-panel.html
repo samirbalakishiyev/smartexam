@@ -448,7 +448,7 @@ const SECS=['Dinləmə','Oxu','Qrammatika','Leksika'];
 const ERR_TYPES=['Zaman','Uzlaşma','Artikl','Sözönü','Söz sırası','Cümlə quruluşu','Söz seçimi','Orfoqrafiya','Digər'];
 const DEFAULT_RUBRIC=document.getElementById('rubric-src').textContent.trim();
 const DEFAULT_RUBRIC9=document.getElementById('rubric9-src').textContent.trim();
-const DEF_SET={teacherName:'',rubric:'',rubric9:'',extraRules9:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',sign:''};
+const DEF_SET={teacherName:'',logo:'',rubric:'',rubric9:'',extraRules9:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',sign:''};
 const TABS=[['home','Panel'],['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['sinaqlar','Sınaqlar'],['parametrler','Parametrlər']];
 const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -779,8 +779,8 @@ async function drawCard(ex){
   const RR=(x,x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
   const Ln=(x,x1,y1,x2,y2,w,col=INK,dash)=>{x.save();x.strokeStyle=col;x.lineWidth=w*k;if(dash)x.setLineDash(dash.map(d=>d*k));x.beginPath();x.moveTo(x1*k,y1*k);x.lineTo(x2*k,y2*k);x.stroke();x.restore()};
   const Bub=(x,cx,cy,d,label)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle=INK;x.lineWidth=.35*k;x.stroke();T(x,label,cx,cy+.1,3,700,'center',SOFT)};
-  const ini=initials(S.settings.teacherName);
-  const Logo=(x,cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.7*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-1)*k,0,Math.PI*2);x.lineWidth=.25*k;x.stroke();T(x,ini,cx,cy+.2,ini.length>4?fs*.75:fs,700,'center',INK,'Georgia, "Noto Serif", serif',.2)};
+  const ini=(S.settings.logo||'').trim().slice(0,6)||initials(S.settings.teacherName);
+  const Logo=(x,cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.7*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-1)*k,0,Math.PI*2);x.lineWidth=.25*k;x.stroke();const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=fs;x.save();if('letterSpacing' in x)x.letterSpacing=(.2*k)+'px';for(let t=0;t<30;t++){x.font=`700 ${f*k}px ${LF}`;if(x.measureText(ini).width<=(d-4.2)*k)break;f*=.94}x.restore();T(x,ini,cx,cy+.2,f,700,'center',INK,LF,.2)};
   // section box; returns bottom y
   const Sec=(x,x0,y0,w,title,range,rows)=>{
     const hh=6.6;let h=hh+2;rows.forEach(r=>h+=typeof r!=='object'?9.2:r.ms?9.8:40.6);h+=2.2;
@@ -1135,6 +1135,8 @@ VIEWS.parametrler=()=>{
   if(!setDraft)setDraft={...S.settings,rubric:S.settings.rubric||DEFAULT_RUBRIC,rubric9:S.settings.rubric9||DEFAULT_RUBRIC9};
   const d=setDraft;
   return `<section class="box"><h2>Müəllim</h2><label class="l">Adınız</label><input type="text" data-bind="setDraft.teacherName" value="${esc(d.teacherName)}">
+  <label class="l">Cavab kartındakı loqo (baş hərflər)</label><input type="text" data-bind="setDraft.logo" value="${esc(d.logo||'')}" maxlength="6" placeholder="${esc(initials(d.teacherName))}">
+  <p class="hint">Boş qalsa, adınızın baş hərfləri yazılır: ${esc(initials(d.teacherName))}</p>
   <label class="l">WhatsApp mesajının sonunda imza</label><input type="text" data-bind="setDraft.sign" value="${esc(d.sign)}" placeholder="${esc(d.teacherName||'Adınız')}"></section>
   <section class="box"><h2>10–11-ci sinif: paraqraf meyarları</h2><p class="hint">Claude paraqrafı bu mətnə görə qiymətləndirir. Dəyişsəniz, yeni yoxlamalar yeni mətnlə aparılacaq.</p>
   <textarea rows="12" data-bind="setDraft.rubric">${esc(d.rubric)}</textarea>
