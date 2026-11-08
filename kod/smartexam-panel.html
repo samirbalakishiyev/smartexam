@@ -654,15 +654,14 @@ async function drawCard(ex){
   let yb=SecX(x1,108,52,90,'READING 1','18 – 21',18,21);
   yb=SecX(x1,108,yb+4.5,90,'READING 2','22 – 25',22,25);
   // fill rule
-  let y=yb+4.5;const sh=42;
+  let y=yb+4.5;const sh=34;
   RR(x1,108,y,90,sh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,sh*k,1.6*k):x1.rect(108*k,y*k,90*k,sh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
   T(x1,'DOLDURMA QAYDASI',111,y+3.3,3.2,700,'left','#fff',F,.35);
   T(x1,'Düzgün cavabın dairəsini tam qaraldın.',111,y+10,2.8,400,'left','#2d3748');
   T(x1,'Hər suala yalnız bir cavab.',111,y+14,2.8,400,'left','#2d3748');
   const exb=(cx,cy,l,mode)=>{x1.beginPath();x1.arc(cx*k,cy*k,2.7*k,0,Math.PI*2);x1.fillStyle=mode==='on'?'#1b1f27':'#fff';x1.fill();x1.strokeStyle=mode==='on'?'#1b1f27':INK;x1.lineWidth=(mode==='thick'?.6:.35)*k;x1.stroke();if(mode!=='on')T(x1,l,cx,cy+.1,2.6,700,'center',SOFT);if(mode==='x'){Ln(x1,cx-2.7,cy-2.7,cx+2.7,cy+2.7,.4,'#1b1f27');Ln(x1,cx-2.7,cy+2.7,cx+2.7,cy-2.7,.4,'#1b1f27')}};
-  T(x1,'Düzgün:',111,y+20.5,2.8,700,'left','#2d3748');['A','B','C','D','E'].forEach((l,j)=>exb(128+j*7.9,y+20.5,l,j===1?'on':''));
-  T(x1,'Yanlış:',111,y+28,2.8,700,'left','#2d3748');exb(128,y+28,'A','x');exb(135.9,y+28,'✓','');exb(143.8,y+28,'C','thick');
-  T(x1,'Düzəliş:',111,y+35.5,2.8,700,'left','#2d3748');exb(128,y+35.5,'A','on');Ln(x1,128-3.6,y+35.5-3.6,128+3.6,y+35.5+3.6,.55,'#C2362F');Ln(x1,128-3.6,y+35.5+3.6,128+3.6,y+35.5-3.6,.55,'#C2362F');T(x1,'→',135.6,y+35.5,3,700,'center','#2d3748');exb(143.2,y+35.5,'C','on');T(x1,'səhvin üstündən X',150,y+34,2.3,400,'left','#5b6577');T(x1,'çəkib düzgünü qaraldın',150,y+37.2,2.3,400,'left','#5b6577');
+  T(x1,'Düzgün:',111,y+20.5,2.8,700,'left','#2d3748');['A','B','C','D','E'].forEach((l,j)=>exb(128+j*7.9,y+20.5,l,j===1?'on':''));T(x1,'— yalnız belə',169,y+20.5,2.6,600,'left','#1F7246');
+  T(x1,'Yanlış:',111,y+28,2.8,700,'left','#2d3748');exb(128,y+28,'A','x');exb(135.9,y+28,'✓','');exb(143.8,y+28,'C','thick');x1.beginPath();x1.arc(151.7*k,(y+28)*k,2.7*k,0,Math.PI*2);x1.fillStyle='#fff';x1.fill();x1.strokeStyle=INK;x1.lineWidth=.35*k;x1.stroke();x1.beginPath();x1.arc(151.7*k,(y+28)*k,1.1*k,0,Math.PI*2);x1.fillStyle='#1b1f27';x1.fill();T(x1,'— qəbul edilmir',157,y+28,2.6,600,'left','#C2362F');
   RR(x1,108,y,90,sh,1.6,INK,.4);
   // result
   y+=sh+4.5;const rh=26;
