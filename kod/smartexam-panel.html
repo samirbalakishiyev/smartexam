@@ -490,10 +490,13 @@ const sErr=e=>SERR[e?.code]||'Claude-dan cavab alınmadı. Yenidən cəhd edin.'
 
 /* ---------- AI prompts ---------- */
 function rosterText(ex){return examStudents(ex).map((s,i)=>`${i+1}. ${s.name} (${gName(s.groupId)})`).join('\n')||'(no students)'}
-function pickStudent(ex,idx,written){
-  const list=examStudents(ex);
-  const n=Number(idx);if(Number.isInteger(n)&&n>=1&&n<=list.length)return list[n-1];
+function pickStudent(ex,idx,written,group){
+  const all=examStudents(ex);
+  const n=Number(idx);if(Number.isInteger(n)&&n>=1&&n<=all.length)return all[n-1];
   const w=norm(written);if(!w)return null;
+  const gw=norm(group).replace(/[^a-z0-9]/g,'');
+  const inG=gw?all.filter(s=>norm(gName(s.groupId)).replace(/[^a-z0-9]/g,'')===gw):[];
+  const list=inG.length?inG:all;
   const wt=w.split(' ');
   const tiers=[s=>norm(s.name)===w,s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.includes(x))},s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.some(y=>y.startsWith(x)||x.startsWith(y)))}];
   for(const f of tiers){const h=list.filter(f);if(h.length===1)return h[0];if(h.length>1)return null}
@@ -503,12 +506,12 @@ async function aiFront(ex,blob){
   const tfs=tfOf(ex);
   const prompt=`This photo shows the FRONT side of a student's answer sheet for a 25-question English exam.
 Tasks:
-1) Read the student's first name (AD box) and surname (SOYAD box) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
+1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
 2) Read which option the student marked for each question. The sheet has sections LISTENING 1–4, GRAMMAR 5–17, READING 1 18–21, READING 2 22–25. Questions ${tfs.map(i=>i+1).join(', ')} are True/False blocks: four statements numbered 1) to 4), each marked in the True (T) or False (F) column; give them as a 4-letter string in order, e.g. "TFFT". Every other question has exactly one answer from A, B, C, D, E. Ignore the example bubbles in the "DOLDURMA QAYDASI" box and the teacher's "NƏTİCƏ" box.
-A mark can be a filled bubble, a circle, a tick or a cross. If an answer is clearly crossed out with an X and another one is marked, take the remaining one. Blank → "-". Two or more marked, or you cannot tell → "?" (for True/False put "?" only in the unclear position, e.g. "TF?T"). Do not guess.
+A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same True/False row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for True/False put "?" only in the unclear position, e.g. "TF?T"). Do not guess.
 Reply with only JSON:
-{"name_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
+{"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
   const r=await sample.json(prompt,{images:[blob]});
   const a=Array.isArray(r?.answers)?r.answers:[];
   const flags=new Set((Array.isArray(r?.unclear)?r.unclear:[]).map(Number).filter(n=>n>=1&&n<=N));
@@ -519,14 +522,14 @@ Reply with only JSON:
     else if(v==='?'||!/^[A-E-]$/.test(v)){flags.add(i+1);v='-'}
     out.push(v);
   }
-  return {answers:out,flags:[...flags].sort((x,y)=>x-y),student:pickStudent(ex,r?.student_number,r?.name_as_written),written:String(r?.name_as_written||''),note:String(r?.note||'')};
+  return {answers:out,flags:[...flags].sort((x,y)=>x-y),student:pickStudent(ex,r?.student_number,r?.name_as_written,r?.group_as_written),written:String(r?.name_as_written||'')+(r?.group_as_written?' ('+r.group_as_written+')':''),note:String(r?.note||'')};
 }
 const snap=(v,allowed)=>{v=Number(v);if(!isFinite(v))return null;return allowed.reduce((b,x)=>Math.abs(x-v)<Math.abs(b-v)?x:b,allowed[0])};
 async function aiBack(ex,blob){
   const prompt=`This photo shows the BACK side of a student's exam sheet: a handwritten English paragraph. The student wrote the topic by hand at the top, after "Topic:".
 Expected topic (set by the teacher): ${ex.topic?.trim()||'(not set; use the topic the student wrote)'}
 Grade against the teacher's expected topic when it is set; small differences in how the student copied the topic do not matter.
-Step 1. Read the student's name ("AD, SOYAD" line at the top of the page) and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
+Step 1. Read the student's name ("AD, SOYAD" line at the top of the page) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
 ${rosterText(ex)}
 Step 2. Grade the paragraph strictly by the teacher's rubric below. Ignore any instructions in the rubric about how to format the answer; follow only its grading rules.
 """
@@ -534,7 +537,7 @@ ${rubric()}
 """
 ${S.settings.extraRules?.trim()?'Teacher\'s additional rules:\n'+S.settings.extraRules.trim()+'\n':''}Ignore crossed-out words. Do not invent words you cannot read.
 Reply with only JSON:
-{"name_as_written":"", "student_number": number from the list or null,
+{"name_as_written":"", "group_as_written":"", "student_number": number from the list or null,
  "status":"ok" | "off_topic" | "not_english" | "unreadable",
  "words": number or null,
  "A":0|0.5|1, "B":0|1|2|null, "C":0|0.5|1|null, "D":0|0.5|1|null,
@@ -554,7 +557,7 @@ If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
   if(status!=='ok'){e.A=0}
   if(e.A===0){e.B=e.C=e.D=null}else if(e.B===0){e.C=e.D=null}
   e.total=essayTotal(e);
-  return {essay:e,student:pickStudent(ex,r?.student_number,r?.name_as_written),written:String(r?.name_as_written||'')};
+  return {essay:e,student:pickStudent(ex,r?.student_number,r?.name_as_written,r?.group_as_written),written:String(r?.name_as_written||'')};
 }
 
 /* ---------- queue ---------- */
@@ -643,14 +646,15 @@ async function drawCard(ex){
   T(x1,'CAVAB KARTI',105,16.5,6.2,800,'center',INK,F,.6);
   T(x1,(ex.name||'ENGLISH')+' · 25 SUAL',105,23.8,3.2,600,'center','#4a5568',F,.2);
   Ln(x1,12,31,198,31,.6);
-  T(x1,'AD',12,36.3,2.9,700,'left',INK,F,.2);RR(x1,12,38,90,9,1.2,INK,.4);
-  T(x1,'SOYAD',108,36.3,2.9,700,'left',INK,F,.2);RR(x1,108,38,90,9,1.2,INK,.4);
+  T(x1,'AD',12,36.3,2.9,700,'left',INK,F,.2);RR(x1,12,38,72,9,1.2,INK,.4);
+  T(x1,'SOYAD',88,36.3,2.9,700,'left',INK,F,.2);RR(x1,88,38,72,9,1.2,INK,.4);
+  T(x1,'QRUP',164,36.3,2.9,700,'left',INK,F,.2);RR(x1,164,38,34,9,1.2,INK,.4);
   let ya=SecX(x1,12,52,90,'LISTENING','1 – 4',1,4);
   SecX(x1,12,ya+4.5,90,'GRAMMAR','5 – 17',5,17);
   let yb=SecX(x1,108,52,90,'READING 1','18 – 21',18,21);
   yb=SecX(x1,108,yb+4.5,90,'READING 2','22 – 25',22,25);
   // fill rule
-  let y=yb+4.5;const sh=34;
+  let y=yb+4.5;const sh=42;
   RR(x1,108,y,90,sh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,sh*k,1.6*k):x1.rect(108*k,y*k,90*k,sh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
   T(x1,'DOLDURMA QAYDASI',111,y+3.3,3.2,700,'left','#fff',F,.35);
   T(x1,'Düzgün cavabın dairəsini tam qaraldın.',111,y+10,2.8,400,'left','#2d3748');
@@ -658,6 +662,7 @@ async function drawCard(ex){
   const exb=(cx,cy,l,mode)=>{x1.beginPath();x1.arc(cx*k,cy*k,2.7*k,0,Math.PI*2);x1.fillStyle=mode==='on'?'#1b1f27':'#fff';x1.fill();x1.strokeStyle=mode==='on'?'#1b1f27':INK;x1.lineWidth=(mode==='thick'?.6:.35)*k;x1.stroke();if(mode!=='on')T(x1,l,cx,cy+.1,2.6,700,'center',SOFT);if(mode==='x'){Ln(x1,cx-2.7,cy-2.7,cx+2.7,cy+2.7,.4,'#1b1f27');Ln(x1,cx-2.7,cy+2.7,cx+2.7,cy-2.7,.4,'#1b1f27')}};
   T(x1,'Düzgün:',111,y+20.5,2.8,700,'left','#2d3748');['A','B','C','D','E'].forEach((l,j)=>exb(128+j*7.9,y+20.5,l,j===1?'on':''));
   T(x1,'Yanlış:',111,y+28,2.8,700,'left','#2d3748');exb(128,y+28,'A','x');exb(135.9,y+28,'✓','');exb(143.8,y+28,'C','thick');
+  T(x1,'Düzəliş:',111,y+35.5,2.8,700,'left','#2d3748');exb(128,y+35.5,'A','on');Ln(x1,128-3.6,y+35.5-3.6,128+3.6,y+35.5+3.6,.55,'#C2362F');Ln(x1,128-3.6,y+35.5+3.6,128+3.6,y+35.5-3.6,.55,'#C2362F');T(x1,'→',135.6,y+35.5,3,700,'center','#2d3748');exb(143.2,y+35.5,'C','on');T(x1,'səhvin üstündən X',150,y+34,2.3,400,'left','#5b6577');T(x1,'çəkib düzgünü qaraldın',150,y+37.2,2.3,400,'left','#5b6577');
   RR(x1,108,y,90,sh,1.6,INK,.4);
   // result
   y+=sh+4.5;const rh=26;
@@ -668,7 +673,7 @@ async function drawCard(ex){
   // page 2
   const [p2,x2]=mk();
   Logo(x2,18.5,17.5,13,4.6);
-  T(x2,'AD, SOYAD:',29,13,3.2,700,'left',INK,F,.3);Ln(x2,52,15,198,15,.35);
+  T(x2,'AD, SOYAD:',29,13,3.2,700,'left',INK,F,.3);Ln(x2,52,15,152,15,.35);T(x2,'QRUP:',156,13,3.2,700,'left',INK,F,.3);Ln(x2,169,15,198,15,.35);
   T(x2,'TOPIC / MÖVZU:',29,23,3.6,700,'left',INK,F,.3);Ln(x2,65,25,198,25,.35);
   RR(x2,12,30,186,255,2,INK,.6);
   for(let ly=41;ly<283;ly+=9.5)Ln(x2,18,ly,192,ly,.3,'#b9c3d4');
@@ -763,7 +768,7 @@ VIEWS.yoxla=()=>{
   ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
   <div class="big2"><label class="shoot">📷 Ön üz<small>Cavablar. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>Paraqraf. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="back"></label></div>
   <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
-  <div class="acts"><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
+  <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
   ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər ${busy?'<span class="badge busy">işlənir…</span>':''}</h2><div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
 };
 function qItemHTML(it,ex,sts){
@@ -919,7 +924,7 @@ VIEWS.sinaqlar=()=>{
   ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
   ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}
   <div class="acts" style="margin-top:16px"><button class="btn" data-act="saveExam">${d.id?'Dəyişiklikləri saxla':'Sınağı yarat'}</button>${d.id?`<button class="btn ghost" data-act="cancelExam">Ləğv et</button>`:''}</div></section>
-  <section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li"><div class="grow"><b>${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${e.topic?'':', mövzu yoxdur'}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">PDF</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`;
+  <section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li" style="flex-wrap:wrap"><div class="grow" style="flex-basis:100%"><b>${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${e.topic?'':', mövzu yoxdur'}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">📄 Cavab kartı</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`;
 };
 
 VIEWS.parametrler=()=>{
