@@ -2,6 +2,7 @@
 <html lang="az">
 <head>
 <meta charset="utf-8">
+<meta name="theme-color" content="#4C5FD5">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SmartExam — Müəllim paneli</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -178,6 +179,47 @@ footer a{color:var(--muted)}
 .cardprev p{margin:4px 0 0;font-size:12px;color:var(--muted);text-align:center}
 .back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--accent);font-weight:650;padding:0;margin:0 0 12px;cursor:pointer}
 .tagrow{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+
+/* ---------- rəngli dizayn ---------- */
+:root{--paper:#F3F5FC;--ink:#1B2240;--muted:#5E6785;--line:#E2E6F3;--soft:#EEF1FB;--accent:#4C5FD5;--g1:#4C5FD5;--g2:#7B4FD6;
+--t1:#EAF0FF;--c1:#3B5BDB;--t2:#E5F6EC;--c2:#1C8A52;--t3:#FFF1DF;--c3:#C26A00;--t4:#F2EBFF;--c4:#7048E8;--shadow:0 1px 2px rgba(25,35,80,.06),0 6px 18px rgba(25,35,80,.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0E1220;--ink:#E6E9F5;--muted:#9AA3C0;--line:#2A3150;--soft:#1D2440;--accent:#8EA0FF;--card:#161C30;
+--t1:#1C2650;--c1:#9DB0FF;--t2:#15301F;--c2:#6BD39A;--t3:#3A2A12;--c3:#F2B45C;--t4:#2A1F4D;--c4:#B9A2FF;--shadow:0 1px 2px rgba(0,0,0,.3)}}
+body::before{background:var(--g1)}
+.top{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;padding:16px 16px 14px}
+.brand{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;line-height:1.15}
+.brand::before{content:"✓";display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.2);font-size:22px;font-weight:800;grid-row:span 2}
+.brand small{color:rgba(255,255,255,.82)}
+.top .pill,.top .pill.cloud,.top .pill.local{background:rgba(255,255,255,.2);color:#fff}
+.nav{border-bottom:0;box-shadow:0 2px 10px rgba(25,35,80,.06);padding:8px 10px}
+.nav button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 10px rgba(76,95,213,.3)}
+.box{border:0;border-radius:18px;box-shadow:var(--shadow)}
+.hero{border-left:0;background:linear-gradient(135deg,var(--t1),var(--t4))}
+.hero h1{color:var(--c1)}
+.stat{border:0;border-radius:16px;box-shadow:var(--shadow)}
+.stats .stat:nth-child(1){background:var(--t1)}.stats .stat:nth-child(1) b{color:var(--c1)}
+.stats .stat:nth-child(2){background:var(--t2)}.stats .stat:nth-child(2) b{color:var(--c2)}
+.stats .stat:nth-child(3){background:var(--t3)}.stats .stat:nth-child(3) b{color:var(--c3)}
+.stats .stat:nth-child(4){background:var(--t4)}.stats .stat:nth-child(4) b{color:var(--c4)}
+.btn{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 10px rgba(76,95,213,.25)}
+.btn.ghost{background:var(--soft);color:var(--c1);box-shadow:none}
+.btn.danger{background:var(--pen-bg);color:var(--pen);box-shadow:none}
+.btn.wa{background:#1FAA59;box-shadow:0 3px 10px rgba(31,170,89,.25)}
+.big2 .shoot:nth-child(1){background:var(--t1);border-color:var(--c1);color:var(--c1)}
+.big2 .shoot:nth-child(2){background:var(--t2);border-color:var(--c2);color:var(--c2)}
+.shoot{border-width:2px;font-size:17px}
+.pct{color:var(--c1)}
+.rank{color:var(--c4)}
+.bar i{background:linear-gradient(90deg,var(--g1),var(--g2))}
+.bar.red i{background:linear-gradient(90deg,#E8590C,var(--pen))}
+details.grp{border:0;border-radius:16px;box-shadow:var(--shadow);border-left:5px solid var(--c4)}
+.chip.on{background:var(--c1);border-color:var(--c1);color:#fff}
+.excard{border:0;background:var(--soft)}
+.crit4 div{background:var(--t1)}.crit4 b{color:var(--c1)}
+.sec{background:var(--t1)}
+.bub.on{background:var(--c1);border-color:var(--c1);color:#fff}
+.nav button:not(.on):hover{background:var(--soft)}
+footer{color:var(--muted)}
 </style>
 </head>
 <body>
