@@ -2,6 +2,8 @@
 
 Samir Balakişiyev · WhatsApp 055 795 86 25
 
-Sayt: https://samirbalakishiyev.github.io/smartexam/
+Link: https://samirbalakishiyev.github.io/smartexam/ → Claude-dakı panelə keçir:
+https://claude.ai/artifact/XJ4uJjjPrkzti9PsyUWoMu
 
-Məlumatlar və foto yoxlama: `Kod.gs` (Google Cədvəl + Apps Script). Quraşdırma qaydası faylın əvvəlində yazılıb.
+Yoxlama Claude-un öz daxilində aparılır (API açarı lazım deyil), məlumatlar Claude hesabında saxlanır.
+`kod/smartexam-panel.html` — panelin kodunun ehtiyat nüsxəsi.
