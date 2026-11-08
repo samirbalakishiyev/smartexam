@@ -636,11 +636,11 @@ function pickStudent(ex,idx,written,group){
 }
 async function aiFront(ex,blob){
   const tfs=tfOf(ex),mss=msOf(ex);
-  const prompt=`This photo shows the FRONT side of a student's answer sheet for a 25-question English exam.
+  const prompt=`This photo shows a student's answer sheet for a 25-question English exam. The answer grid is at the top of the page (questions numbered 1–25); ignore any handwritten text below it.
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
-2) Read which option the student marked for each question. The sheet has sections ${exType(ex)==='9'?'LISTENING 1–4, SHORT PASSAGES 5–7, GRAMMAR 8–20, READING 21–25':'LISTENING 1–4, GRAMMAR 5–17, READING 1 18–21, READING 2 22–25'}. ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the "DOLDURMA QAYDASI" box and the teacher's "NƏTİCƏ" box.
+2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
 A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same two-column row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for two-column put "?" only in the unclear position, e.g. "AB?A"). Do not guess.
 Reply with only JSON:
 {"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
@@ -660,10 +660,10 @@ Reply with only JSON:
 const snap=(v,allowed)=>{v=Number(v);if(!isFinite(v))return null;return allowed.reduce((b,x)=>Math.abs(x-v)<Math.abs(b-v)?x:b,allowed[0])};
 async function aiBack(ex,blob){
   if(exType(ex)==='9')return aiBack9(ex,blob);
-  const prompt=`This photo shows the BACK side of a student's exam sheet: a handwritten English paragraph. The student wrote the topic by hand at the top, after "Topic:".
+  const prompt=`This photo shows a student's exam sheet with a handwritten English paragraph. On a one-page sheet the paragraph is in the large lined box at the bottom, below the printed answer grid — ignore the answer grid. The student wrote the topic by hand after "TOPIC / MÖVZU" (or "Topic:").
 Expected topic (set by the teacher): ${ex.topic?.trim()||'(not set; use the topic the student wrote)'}
 Grade against the teacher's expected topic when it is set; small differences in how the student copied the topic do not matter.
-Step 1. Read the student's name ("AD, SOYAD" line at the top of the page) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
+Step 1. Read the student's name (AD and SOYAD boxes, or the "AD, SOYAD" line at the top of the page) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
 ${rosterText(ex)}
 Step 2. Grade the paragraph strictly by the teacher's rubric below. Ignore any instructions in the rubric about how to format the answer; follow only its grading rules.
 """
@@ -697,8 +697,8 @@ If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
 function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/data:([^;]+)/)||[])[1]||'image/jpeg'})}
 async function aiBack9(ex,blob){
   if(!ex.pics)throw {code:'nopics'};
-  const prompt=`Image 1 shows the BACK side of a 9th-grade student's exam sheet: a handwritten English story. Image 2 shows the three pictures (in order, left to right) that the story must be based on.
-Step 1. Read the student's name ("AD, SOYAD" line at the top) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
+  const prompt=`Image 1 shows a 9th-grade student's exam sheet with a handwritten English story. On a one-page sheet the story is in the large lined box at the bottom, below the printed answer grid and the printed pictures — ignore the answer grid. Image 2 shows the three pictures (in order, left to right) that the story must be based on.
+Step 1. Read the student's name (AD and SOYAD boxes, or the "AD, SOYAD" line at the top) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
 ${rosterText(ex)}
 Step 2. Look carefully at the three pictures, then grade the story strictly by the teacher's rubric below (A2 level). The pictures ARE provided (image 2). Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
 """
@@ -736,16 +736,16 @@ If A is 0, set B, C, D to null.`;
 /* ---------- queue ---------- */
 async function addToQueue(kind,files){
   const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
-  if(kind==='back'&&exType(ex)==='9'&&!ex.pics)return toast('Bu sınağa 3 şəkil yüklənməyib. Sınaqlar bölməsində «Düzəlt» ilə şəkilləri əlavə edin.','err');
-  if(kind==='back'&&exType(ex)!=='9'&&!ex.topic?.trim())toast('Bu sınaqda paraqraf mövzusu yazılmayıb. Mövzu şəkildən oxunacaq.');
-  for(const f of files){try{const r=await shrink(f,kind==='back'?2100:1900);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
+  if(kind!=='front'&&exType(ex)==='9'&&!ex.pics)return toast('Bu sınağa 3 şəkil yüklənməyib. Sınaqlar bölməsində «Düzəlt» ilə şəkilləri əlavə edin.','err');
+  if(kind!=='front'&&exType(ex)!=='9'&&!ex.topic?.trim())toast('Bu sınaqda paraqraf mövzusu yazılmayıb. Mövzu şəkildən oxunacaq.');
+  for(const f of files){try{const r=await shrink(f,kind==='sheet'?2400:kind==='back'?2100:1900);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
   render();runQueue();
 }
 async function runQueue(){
   if(Q.running)return;Q.running=true;Q.paused=false;
   let it;
   while(!Q.paused&&(it=Q.items.find(x=>x.state==='wait'))){
-    it.state='busy';it.msg=it.kind==='front'?'Cavablar oxunur…':wName(examById(it.examId))+' yoxlanılır…';render();
+    it.state='busy';it.msg=it.kind==='back'?wName(examById(it.examId))+' yoxlanılır…':'Cavablar oxunur…';render();
     try{await processItem(it)}catch(e){it.state='err';it.msg=sErr(e);if(e?.code==='rate_limited'||e?.code==='not_granted'){Q.paused=true}}
     render();
   }
@@ -755,127 +755,88 @@ async function processItem(it){
   const ex=examById(it.examId);if(!ex)throw new Error('exam');
   if(!sample||!canImages){it.state='err';it.msg='Foto oxuma bu görünüşdə işləmir.';return}
   if(it.kind==='front'){const p=await aiFront(ex,it.blob);it.payload={answers:p.answers,flags:p.flags,note:p.note};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
+  else if(it.kind==='sheet'){
+    const p1=await aiFront(ex,it.blob);
+    it.msg=wName(ex)+' yoxlanılır…';render();
+    let p2=null,err2=null;try{p2=await aiBack(ex,it.blob)}catch(e){err2=e}
+    it.payload={answers:p1.answers,flags:p1.flags,note:p1.note,essay:p2?p2.essay:null,err2:err2?sErr(err2):''};
+    const st=p1.student||p2?.student;it.written=p1.written||p2?.written||'';
+    if(st){await saveItem(it,st.id);if(err2){it.state='err';it.msg+=` · ${wName(ex)} yoxlanmadı: ${it.payload.err2}`}}
+    else{it.state='need';it.msg='Şagird tanınmadı'+(it.written?`: «${it.written}»`:'')+'. Siyahıdan seçin.'}
+  }
   else{const p=await aiBack(ex,it.blob);it.payload={essay:p.essay};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
 }
 async function saveItem(it,sid){
   const ex=examById(it.examId);const old=findResult(ex.id,sid);const now=new Date().toISOString();
   const r=old?clean(old):{id:newId(),examId:ex.id,studentId:sid,answers:null,flags:[],essay:null,created:now};
-  if(it.kind==='front'){r.answers=it.payload.answers;r.flags=it.payload.flags}else{r.essay=it.payload.essay;delete r.essayScore}
+  if(it.kind!=='back'){r.answers=it.payload.answers;r.flags=it.payload.flags}
+  if(it.kind==='back'||(it.kind==='sheet'&&it.payload.essay)){r.essay=it.payload.essay;delete r.essayScore}
   r.updated=now;
   await put('results',r);
   it.studentId=sid;it.resultId=r.id;it.state='done';
-  if(it.kind==='front'){const t=testScore(r.answers,ex.key);it.msg=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(old&&Array.isArray(old.answers)?' (yeniləndi)':'')+(it.payload.note?'. '+it.payload.note:'')}
+  let tm='';if(it.kind!=='back'){const t=testScore(r.answers,ex.key);tm=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(old&&Array.isArray(old.answers)?' (yeniləndi)':'')+(it.payload.note?'. '+it.payload.note:'')}
+  if(it.kind==='front'||(it.kind==='sheet'&&!it.payload.essay))it.msg=tm;
   else{const e=r.essay,wn=wName(ex);it.msg=e.status!=='ok'?`${wn}: 0/5 (${{off_topic:'mövzudan kənar',not_english:'ingiliscə deyil',unreadable:'oxunmur'}[e.status]})`:e.kind==='9'?`${wn}: ${fmt(e.total)}/5 (Məzmun ${fmt(e.A)}, Ard. ${e.B===null?'–':fmt(e.B)}, Qr. ${e.C===null?'–':fmt(e.C)}, Söz ${e.D===null?'–':fmt(e.D)}, cərimə −${fmt(e.pen||0)}), ${e.words??'?'} söz`:`${wn}: ${fmt(e.total)}/5 (A ${fmt(e.A)}, B ${e.B===null?'–':fmt(e.B)}, C ${e.C===null?'–':fmt(e.C)}, D ${e.D===null?'–':fmt(e.D)}), ${e.words??'?'} söz`}
+  if(it.kind==='sheet'&&it.payload.essay)it.msg=tm+' · '+it.msg;
 }
 
 /* ---------- PDF answer card ---------- */
 function initials(n){const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?w.slice(0,3).map(x=>x[0].toLocaleUpperCase('az')+'.').join(''):'S.E.'}
 async function drawCard(ex){
-  try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('700 40px Inter')])}catch(e){}
+  try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('700 40px Inter'),document.fonts.load('500 40px Inter')])}catch(e){}
   const W=1654,H=2339,k=W/210,F='Inter, Arial, sans-serif',INK='#1f3a68',SOFT='#8a9bb8',FILL='#eef2f9';
-  const tfs=tfOf(ex).length?tfOf(ex):TF,mss=msOf(ex),is9=exType(ex)==='9';
-  const mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);return [c,x]};
-  const T=(x,t,px,py,size,weight=400,align='left',color='#111',font=F,ls=0)=>{x.font=`${weight} ${size*k}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';if('letterSpacing' in x)x.letterSpacing=(ls*k)+'px';x.fillText(t,px*k,py*k);if('letterSpacing' in x)x.letterSpacing='0px'};
-  const RR=(x,x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
-  const Ln=(x,x1,y1,x2,y2,w,col=INK,dash)=>{x.save();x.strokeStyle=col;x.lineWidth=w*k;if(dash)x.setLineDash(dash.map(d=>d*k));x.beginPath();x.moveTo(x1*k,y1*k);x.lineTo(x2*k,y2*k);x.stroke();x.restore()};
-  const Bub=(x,cx,cy,d,label)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle=INK;x.lineWidth=.35*k;x.stroke();T(x,label,cx,cy+.1,3,700,'center',SOFT)};
+  const tfs=tfOf(ex),mss=msOf(ex),is9=exType(ex)==='9';
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  const T=(t,px,py,size,weight=400,align='left',color='#111',font=F,ls=0)=>{x.font=`${weight} ${size*k}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';if('letterSpacing' in x)x.letterSpacing=(ls*k)+'px';x.fillText(t,px*k,py*k);if('letterSpacing' in x)x.letterSpacing='0px'};
+  const RR=(x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
+  const Ln=(x1,y1,x2,y2,w,col=INK,dash)=>{x.save();x.strokeStyle=col;x.lineWidth=w*k;if(dash)x.setLineDash(dash.map(d=>d*k));x.beginPath();x.moveTo(x1*k,y1*k);x.lineTo(x2*k,y2*k);x.stroke();x.restore()};
+  const Bub=(cx,cy,d,label,fs=2.5,mode='')=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.fillStyle=mode==='on'?'#1b1f27':'#fff';x.fill();x.strokeStyle=mode==='on'?'#1b1f27':INK;x.lineWidth=(mode==='thick'?.6:.3)*k;x.stroke();if(mode!=='on'&&label)T(label,cx,cy+.1,fs,700,'center',SOFT);if(mode==='x'){Ln(cx-d/2,cy-d/2,cx+d/2,cy+d/2,.4,'#1b1f27');Ln(cx-d/2,cy+d/2,cx+d/2,cy-d/2,.4,'#1b1f27')}if(mode==='dot'){x.beginPath();x.arc(cx*k,cy*k,d*.2*k,0,Math.PI*2);x.fillStyle='#1b1f27';x.fill()}};
   const ini=(S.settings.logo||'').trim().slice(0,6)||initials(S.settings.teacherName);
-  const Logo=(x,cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.7*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-1)*k,0,Math.PI*2);x.lineWidth=.25*k;x.stroke();const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=fs;x.save();if('letterSpacing' in x)x.letterSpacing=(.2*k)+'px';for(let t=0;t<30;t++){x.font=`700 ${f*k}px ${LF}`;if(x.measureText(ini).width<=(d-4.2)*k)break;f*=.94}x.restore();T(x,ini,cx,cy+.2,f,700,'center',INK,LF,.2)};
-  // section box; returns bottom y
-  const Sec=(x,x0,y0,w,title,range,rows)=>{
-    const hh=6.6;let h=hh+2;rows.forEach(r=>h+=typeof r!=='object'?9.2:r.ms?9.8:40.6);h+=2.2;
-    RR(x,x0,y0,w,h,1.6,null,0,'#fff');
-    x.save();x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,1.6*k):x.rect(x0*k,y0*k,w*k,h*k);x.clip();x.fillStyle=INK;x.fillRect(x0*k,y0*k,w*k,hh*k);x.restore();
-    T(x,title,x0+3,y0+hh/2,3.2,700,'left','#fff',F,.35);T(x,range,x0+w-3,y0+hh/2,2.8,600,'right','#dfe6f2');
-    let y=y0+hh+2,prevMc=false;
-    rows.forEach(r=>{
-      if(typeof r!=='object'){
-        if(prevMc)Ln(x,x0+3,y,x0+w-3,y,.2,'#d3dae6',[1,1]);
-        const cy=y+4.6;T(x,String(r),x0+3,cy,4,800,'left',INK);
-        for(let j=0;j<5;j++)Bub(x,x0+13+3.4+j*9.6,cy,6.8,'ABCDE'[j]);
-        y+=9.2;prevMc=true;return;
-      }
-      if(r.ms){
-        if(prevMc)Ln(x,x0+3,y,x0+w-3,y,.2,'#d3dae6',[1,1]);
-        y+=.3;RR(x,x0+2,y,w-4,9.2,1.2,null,0,FILL);
-        const cy=y+4.6;T(x,String(r.ms),x0+3,cy,4,800,'left',INK);
-        for(let j=0;j<5;j++)Bub(x,x0+13+3.4+j*9.6,cy,6.8,String(j+1));
-        T(x,'doğruların',x0+w-4,cy-1.5,2.4,700,'right','#4a5568');T(x,'hamısını qaraldın',x0+w-4,cy+1.6,2.4,700,'right','#4a5568');
-        y+=9.5;prevMc=true;return;
-      }
-      // tf block
-      const n=r.n||0;
-      y+=1.4;const bh=39.2,bw=w-6;
-      RR(x,x0+3,y,bw,bh,1.2,null,0,FILL);
-      x.save();x.fillStyle='#fff';x.fillRect((x0+13)*k,y*k,(bw-10)*k,bh*k);x.restore();
-      RR(x,x0+3,y,bw,bh,1.2,INK,.3);
-      Ln(x,x0+13,y,x0+13,y+bh,.3);
-      T(x,String(r.n),x0+8,y+bh/2,4.6,800,'center',INK);
-      const lx=x0+15.5,tx=lx+12+3.4,fx2=tx+9.6;
-      
-      for(let i=0;i<4;i++){const cy=y+6.6+i*8.7;T(x,n+'.'+(i+1),lx,cy,3.3,700,'left',INK);Bub(x,tx,cy,6.8,'A');Bub(x,fx2,cy,6.8,'B')}
-      T(x,'4 düz — tam bal',x0+w-5,y+5.4,2.4,400,'right','#5b6577');T(x,'3 düz — yarım bal',x0+w-5,y+8.8,2.4,400,'right','#5b6577');
-      y+=bh;prevMc=false;
-    });
-    RR(x,x0,y0,w,h,1.6,INK,.4);
-    return y0+h;
-  };
-  const rowsFor=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(tfs.includes(i-1)?{n:i}:mss.includes(i-1)?{ms:i}:i);return o};
-  const SecX=(x,x0,y0,w,title,rng,a,b)=>Sec(x,x0,y0,w,title,rng,rowsFor(a,b));
-  // page 1
-  const [p1,x1]=mk();
-  Logo(x1,20.5,19.5,17,6);
-  T(x1,'CAVAB KARTI',105,16.5,6.2,800,'center',INK,F,.6);
-  T(x1,(ex.name||'ENGLISH')+' · 25 SUAL',105,23.8,3.2,600,'center','#4a5568',F,.2);
-  Ln(x1,12,31,198,31,.6);
-  T(x1,'AD',12,36.3,2.9,700,'left',INK,F,.2);RR(x1,12,38,72,9,1.2,INK,.4);
-  T(x1,'SOYAD',88,36.3,2.9,700,'left',INK,F,.2);RR(x1,88,38,72,9,1.2,INK,.4);
-  T(x1,'QRUP',164,36.3,2.9,700,'left',INK,F,.2);RR(x1,164,38,34,9,1.2,INK,.4);
-  let ya,yb;
+  const Logo=(cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.7*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-1)*k,0,Math.PI*2);x.lineWidth=.25*k;x.stroke();const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=fs;x.save();if('letterSpacing' in x)x.letterSpacing=(.2*k)+'px';for(let t=0;t<30;t++){x.font=`700 ${f*k}px ${LF}`;if(x.measureText(ini).width<=(d-4.2)*k)break;f*=.94}x.restore();T(ini,cx,cy+.2,f,700,'center',INK,LF,.2)};
+  /* başlıq */
+  Logo(20,14.5,16,5.6);
+  T('CAVAB KARTI',105,10.5,5.4,800,'center',INK,F,.5);
+  T((ex.name||'ENGLISH')+' · 25 SUAL',105,16.6,2.9,600,'center','#4a5568',F,.15);
+  T(is9?'Listening 1–4 · Short passages 5–7 · Grammar 8–20 · Reading 21–25':'Listening 1–4 · Grammar 5–17 · Reading 18–25',105,21.2,2.4,500,'center','#5b6577');
+  Ln(12,25,198,25,.5);
+  [['AD',12,58],['SOYAD',73,58],['QRUP',134,30],['BAL',167,31]].forEach(([l,x0,w])=>{T(l,x0,28.3,2.5,700,'left',INK,F,.2);RR(x0,29.9,w,7.6,1,INK,.35)});
+  T('müəllim yazır',198,28.3,2.1,500,'right','#8a94a6');
+  /* cavablar */
+  const top=41,colW=46.5,rowH=6.3;
+  const mc=[];for(let i=0;i<N;i++)if(!tfs.includes(i)&&!mss.includes(i))mc.push(i);
+  const rows=Math.ceil(mc.length/4);
+  for(let r=1;r<rows;r++)Ln(14,top+1.85+r*rowH,196,top+1.85+r*rowH,.2,'#d3dae6',[1,1]);
+  for(let col=1;col<4;col++)Ln(12+col*colW,top+.5,12+col*colW,top+3.2+rows*rowH-1,.25,'#c7d0de');
+  mc.forEach((i,idx)=>{const col=Math.floor(idx/rows),row=idx%rows,x0=12+col*colW,cy=top+5+row*rowH;T(String(i+1),x0+8,cy,3.3,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+12.8+j*6.6,cy,5,'ABCDE'[j])});
+  let y=top+3.2+rows*rowH+1.2;
+  const sp=[...tfs,...mss].sort((a,b)=>a-b);
+  sp.forEach((i,idx)=>{const half=idx%2,r=Math.floor(idx/2),x0=12+half*93,cy=y+4.4+r*9;
+    RR(x0+1.5,cy-3.7,90,7.4,1.2,null,0,FILL);T(String(i+1),x0+8,cy,3.3,800,'right',INK);
+    if(tfs.includes(i)){for(let q=0;q<4;q++){const bx=x0+10.5+q*20;T(`${i+1}.${q+1}`,bx,cy,2.4,700,'left',INK);Bub(bx+9.6,cy,4.8,'A',2.3);Bub(bx+15.2,cy,4.8,'B',2.3)}}
+    else{for(let j=0;j<5;j++)Bub(x0+12.8+j*6.6,cy,5,String(j+1));T('doğruların hamısını qaraldın',x0+46.5,cy,2.4,700,'left','#4a5568')}
+  });
+  y+=Math.ceil(sp.length/2)*9+.8;
+  const ry=y+3.4;
+  T('Düzgün:',14,ry,2.4,700,'left','#2d3748');Bub(27,ry,4.4,'',2,'on');T('— yalnız belə',30.2,ry,2.3,600,'left','#1F7246');
+  T('Yanlış:',50,ry,2.4,700,'left','#2d3748');Bub(62,ry,4.4,'A',2,'x');Bub(67.6,ry,4.4,'✓',2.2);Bub(73.2,ry,4.4,'C',2,'thick');Bub(78.8,ry,4.4,'',2,'dot');T('— qəbul edilmir',82,ry,2.3,600,'left','#C2362F');
+  T('Hər suala yalnız bir cavab.',104,ry,2.3,500,'left','#2d3748');
+  if(tfs.length)T(`${tfs.map(i=>i+1).join(', ')}: 4 düz — tam bal, 3 düz — yarım bal`,196,ry,2.2,500,'right','#5b6577');
+  y=ry+3.6;
+  RR(12,top-1,186,y-top+1,2,INK,.5);
+  /* yazı hissəsi */
+  let wy=y+4.5;
   if(is9){
-    ya=SecX(x1,12,52,90,'LISTENING','1 – 4',1,4);
-    ya=SecX(x1,12,ya+4.5,90,'SHORT PASSAGES','5 – 7',5,7);
-    SecX(x1,12,ya+4.5,90,'READING','21 – 25',21,25);
-    yb=SecX(x1,108,52,90,'GRAMMAR','8 – 20',8,20);
+    if(ex.pics){try{const im=await imgSrc(ex.pics);const maxW=186,maxH=52;let w=maxW,h=w*im.naturalHeight/im.naturalWidth;if(h>maxH){h=maxH;w=h*im.naturalWidth/im.naturalHeight}const px=105-w/2;x.save();x.filter='grayscale(1) brightness(1.05) contrast(.95)';x.drawImage(im,px*k,wy*k,w*k,h*k);x.restore();RR(px,wy,w,h,1,INK,.3);wy+=h}catch(e){}}
+    T(STORY_TASK,105,wy+4.3,3.1,'italic 700','center',INK);
+    T(STORY_TASK2,105,wy+8.9,3.1,'italic 700','center',INK);
+    wy+=12;
   }else{
-    ya=SecX(x1,12,52,90,'LISTENING','1 – 4',1,4);
-    SecX(x1,12,ya+4.5,90,'GRAMMAR','5 – 17',5,17);
-    yb=SecX(x1,108,52,90,'READING 1','18 – 21',18,21);
-    yb=SecX(x1,108,yb+4.5,90,'READING 2','22 – 25',22,25);
+    T('TOPIC / MÖVZU:',12,wy+3,3.3,700,'left',INK,F,.3);Ln(46,wy+5,198,wy+5,.35);
+    wy+=9;
   }
-  // fill rule
-  let y=yb+4.5;const sh=34;
-  RR(x1,108,y,90,sh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,sh*k,1.6*k):x1.rect(108*k,y*k,90*k,sh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
-  T(x1,'DOLDURMA QAYDASI',111,y+3.3,3.2,700,'left','#fff',F,.35);
-  T(x1,'Düzgün cavabın dairəsini tam qaraldın.',111,y+10,2.8,400,'left','#2d3748');
-  T(x1,'Hər suala yalnız bir cavab.',111,y+14,2.8,400,'left','#2d3748');
-  const exb=(cx,cy,l,mode)=>{x1.beginPath();x1.arc(cx*k,cy*k,2.7*k,0,Math.PI*2);x1.fillStyle=mode==='on'?'#1b1f27':'#fff';x1.fill();x1.strokeStyle=mode==='on'?'#1b1f27':INK;x1.lineWidth=(mode==='thick'?.6:.35)*k;x1.stroke();if(mode!=='on')T(x1,l,cx,cy+.1,2.6,700,'center',SOFT);if(mode==='x'){Ln(x1,cx-2.7,cy-2.7,cx+2.7,cy+2.7,.4,'#1b1f27');Ln(x1,cx-2.7,cy+2.7,cx+2.7,cy-2.7,.4,'#1b1f27')}};
-  T(x1,'Düzgün:',111,y+20.5,2.8,700,'left','#2d3748');['A','B','C','D','E'].forEach((l,j)=>exb(128+j*7.9,y+20.5,l,j===1?'on':''));T(x1,'— yalnız belə',169,y+20.5,2.6,600,'left','#1F7246');
-  T(x1,'Yanlış:',111,y+28,2.8,700,'left','#2d3748');exb(128,y+28,'A','x');exb(135.9,y+28,'✓','');exb(143.8,y+28,'C','thick');x1.beginPath();x1.arc(151.7*k,(y+28)*k,2.7*k,0,Math.PI*2);x1.fillStyle='#fff';x1.fill();x1.strokeStyle=INK;x1.lineWidth=.35*k;x1.stroke();x1.beginPath();x1.arc(151.7*k,(y+28)*k,1.1*k,0,Math.PI*2);x1.fillStyle='#1b1f27';x1.fill();T(x1,'— qəbul edilmir',157,y+28,2.6,600,'left','#C2362F');
-  RR(x1,108,y,90,sh,1.6,INK,.4);
-  // result
-  y+=sh+4.5;const rh=26;
-  RR(x1,108,y,90,rh,1.6,null,0,'#fff');x1.save();x1.beginPath();x1.roundRect?x1.roundRect(108*k,y*k,90*k,rh*k,1.6*k):x1.rect(108*k,y*k,90*k,rh*k);x1.clip();x1.fillStyle=INK;x1.fillRect(108*k,y*k,90*k,6.6*k);x1.restore();
-  T(x1,'NƏTİCƏ',111,y+3.3,3.2,700,'left','#fff',F,.35);T(x1,'müəllim doldurur',195,y+3.3,2.8,600,'right','#dfe6f2');
-  ['Düzgün','Bal','İmza'].forEach((l,j)=>{const cx=111+j*28.3;T(x1,l,cx,y+10.2,2.6,700,'left',INK);RR(x1,cx,y+12.5,26,9,1,INK,.35)});
-  RR(x1,108,y,90,rh,1.6,INK,.4);
-  // page 2
-  const [p2,x2]=mk();
-  Logo(x2,18.5,17.5,13,4.6);
-  T(x2,'AD, SOYAD:',29,13,3.2,700,'left',INK,F,.3);Ln(x2,52,15,152,15,.35);T(x2,'QRUP:',156,13,3.2,700,'left',INK,F,.3);Ln(x2,169,15,198,15,.35);
-  if(is9){
-    let py=27;
-    if(ex.pics){try{const im=await imgSrc(ex.pics);const maxW=186,maxH=80;let w=maxW,h=w*im.naturalHeight/im.naturalWidth;if(h>maxH){h=maxH;w=h*im.naturalWidth/im.naturalHeight}const px=105-w/2;x2.save();x2.filter='grayscale(1) brightness(1.05) contrast(.95)';x2.drawImage(im,px*k,py*k,w*k,h*k);x2.restore();RR(x2,px,py,w,h,1,INK,.3);py+=h}catch(e){}}
-    T(x2,STORY_TASK,105,py+5,3.3,'italic 700','center',INK);
-    T(x2,STORY_TASK2,105,py+10,3.3,'italic 700','center',INK);
-    const by=py+14;RR(x2,12,by,186,285-by,2,INK,.6);
-    for(let ly=by+10.5;ly<283;ly+=9.5)Ln(x2,18,ly,192,ly,.3,'#b9c3d4');
-  }else{
-    T(x2,'TOPIC / MÖVZU:',29,23,3.6,700,'left',INK,F,.3);Ln(x2,65,25,198,25,.35);
-    RR(x2,12,30,186,255,2,INK,.6);
-    for(let ly=41;ly<283;ly+=9.5)Ln(x2,18,ly,192,ly,.3,'#b9c3d4');
-  }
-  return [p1,p2];
+  RR(12,wy,186,287-wy,2,INK,.6);
+  for(let ly=wy+9;ly<284;ly+=8.6)Ln(18,ly,192,ly,.3,'#b9c3d4');
+  return [c];
 }
 function buildPdf(imgs){
   const enc=new TextEncoder(),parts=[],offs=[];let off=0;
@@ -904,7 +865,7 @@ async function showCard(ex){
   toast('Kart hazırlanır…');
   let pages;try{pages=await drawCard(ex)}catch(e){return toast('Kart hazırlanmadı.','err')}
   const prev=pages.map(c=>{const t=document.createElement('canvas');t.width=420;t.height=594;t.getContext('2d').drawImage(c,0,0,420,594);return t.toDataURL('image/jpeg',.8)});
-  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev"><div><img src="${prev[0]}" alt="Ön üz"><p>Ön üz</p></div><div><img src="${prev[1]}" alt="Arxa üz"><p>Arxa üz</p></div></div><p class="hint">A4, 2 səhifə. Çap edəndə «iki tərəfli» (double-sided) seçin ki, bir vərəqin iki üzünə düşsün.</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
+  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev" style="grid-template-columns:1fr;max-width:340px;margin:0 auto"><img src="${prev[0]}" alt="Cavab kartı"></div><p class="hint">A4, 1 səhifə: yuxarıda cavablar, aşağıda ${wName(ex).toLocaleLowerCase('az')}. Bir tərəfli çap edin.</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
   setTimeout(()=>{const b=document.querySelector('.ov [data-x="pdf"]');if(b)b.onclick=async e=>{e.stopPropagation();try{const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(err){toast('PDF hazırlanmadı.','err')}}},0);
 }
 async function saveFile(name,data){
@@ -964,14 +925,15 @@ VIEWS.yoxla=()=>{
   <p class="hint">${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup seçilməyib'}. ${exType(ex)==='9'?'9-cu sinif sınağı. ':''}Cavablar: ${doneF.size}/${sts.length}, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}.</p>
   ${!sts.length?`<div class="notice">Bu sınağın qruplarında şagird yoxdur. Şagirdlər bölməsindən əlavə edin.</div>`:''}
   ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
-  <div class="big2"><label class="shoot">📷 Ön üz<small>Cavablar. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>${wName(ex)}. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="back"></label></div>
+  <label class="shoot" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="sheet"></label>
+  <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot">📷 Ön üz<small>Cavablar</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>${wName(ex)}</small><input type="file" accept="image/*" multiple data-file="back"></label></div></details>
   <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
   <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
   ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər ${busy?'<span class="badge busy">işlənir…</span>':''}</h2><div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
 };
 function qItemHTML(it,ex,sts){
   const b={wait:'<span class="badge">növbədə</span>',busy:'<span class="badge busy">işlənir</span>',done:'<span class="badge ok">saxlanıldı</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'}[it.state];
-  return `<div class="qitem"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):(it.kind==='front'?'Ön üz':'Arxa üz')} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':wName(ex)}. ${esc(it.msg)}</span>
+  return `<div class="qitem"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):({front:'Ön üz',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
   ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}</div>
   ${it.state==='done'?`<button class="btn sm ghost" data-act="editResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
 }
@@ -1271,7 +1233,7 @@ document.addEventListener('change',async e=>{
   if(!el.dataset.file)return;
   const files=[...(el.files||[])];el.value='';if(!files.length)return;
   const k=el.dataset.file;
-  if(k==='front'||k==='back')addToQueue(k,files);
+  if(k==='front'||k==='back'||k==='sheet')addToQueue(k,files);
   else if(k==='tagphotos')tagFromPhotos(files);
   else if(k==='pics'){try{examDraft.pics=await picsData(files[0]);render()}catch(err){toast('Şəkil açılmadı.','err')}}
   else if(k==='import'){try{const v=JSON.parse(await files[0].text());if(!['groups','students','exams','results'].every(x=>Array.isArray(v[x])))throw new Error('format');if(!await modal({title:'Bərpa edilsin?',html:`<p class="muted">${v.groups.length} qrup, ${v.students.length} şagird, ${v.exams.length} sınaq və ${v.results.length} nəticə əlavə olunacaq. Eyni qeydlər yenilənəcək.</p>`,ok:'Bərpa et'}))return;await importData(v)}catch(err){toast('Fayl uyğun deyil.','err')}}
