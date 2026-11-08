@@ -190,7 +190,14 @@ body::before{background:var(--g1)}
 .brand{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;line-height:1.15}
 .brand::before{content:"✓";display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.2);font-size:22px;font-weight:800;grid-row:span 2}
 .brand small{color:rgba(255,255,255,.82)}
-.top .pill,.top .pill.cloud,.top .pill.local{background:rgba(255,255,255,.2);color:#fff}
+.top .pill{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
+.top .pill.cloud{background:#1FAE68;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.top .pill.cloud::before{content:"☁ ";}
+.top .pill.local{background:#F2A93B;color:#2B1C00}
+.ck{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--muted);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff}
+.ck.on{background:var(--pen);border-color:var(--pen)}
+.li.selon{background:var(--pen-bg);border-radius:10px}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .nav{border-bottom:0;box-shadow:0 2px 10px rgba(25,35,80,.06);padding:8px 10px}
 .nav button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 10px rgba(76,95,213,.3)}
 .box{border:0;border-radius:18px;box-shadow:var(--shadow)}
@@ -339,7 +346,7 @@ let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,
 let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
 const forms={group:'',sGroup:'',bulk:'',newTeacher:''};
 const rf={examId:'',groupId:''};
-let setDraft=null,examDraft=freshExam(),ed=null;
+let sel=null,setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
 function freshExam(){return {id:null,name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
 
@@ -438,7 +445,7 @@ function scheduleRender(){if(isEditing()){pendingRender=true;return}render()}
 document.addEventListener('focusout',()=>setTimeout(()=>{if(pendingRender&&!isEditing()){pendingRender=false;render()}},60));
 function render(){
   const el=$('#status');
-  if(mode==='cloud'){el.className='pill cloud';el.textContent=S.settings.teacherName||'Hesabınızda saxlanılır'}
+  if(mode==='cloud'){el.className='pill cloud';el.textContent='Hesabda saxlanılır'}
   else if(mode==='local'){el.className='pill local';el.textContent='Yalnız bu brauzerdə'}
   else if(mode==='slow'){el.className='pill local';el.textContent='Bağlantı gecikir'}
   else{el.className='pill';el.textContent='Yüklənir…'}
@@ -794,10 +801,12 @@ VIEWS.sagirdler=()=>{
   const gs=groupsSorted();
   if(!forms.sGroup&&gs[0])forms.sGroup=gs[0].id;
   const last=sid=>{const rs=S.results.filter(r=>r.studentId===sid).sort((a,b)=>(examById(b.examId)?.date||'').localeCompare(examById(a.examId)?.date||''));return rs[0]};
-  return `<section class="box"><div class="search" style="margin:0"><input type="search" data-search="1" placeholder="Şagird axtar (bütün qruplarda)" aria-label="Şagird axtar"></div></section>
-  ${gs.map(g=>{const st=studentsOf(g.id);return `<details class="grp"><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
-  ${st.length?`<div class="list">${st.map(s=>{const l=last(s.id);return `<div class="li click srow" data-act="profile" data-id="${s.id}" data-n="${esc(norm(s.name))}"><div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`<span class="pct">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
-  <div class="acts"><button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
+  return `<section class="box"><div class="search" style="margin:0"><input type="search" data-search="1" placeholder="Şagird axtar (bütün qruplarda)" aria-label="Şagird axtar"></div>
+  <div class="selbar">${sel?`<b>Seçildi: ${sel.size}</b><button class="btn sm danger${sel.size?'':' off'}" data-act="delSelected">🗑 Seçilənləri sil</button><button class="btn sm ghost" data-act="selOff">Ləğv et</button>`:(S.students.length?`<button class="btn sm ghost" data-act="selOn">☑ Seç və sil</button>`:'')}</div>
+  ${sel?'<p class="hint" style="margin-bottom:0">Silmək istədiyiniz şagirdlərə basın və ya qrupda «Hamısını seç» düyməsini basın.</p>':''}</section>
+  ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));return `<details class="grp"${sel?' open':''}><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
+  ${st.length?`<div class="list">${st.map(s=>{const l=last(s.id);const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:''}<div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`<span class="pct">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
+  <div class="acts">${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
   <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, A1" aria-label="Qrup adı"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
   <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
   <label class="l">Şagirdlər (hər sətirdə bir nəfər)</label><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67&#10;Tofiq Əliyev, 055 765 43 21">${esc(forms.bulk)}</textarea>
@@ -939,6 +948,19 @@ const ACT={
   go:el=>go(el.dataset.to),
   back:()=>go(prevTab),
   async saveTeacher(){const n=forms.newTeacher.trim();if(!n)return toast('Adınızı yazın.','err');await saveSettings({...S.settings,teacherName:n});render()},
+  selOn(){sel=new Set();render()},
+  selOff(){sel=null;render()},
+  selStu(el){const id=el.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);render()},
+  selGroup(el){const st=studentsOf(el.dataset.id);const all=st.every(s=>sel.has(s.id));st.forEach(s=>all?sel.delete(s.id):sel.add(s.id));render()},
+  async delSelected(){
+    const ids=[...sel].filter(id=>studentById(id));if(!ids.length)return;
+    const rs=S.results.filter(r=>ids.includes(r.studentId));
+    const names=ids.map(sName);
+    if(!await confirmBox(`${ids.length} şagird silinsin?`,`${names.slice(0,8).join(', ')}${names.length>8?` və daha ${names.length-8} nəfər`:''}. Onların ${rs.length} nəticəsi də silinəcək. Bu geri qaytarılmır.`))return;
+    let k=0;for(const r of rs)await del('results',r.id);
+    for(const id of ids){await del('students',id);k++;if(k%5===0)toast(`Silinir: ${k}/${ids.length}`)}
+    sel=null;render();toast(`${k} şagird silindi.`);
+  },
   profile:el=>{profileId=el.dataset.id;profileOpen=new Set();go('profile')},
   toggleOpen:el=>{const id=el.dataset.id;profileOpen.has(id)?profileOpen.delete(id):profileOpen.add(id);render()},
   rfGroup:el=>{rf.groupId=el.dataset.id;render()},
@@ -1018,7 +1040,7 @@ async function importData(v){
 /* ---------- events ---------- */
 function setBind(path,val){const p=path.split('.');const roots={forms,rf,examDraft,ed,setDraft,Q};let o=roots[p[0]];if(!o)return;for(let i=1;i<p.length-1;i++){o=o[p[i]];if(o==null)return}o[p[p.length-1]]=val}
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab]');if(t){if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
+  const t=e.target.closest('[data-tab]');if(t){sel=null;if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
   const b=e.target.closest('[data-bub]');if(b){tapBubble(b);return}
   const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
 });
