@@ -494,6 +494,7 @@ const testScore=(ans,key)=>ans.reduce((s,v,i)=>s+pointsFor(i,v,key[i]),0);
 function resTest(r){if(!Array.isArray(r.answers))return null;const ex=examById(r.examId);return ex?testScore(r.answers,ex.key):(r.score??null)}
 function resEssay(r){if(r.essay&&typeof r.essay.total==='number')return r.essay.total;if(r.essayScore!==null&&r.essayScore!==undefined&&r.essayScore!=='')return Number(r.essayScore);return null}
 const resTotal=r=>(resTest(r)||0)+(resEssay(r)||0);
+const totTxt=r=>`${fmt(resTotal(r))}/30 → (100/30)×${fmt(resTotal(r))} = ${fmt(resPct(r))}%`;
 const resPct=r=>Math.round(resTotal(r)*100/30*100)/100;
 function wrongQs(r){const ex=examById(r.examId);if(!ex||!Array.isArray(r.answers))return [];return r.answers.map((v,i)=>({i,v,k:ex.key[i],p:pointsFor(i,v,ex.key[i]),sec:qSec(ex,i),tag:qTag(ex,i)})).filter(x=>x.p<1)}
 function secScores(r){const ex=examById(r.examId);const m={};if(!ex||!Array.isArray(r.answers))return m;r.answers.forEach((v,i)=>{const s=qSec(ex,i);m[s]=m[s]||{got:0,max:0};m[s].got+=pointsFor(i,v,ex.key[i]);m[s].max++});return m}
@@ -780,6 +781,7 @@ async function saveItem(it,sid){
   if(it.kind==='front'||(it.kind==='sheet'&&!it.payload.essay))it.msg=tm;
   else{const e=r.essay,wn=wName(ex);it.msg=e.status!=='ok'?`${wn}: 0/5 (${{off_topic:'mövzudan kənar',not_english:'ingiliscə deyil',unreadable:'oxunmur'}[e.status]})`:e.kind==='9'?`${wn}: ${fmt(e.total)}/5 (Məzmun ${fmt(e.A)}, Ard. ${e.B===null?'–':fmt(e.B)}, Qr. ${e.C===null?'–':fmt(e.C)}, Söz ${e.D===null?'–':fmt(e.D)}, cərimə −${fmt(e.pen||0)}), ${e.words??'?'} söz`:`${wn}: ${fmt(e.total)}/5 (A ${fmt(e.A)}, B ${e.B===null?'–':fmt(e.B)}, C ${e.C===null?'–':fmt(e.C)}, D ${e.D===null?'–':fmt(e.D)}), ${e.words??'?'} söz`}
   if(it.kind==='sheet'&&it.payload.essay)it.msg=tm+' · '+it.msg;
+  it.msg+=` · Cəmi: ${totTxt(r)}`+(resTest(r)===null?' (test hələ yoxlanmayıb)':resEssay(r)===null?` (${wName(ex).toLocaleLowerCase('az')} hələ yoxlanmayıb)`:'');
 }
 
 /* ---------- PDF answer card ---------- */
@@ -920,7 +922,7 @@ VIEWS.home=()=>{
 function resRow(r,i){
   const st=studentById(r.studentId),t=resTest(r),e=resEssay(r);
   const badges=[t===null?'<span class="badge warn">test yoxdur</span>':'',e===null?`<span class="badge">${wName(examById(r.examId)).toLocaleLowerCase('az')} yoxdur</span>`:'',(r.flags||[]).length?`<span class="badge warn">⚠ ${r.flags.length} sual</span>`:''].join(' ');
-  return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. Test ${t===null?'–':fmt(t)}/25, ${wName(examById(r.examId)).toLocaleLowerCase('az')} ${e===null?'–':fmt(e)}/5</small><div>${badges}</div></div><span class="pct">${fmt(resPct(r))}%</span></div>`;
+  return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. Test ${t===null?'–':fmt(t)}/25 + ${wName(examById(r.examId)).toLocaleLowerCase('az')} ${e===null?'–':fmt(e)}/5 = <b>${fmt(resTotal(r))}/30</b></small><div>${badges}</div></div><span class="pct">${fmt(resPct(r))}%</span></div>`;
 }
 
 VIEWS.yoxla=()=>{
@@ -1023,7 +1025,7 @@ VIEWS.profile=()=>{
 function examCard(r){
   const ex=examById(r.examId),t=resTest(r),e=r.essay,es=resEssay(r),open=profileOpen.has(r.id),wq=wrongQs(r);
   const ph=waPhone(studentById(r.studentId)?.phone);
-  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25, ${wName(ex).toLocaleLowerCase('az')} ${es===null?'–':fmt(es)}/5${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
+  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25 + ${wName(ex).toLocaleLowerCase('az')} ${es===null?'–':fmt(es)}/5 = <b>${fmt(resTotal(r))}/30</b>${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
   <div class="acts"><button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
   ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
   ${e?essayHTML(e):''}`:''}</div>`;
@@ -1038,7 +1040,7 @@ function essayHTML(e){
 }
 function examMsg(r){
   const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),e=r.essay,es=resEssay(r);
-  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`];
+  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`,`Cəmi: test ${resTest(r)===null?'–':fmt(resTest(r))}/25 + ${wName(ex).toLocaleLowerCase('az')} ${resEssay(r)===null?'–':fmt(resEssay(r))}/5 = ${totTxt(r)}`];
   if(t!==null){L.push(`Test: ${fmt(t)}/25`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
     const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${dispAns(q.v)}, düzgün: ${dispAns(q.k)}`))}}
   if(es!==null){L.push('',`${wName(ex)}: ${fmt(es)}/5`);if(e&&e.status==='ok')L.push(e.kind==='9'?`  Məzmun ${fmt(e.A)}/2, Ardıcıllıq ${e.B===null?'–':fmt(e.B)}/1, Qrammatika ${e.C===null?'–':fmt(e.C)}/1, Söz ehtiyatı ${e.D===null?'–':fmt(e.D)}/1, cərimə −${fmt(e.pen||0)}`:`  A ${fmt(e.A)}/1, B ${e.B===null?'–':fmt(e.B)}/2, C ${e.C===null?'–':fmt(e.C)}/1, D ${e.D===null?'–':fmt(e.D)}/1`);if(e?.feedback)L.push(e.feedback)}
@@ -1073,7 +1075,7 @@ VIEWS.edit=()=>{
   <p class="hint">A=0 olarsa ümumi bal 0, B=0 olarsa yalnız A sayılır.</p>`)+`
   <label class="l">Şagirdə rəy</label><textarea rows="3" data-bind="ed.essay.feedback">${esc(e.feedback||'')}</textarea>
   <div class="acts"><button class="btn ghost sm" data-act="edNoEssay">${wName(ex)} balını sil</button></div>`:`<p class="muted">${wName(ex)} balı yoxdur.</p><button class="btn ghost sm" data-act="edAddEssay">${wName(ex)} balını əl ilə yaz</button>`}</section>
-  <div class="savebar"><div class="grow"><b>${fmt(Math.round(((t||0)+(et||0))*100/30*100)/100)}%</b><br><span class="muted">${ed.studentId?esc(sName(ed.studentId)):'Şagird seçilməyib'}</span></div>${ed.id?`<button class="btn danger" data-act="edDelete">Sil</button>`:''}<button class="btn" data-act="edSave">Yadda saxla</button></div>`;
+  <div class="savebar"><div class="grow"><b>${fmt((t||0)+(et||0))}/30 → ${fmt(Math.round(((t||0)+(et||0))*100/30*100)/100)}%</b><br><span class="muted">${ed.studentId?esc(sName(ed.studentId)):'Şagird seçilməyib'}</span></div>${ed.id?`<button class="btn danger" data-act="edDelete">Sil</button>`:''}<button class="btn" data-act="edSave">Yadda saxla</button></div>`;
 };
 function normEssay(e){const o={...e,status:e.status||'ok'};for(const k of ['A','B','C','D'])o[k]=o[k]===''||o[k]===null||o[k]===undefined?null:Number(o[k]);if(o.A===null)o.A=0;if(o.kind==='9')o.pen=o.pen===''||o.pen==null?0:Number(o.pen);return o}
 function openEditor(r,examId){
@@ -1257,8 +1259,8 @@ const ACT={
   csv(){
     const ex=examById(rf.examId);if(!ex)return;
     const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
-    const rows=[['Şagird','Qrup','Telefon','Test (25)',...SECS,'A','B','C','D','Cərimə','Yazı (5)','Faiz','Səhv suallar']];
-    for(const r of rs){const st=studentById(r.studentId),m=secScores(r),e=r.essay||{};rows.push([sName(r.studentId),gName(st?.groupId),st?.phone||'',resTest(r)===null?'':fmt(resTest(r)),...SECS.map(k=>m[k]?fmt(m[k].got)+'/'+m[k].max:''),...['A','B','C','D'].map(k=>e[k]===null||e[k]===undefined?'':fmt(e[k])),e.kind==='9'?fmt(e.pen||0):'',resEssay(r)===null?'':fmt(resEssay(r)),fmt(resPct(r)),wrongQs(r).map(q=>q.i+1).join(' ')])}
+    const rows=[['Şagird','Qrup','Telefon','Test (25)',...SECS,'A','B','C','D','Cərimə','Yazı (5)','Cəmi (30)','Faiz','Səhv suallar']];
+    for(const r of rs){const st=studentById(r.studentId),m=secScores(r),e=r.essay||{};rows.push([sName(r.studentId),gName(st?.groupId),st?.phone||'',resTest(r)===null?'':fmt(resTest(r)),...SECS.map(k=>m[k]?fmt(m[k].got)+'/'+m[k].max:''),...['A','B','C','D'].map(k=>e[k]===null||e[k]===undefined?'':fmt(e[k])),e.kind==='9'?fmt(e.pen||0):'',resEssay(r)===null?'':fmt(resEssay(r)),fmt(resTotal(r)),fmt(resPct(r)),wrongQs(r).map(q=>q.i+1).join(' ')])}
     saveFile('netice-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.csv','\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'));
   },
   async saveSettings(){if(await saveSettings(setDraft)){setDraft=null;render();toast('Yadda saxlanıldı.')}},
