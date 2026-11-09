@@ -469,7 +469,7 @@ const ERR_TYPES=['Zaman','Uzlaşma','Artikl','Sözönü','Söz sırası','Cüml�
 const DEFAULT_RUBRIC=document.getElementById('rubric-src').textContent.trim();
 const DEFAULT_RUBRIC9=document.getElementById('rubric9-src').textContent.trim();
 const DEF_SET={teacherName:'',logo:'',rubric:'',rubric9:'',extraRules9:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',sign:''};
-const TABS=[['home','Panel'],['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['sinaqlar','Sınaqlar'],['parametrler','Parametrlər']];
+const TABS=[['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['sinaqlar','Sınaqlar'],['parametrler','Parametrlər']];
 const $=s=>document.querySelector(s);
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -483,9 +483,9 @@ const defSec=(i,t)=>t==='9'?(i<4?'Dinləmə':i<7?'Oxu':i<20?'Qrammatika':'Oxu'):
 
 let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
 let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,downloads=null;
-let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
+let tab='yoxla',prevTab='yoxla',resId='',pendingRender=false,profileId='',profileOpen=new Set();
 const forms={group:'',sGroup:'',bulk:'',newTeacher:'',rows:[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]};
-const rf={examId:'',groupId:''};
+const rf={examId:'',groupId:'',studentId:''};
 let xn={mode:'home',gid:'',examId:''},sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
 function loadDraft(e){examDraft={...freshExam(),id:e.id,fmt:exFmt(e),fmtPicked:true,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:qN(e)},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:false}}
@@ -597,13 +597,13 @@ function render(){
   else if(mode==='local'){el.className='pill local';el.textContent='Yalnız bu brauzerdə'}
   else if(mode==='slow'){el.className='pill local';el.textContent='Bağlantı gecikir'}
   else{el.className='pill';el.textContent='Yüklənir…'}
-  const navTab=(tab==='profile'||tab==='edit')?prevTab:tab;
+  const navTab=(tab==='profile'||tab==='edit'||tab==='res')?prevTab:tab;
   $('#nav').innerHTML=TABS.map(([k,n])=>`<button type="button" data-tab="${k}" class="${k===navTab?'on':''}" aria-current="${k===navTab?'page':'false'}">${n}</button>`).join('');
-  $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.home)();
+  $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.yoxla)();
   if(tab==='neticeler'||tab==='sagirdler'){const s=$('[data-search]');if(s&&s.value)applySearch(s)}
 }
 function toTop(){try{window.scrollTo(0,0)}catch(e){}try{const v=document.querySelector('.top');if(v)v.scrollIntoView({block:'start'})}catch(e){}}
-function go(t){if(t!=='profile'&&t!=='edit')prevTab=t;tab=t;render();toTop()}
+function go(t){if(t!=='profile'&&t!=='edit'&&t!=='res')prevTab=t;tab=t;render();toTop()}
 
 /* ---------- answer grid ---------- */
 function gridHTML(g,arr,opt={}){
@@ -1155,7 +1155,9 @@ function resRow(r,i){
   return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. ${scoreLine(r)}</small><div>${badges}</div></div>${dsHTML(r)}<span class="pct" style="margin-left:14px">${fmt(resPct(r))}%</span></div>`;
 }
 
-VIEWS.yoxla=()=>{
+function topNotes(){const t=S.settings.teacherName;return `${!t&&mode!=='loading'?`<section class="box hero"><h1>Xoş gəlmisiniz!</h1><p class="muted">Adınızı yazın. Bu tətbiqdə yalnız sizin qruplarınız, sınaqlarınız və nəticələriniz görünəcək.</p><div class="inline"><input type="text" data-bind="forms.newTeacher" value="${esc(forms.newTeacher)}" placeholder="Ad və soyad" aria-label="Müəllimin adı"><button class="btn" data-act="saveTeacher">Davam et</button></div></section>`:''}${mode==='local'?`<div class="notice">Məlumatlar yalnız bu brauzerdə saxlanır. Parametrlərdən tez-tez ehtiyat nüsxə yükləyin.</div>`:''}${mode==='slow'?`<div class="notice">Bağlantı gecikir. Bir az gözləyin və ya səhifəni yeniləyin.</div>`:''}`}
+VIEWS.yoxla=()=>topNotes()+yoxlaBody();
+function yoxlaBody(){
   const exs=examsSorted();
   if(!exs.length)return `<section class="box"><h2>Sınağı yoxla</h2><p class="muted">Əvvəl cavab açarı ilə sınaq yaradın.</p><button class="btn" data-act="go" data-to="sinaqlar">Sınaq yarat</button></section>`;
   if(!Q.examId||!examById(Q.examId))Q.examId=exs[0].id;
@@ -1172,37 +1174,69 @@ VIEWS.yoxla=()=>{
   <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot" for="pk-front">📷 Ön üz<small>Cavablar</small></label><label class="shoot" for="pk-back">📝 Arxa üz<small>${wName(ex)}</small></label></div></details>`:`<label class="shoot" for="pk-front" style="width:100%">📷 Kartın şəkli<small>${fmtName(exFmt(ex))} kartı — hər şəkildə bir kart. Bir və ya bir neçə şəkil</small></label>`}
   <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
   <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
-  ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər</h2><div class="qcount">${(()=>{const c=k=>items.filter(x=>x.state===k).length;return [c('wait')?`<span class="badge">⏳ ${c('wait')} növbədə</span>`:'',c('busy')?`<span class="badge busy">🔄 ${c('busy')} yoxlanır</span>`:'',c('done')?`<span class="badge ok">✅ ${c('done')} hazır</span>`:'',c('need')?`<span class="badge warn">${c('need')} şagirdi seçin</span>`:'',c('err')?`<span class="badge err">${c('err')} xəta</span>`:''].join('')})()}</div>${busy?'<p class="hint" style="margin-top:0">Yoxlama gedərkən növbəti vərəqin şəklini çəkib göndərə bilərsiniz — sıraya düşəcək.</p>':''}<div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
-};
+  ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər</h2><div class="qcount">${(()=>{const c=k=>items.filter(x=>x.state===k).length;return [c('wait')?`<span class="badge">⏳ ${c('wait')} növbədə</span>`:'',c('busy')?`<span class="badge busy">🔄 ${c('busy')} yoxlanır</span>`:'',c('done')?`<span class="badge ok">✅ ${c('done')} hazır</span>`:'',c('need')?`<span class="badge warn">${c('need')} şagirdi seçin</span>`:'',c('err')?`<span class="badge err">${c('err')} xəta</span>`:''].join('')})()}</div>${busy?'<p class="hint" style="margin-top:0">Yoxlama gedərkən növbəti vərəqin şəklini göndərə bilərsiniz — sıraya düşəcək. Hər nəticə hazır olan kimi şagirdin adına avtomatik saxlanır.</p>':''}<div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
+}
 function qItemHTML(it,ex,sts){
   const b={wait:'<span class="badge">⏳ növbədə</span>',busy:'<span class="badge busy">🔄 yoxlanır</span>',done:'<span class="badge ok">✅ hazır</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'}[it.state];
   return `<div class="qitem st-${it.state}"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):({front:hasW(ex)?'Ön üz':'Kart',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
   ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}</div>
-  ${it.state==='done'?`<button class="btn sm ghost" data-act="editResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
+  ${it.state==='done'?`<button class="btn sm ghost" data-act="viewResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
 }
 
 VIEWS.neticeler=()=>{
-  const exs=examsSorted();
-  if(!exs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Hələ sınaq yoxdur.</p></section>`;
-  if(!examById(rf.examId))rf.examId=exs[0].id;
-  const ex=examById(rf.examId),gs=(ex.groupIds||[]).map(groupById).filter(Boolean);
-  if(rf.groupId&&!gs.find(g=>g.id===rf.groupId))rf.groupId='';
-  const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
-  const inScope=examStudents(ex).filter(s=>!rf.groupId||s.groupId===rf.groupId);
-  const missing=inScope.filter(s=>!rs.find(r=>r.studentId===s.id));
-  const n=rs.length,withT=rs.filter(r=>resTest(r)!==null);
-  const avgPct=n?rs.reduce((s,r)=>s+resPct(r),0)/n:0;
-  const secs={};withT.forEach(r=>{const m=secScores(r);for(const k in m){secs[k]=secs[k]||{got:0,max:0};secs[k].got+=m[k].got;secs[k].max+=m[k].max}});
-  const hard=Array.from({length:qN(ex)},(_,i)=>{const w=withT.filter(r=>pointsFor(i,r.answers[i],ex.key[i])<1).length;return {i,w,p:withT.length?Math.round(w*100/withT.length):0}}).filter(q=>q.w).sort((a,b)=>b.w-a.w).slice(0,5);
-  return `<section class="box"><h2>Nəticələr</h2><label class="l">Sınaq</label><select data-bind="rf.examId" data-rr="1">${exs.map(e=>`<option value="${e.id}"${e.id===rf.examId?' selected':''}>${esc(e.name)}${e.date?' ('+esc(e.date)+')':''}</option>`).join('')}</select>
-  ${gs.length>1?`<div class="chips" style="margin-top:10px"><button class="chip${!rf.groupId?' on':''}" data-act="rfGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${rf.groupId===g.id?' on':''}" data-act="rfGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div>`:''}</section>
-  ${n?`<div class="stats"><div class="stat"><b>${n}</b><span>Yoxlanmış iş</span></div><div class="stat"><b>${fmt(Math.round(avgPct*10)/10)}%</b><span>Orta nəticə</span></div><div class="stat"><b>${fmt(Math.round(resPct(rs[0])*10)/10)}%</b><span>Ən yüksək</span></div><div class="stat"><b>${missing.length}</b><span>Yoxlanmayıb</span></div></div>`:''}
-  <section class="box"><div class="search"><input type="search" data-search="1" placeholder="Şagird axtar" aria-label="Şagird axtar"></div>
-  ${n?`<div class="list">${rs.map((r,i)=>resRow(r,i)).join('')}</div>`:`<p class="empty">Bu sınaq üzrə hələ nəticə yoxdur.</p>`}
-  ${missing.length?`<h3>Yoxlanmayanlar (${missing.length})</h3><p class="muted" style="font-size:14px">${missing.map(s=>esc(s.name)).join(', ')}</p>`:''}
-  <div class="acts"><button class="btn sm${n?'':' off'}" data-act="shareClass">📸 Valideynlər üçün şəkil</button><button class="btn ghost sm${n?'':' off'}" data-act="csv">CSV yüklə</button></div></section>
-  ${withT.length?`<section class="box"><h2>Sınağın təhlili</h2>${SECS.filter(s=>secs[s]).map(s=>{const p=Math.round(secs[s].got*100/secs[s].max);return `<div class="arow"><div class="t"><span>${s}</span><b>${p}%</b></div><div class="bar${p<50?' red':''}"><i style="width:${p}%"></i></div></div>`}).join('')}
-  <h3>Ən çox səhv edilən suallar</h3>${hard.map(q=>`<div class="arow"><div class="t"><span>${q.i+1}-ci sual <span class="muted">(${esc(qSec(ex,q.i))}${qTag(ex,q.i)?': '+esc(qTag(ex,q.i)):''})</span></span><b>${q.w} nəfər, ${q.p}%</b></div><div class="bar red"><i style="width:${q.p}%"></i></div></div>`).join('')||'<p class="muted">Səhv yoxdur.</p>'}</section>`:''}`;
+  const gs=groupsSorted();
+  if(!gs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Əvvəl Şagirdlər bölməsində qrup yaradın.</p></section>`;
+  if(rf.groupId&&!groupById(rf.groupId))rf.groupId='';
+  const g=rf.groupId;
+  const exs=g?examsSorted().filter(e=>(e.groupIds||[]).includes(g)||S.results.some(r=>r.examId===e.id&&studentById(r.studentId)?.groupId===g)):[];
+  if(rf.examId&&!exs.find(e=>e.id===rf.examId))rf.examId='';
+  const sts=g?studentsOf(g):[];
+  if(rf.studentId&&!sts.find(x=>x.id===rf.studentId))rf.studentId='';
+  const O=(v,l,on)=>`<option value="${v}"${on?' selected':''}>${esc(l)}</option>`;
+  const flt=`<section class="box"><h2>Nəticələr</h2><div class="flt">
+  <div><label class="l" style="margin-top:0">1. Qrup</label><select data-bind="rf.groupId" data-rr="1">${O('','Qrupu seçin',!g)}${gs.map(x=>O(x.id,x.name,x.id===g)).join('')}</select></div>
+  <div><label class="l">2. Sınaq</label><select data-bind="rf.examId" data-rr="1"${!g||rf.studentId?' disabled':''}>${O('',rf.studentId?'Şagird seçilib — bütün sınaqları görünür':!g?'Əvvəl qrupu seçin':exs.length?'Sınağı seçin':'Bu qrupda sınaq yoxdur',!rf.examId||rf.studentId)}${rf.studentId?'':exs.map(e=>O(e.id,e.name+(e.date?' ('+e.date+')':''),e.id===rf.examId)).join('')}</select></div>
+  <div><label class="l">3. Şagird</label><select data-bind="rf.studentId" data-rr="1"${!g?' disabled':''}>${O('',!g?'Əvvəl qrupu seçin':'Şagird seçin (istəyə görə)',!rf.studentId)}${sts.map(x=>O(x.id,x.name,x.id===rf.studentId)).join('')}</select></div>
+  </div>${rf.studentId?`<div class="acts"><button class="btn sm ghost" data-act="rfClearStu">✕ Şagird seçimini götür</button></div>`:''}</section>`;
+  if(!g)return flt;
+  if(rf.studentId){
+    const st=studentById(rf.studentId);
+    const rs=S.results.filter(r=>r.studentId===st.id&&examById(r.examId)).sort((a,b)=>(examById(b.examId).date||'').localeCompare(examById(a.examId).date||''));
+    return flt+`<section class="box"><h2>${esc(st.name)} <span class="muted" style="font-weight:500">${esc(gName(st.groupId))}</span></h2>${rs.length?rs.map(resCard).join(''):'<p class="empty">Bu şagirdin hələ nəticəsi yoxdur.</p>'}</section>`;
+  }
+  if(!rf.examId)return flt+`<p class="hint" style="text-align:center">Sınağı seçin — o sınağın nəticələri çıxacaq. Və ya şagirdi seçin — onun bütün sınaqları çıxacaq.</p>`;
+  const ex=examById(rf.examId);
+  const rs=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===g).sort((a,b)=>resPct(b)-resPct(a));
+  return flt+`<section class="box"><h2>${esc(ex.name)} <span class="muted" style="font-weight:500">${esc(gName(g))}</span></h2>
+  ${rs.length?`<div class="list">${rs.map((r,i)=>`<div class="li click srow" data-act="viewResult" data-id="${r.id}"><span class="rank">${i+1}</span><div class="grow"><b>${esc(sName(r.studentId))}</b></div>${dsHTML(r)}<span class="pct" style="margin-left:14px">${fmt(resPct(r))}%</span></div>`).join('')}</div>
+  <div class="acts"><button class="btn sm" data-act="shareClass">📸 Valideynlər üçün şəkil</button></div>`:'<p class="empty">Bu sınaq üzrə bu qrupda hələ nəticə yoxdur.</p>'}</section>`;
+};
+function resCard(r){
+  const ex=examById(r.examId);if(!ex)return '';
+  const t=resTest(r),e=r.essay,es=resEssay(r),wq=t===null?[]:wrongQs(r),ph=waPhone(studentById(r.studentId)?.phone);
+  const parts=[`Test <b>${t===null?'–':fmt(t)}/${qN(ex)}</b>`];if(hasW(ex))parts.push(`${wName(ex)} <b>${es===null?'–':fmt(es)}/5</b>`,`Cəmi <b>${fmt(resTotal(r))}/${maxTot(ex)}</b>`);
+  const mist=e&&e.status==='ok'&&(e.mistakes||[]).length&&e.transcript;
+  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
+  <p style="margin:8px 0 4px">${parts.join(' · ')}</p>${(r.flags||[]).length?`<p class="hint" style="margin:0">⚠ ${r.flags.length} sual yoxlanmalıdır — «Düzəlt» ilə baxın.</p>`:''}
+  ${t!==null?`<h3>Səhv suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> Yazıb: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted" style="margin:0">Səhv yoxdur.</p>'}`:''}
+  ${e&&hasW(ex)?essayShort(e):''}
+  <div class="acts">${mist?`<button class="btn sm" data-act="shareMist" data-id="${r.id}">📝 Səhvlər şəkli</button>`:''}${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
+  ${!ph?'<p class="hint" style="margin:4px 0 0">WhatsApp üçün Şagirdlər bölməsində şagirdin nömrəsini yazın.</p>':''}</div>`;
+}
+function essayShort(e){
+  const wn=e.kind==='9'?'Hekayə':'Paraqraf';
+  if(e.status&&e.status!=='ok')return `<h3>${wn}: 0/5</h3><p class="muted" style="margin:0">${{off_topic:'Mövzudan kənar yazılıb.',not_english:'İngilis dilində deyil.',unreadable:'Yazı oxunmur.'}[e.status]||''}</p>`;
+  const v=(k,m)=>e[k]===null||e[k]===undefined?'–':fmt(e[k])+'/'+m;
+  const cr=e.kind==='9'?`Məzmun ${v('A',2)} · Ardıcıllıq ${v('B',1)} · Qrammatika ${v('C',1)} · Söz ${v('D',1)}${e.A?` · cərimə −${fmt(e.pen||0)}`:''}`:`A ${v('A',1)} · B ${v('B',2)} · C ${v('C',1)} · D ${v('D',1)}`;
+  const com=['A','B','C','D'].filter(k=>e.comments?.[k]);
+  return `<h3>${wn}: ${fmt(e.total??0)}/5${e.words?` <span class="muted" style="font-weight:500">(${e.words} söz)</span>`:''}</h3><p style="margin:0 0 6px;font-size:14px">${cr}</p>
+  ${(e.mistakes||[]).length?e.mistakes.map(m=>`<div class="mist"><s>${esc(m.original)}</s> → <ins>${esc(m.correction)}</ins> <span class="badge">${esc(m.type)}</span></div>`).join(''):''}
+  ${com.length?`<details style="margin-top:6px"><summary class="muted" style="cursor:pointer;font-size:14px">Balların izahı</summary>${com.map(k=>`<div class="muted" style="font-size:14px;margin-top:4px"><b>${k}:</b> ${esc(e.comments[k])}</div>`).join('')}</details>`:''}`;
+}
+VIEWS.res=()=>{
+  const r=S.results.find(x=>x.id===resId);if(!r)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Nəticə tapılmadı.</div>`;
+  const st=studentById(r.studentId);
+  return `<button class="back" data-act="back">← Geri</button><section class="box"><h2>${esc(st?.name||'Şagird')} <span class="muted" style="font-weight:500">${esc(gName(st?.groupId))}</span></h2>${resCard(r)}</section>`;
 };
 
 VIEWS.sagirdler=()=>{
@@ -1214,7 +1248,7 @@ VIEWS.sagirdler=()=>{
   ${sel?'<p class="hint" style="margin-bottom:0">Silmək istədiyiniz şagirdlərə basın və ya qrupda «Hamısını seç» düyməsini basın.</p>':''}</section>
   ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));const ed=stuEdit.has(g.id)&&!sel;return `<details class="grp" data-g="${g.id}"${sel||ed||openGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
   ${ed&&st.length?'<p class="hint" style="margin-top:0">Adı və ya nömrəni dəyişin — xanadan çıxanda avtomatik saxlanır. Nömrə istəyə görədir (WhatsApp üçün).</p>':''}
-  ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"></div>`;const l=last(s.id);const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:''}<div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`${dsHTML(l)}<span class="pct" style="margin-left:14px">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
+  ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"></div>`;const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'editStudent'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:`<span class="rank">${i+1}</span>`}<div class="grow"><b>${esc(s.name)}</b>${s.phone?`<small>${esc(s.phone)}</small>`:''}</div>${sel?'':'<span class="muted" style="font-size:20px">›</span>'}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
   <div class="acts">${!sel&&st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEditToggle" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
   <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, A1" aria-label="Qrup adı"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
   <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
@@ -1272,12 +1306,10 @@ function essayHTML(e){
   ${e.feedback?`<h3>Rəy</h3><p>${esc(e.feedback)}</p>`:''}`;
 }
 function examMsg(r){
-  const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),e=r.essay,es=resEssay(r);
-  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`,(hasW(ex)?`Cəmi: test ${resTest(r)===null?'–':fmt(resTest(r))}/25 + ${wName(ex).toLocaleLowerCase('az')} ${resEssay(r)===null?'–':fmt(resEssay(r))}/5 = ${totTxt(r)}`:`Cəmi: ${totTxt(r)}`)];
-  if(t!==null){L.push(`Test: ${fmt(t)}/${qN(ex)}`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
-    const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${dispAns(q.v)}, düzgün: ${dispAns(q.k)}`))}}
-  if(es!==null){L.push('',`${wName(ex)}: ${fmt(es)}/5`);if(e&&e.status==='ok')L.push(e.kind==='9'?`  Məzmun ${fmt(e.A)}/2, Ardıcıllıq ${e.B===null?'–':fmt(e.B)}/1, Qrammatika ${e.C===null?'–':fmt(e.C)}/1, Söz ehtiyatı ${e.D===null?'–':fmt(e.D)}/1, cərimə −${fmt(e.pen||0)}`:`  A ${fmt(e.A)}/1, B ${e.B===null?'–':fmt(e.B)}/2, C ${e.C===null?'–':fmt(e.C)}/1, D ${e.D===null?'–':fmt(e.D)}/1`);if(e?.feedback)L.push(e.feedback)}
-  L.push('',S.settings.sign||S.settings.teacherName||'');
+  const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),es=resEssay(r);
+  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name||''}» sınağının nəticəsi:`,`Test: ${t===null?'–':fmt(t)}/${qN(ex)}`];
+  if(hasW(ex))L.push(`${wName(ex)}: ${es===null?'–':fmt(es)}/5`,`Cəmi: ${fmt(resTotal(r))}/${maxTot(ex)}`);
+  L.push(`Faiz: ${fmt(resPct(r))}%`,'',S.settings.sign||S.settings.teacherName||'');
   return L.join('\n').trim();
 }
 function reportMsg(sid){
@@ -1435,6 +1467,8 @@ const ACT={
   profile:el=>{profileId=el.dataset.id;profileOpen=new Set();go('profile')},
   toggleOpen:el=>{const id=el.dataset.id;profileOpen.has(id)?profileOpen.delete(id):profileOpen.add(id);render()},
   rfGroup:el=>{rf.groupId=el.dataset.id;render()},
+  rfClearStu:()=>{rf.studentId='';render()},
+  viewResult:el=>{resId=el.dataset.id;go('res')},
   manual:()=>openEditor(null,Q.examId),
   resume:()=>runQueue(),
   retry:el=>{const it=Q.items.find(x=>x.id===el.dataset.id);if(it){it.state='wait';it.msg='Növbədədir';runQueue()}},
