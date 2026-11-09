@@ -577,7 +577,8 @@ function render(){
   $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.home)();
   if(tab==='neticeler'||tab==='sagirdler'){const s=$('[data-search]');if(s&&s.value)applySearch(s)}
 }
-function go(t){if(t!=='profile'&&t!=='edit')prevTab=t;tab=t;render();window.scrollTo(0,0)}
+function toTop(){try{window.scrollTo(0,0)}catch(e){}try{const v=document.querySelector('.top');if(v)v.scrollIntoView({block:'start'})}catch(e){}}
+function go(t){if(t!=='profile'&&t!=='edit')prevTab=t;tab=t;render();toTop()}
 
 /* ---------- answer grid ---------- */
 function gridHTML(g,arr,opt={}){
@@ -1084,7 +1085,7 @@ function openEditor(r,examId){
 VIEWS.sinaqlar=()=>{
   const d=examDraft,gs=groupsSorted(),filled=d.key.filter((v,i)=>({tf:/^[TF]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length,hasRes=d.id&&S.results.some(r=>r.examId===d.id);
   const list=examsSorted();
-  return `<section class="box"><h2>${d.id?'Sınağı düzəlt':'Yeni sınaq'}</h2>
+  return `${d.id?`<button class="back" data-act="cancelExam">← Sınaqlar siyahısına qayıt</button>`:''}<section class="box"${d.id?' style="box-shadow:0 0 0 2px var(--accent),var(--shadow)"':''}><h2>${d.id?`✏️ «${esc(d.name)}» sınağını düzəlt`:'Yeni sınaq'}</h2>${d.id?`<p class="hint">Cavab açarını, adı, tarixi, qrupları və mövzunu dəyişib aşağıda «Dəyişiklikləri saxla» basın.${S.results.some(r=>r.examId===d.id)?' Yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanacaq.':''}</p>`:''}
   <div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
   <label class="l">Sınağın növü</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün növü dəyişmək olmaz.</p>':''}
   <label class="l">Qruplar</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}
@@ -1099,7 +1100,7 @@ VIEWS.sinaqlar=()=>{
   ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
   ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}
   <div class="acts" style="margin-top:16px"><button class="btn" data-act="saveExam">${d.id?'Dəyişiklikləri saxla':'Sınağı yarat'}</button>${d.id?`<button class="btn ghost" data-act="cancelExam">Ləğv et</button>`:''}</div></section>
-  <section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li" style="flex-wrap:wrap"><div class="grow" style="flex-basis:100%"><b>${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${exType(e)==='9'?', 9-cu sinif'+(e.pics?'':', şəkil yoxdur'):(e.topic?'':', mövzu yoxdur')}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">📄 Cavab kartı</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`;
+  ${d.id?'':`<section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li" style="flex-wrap:wrap"><div class="grow click" style="flex-basis:100%;cursor:pointer" data-act="editExam" data-id="${e.id}"><b style="color:var(--c1)">${esc(e.name)} ✏️</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${exType(e)==='9'?', 9-cu sinif'+(e.pics?'':', şəkil yoxdur'):(e.topic?'':', mövzu yoxdur')}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">📄 Cavab kartı</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`}`;
 };
 
 VIEWS.parametrler=()=>{
@@ -1198,11 +1199,11 @@ const ACT={
     const old=d.id&&examById(d.id);
     const ex={id:d.id||newId(),type:d.type,pics:d.type==='9'?d.pics:'',name:d.name.trim(),date:d.date,groupIds:d.groupIds.slice(),topic:d.topic.trim(),key:d.key.slice(),qmeta:d.qmeta.map(m=>({sec:m.sec,tag:String(m.tag||'').trim()})),created:old?.created||new Date().toISOString()};
     await put('exams',ex).catch(()=>{});
-    examDraft=freshExam();render();window.scrollTo(0,0);
+    examDraft=freshExam();render();toTop();
     toast(old?'Sınaq yeniləndi.':'Sınaq yaradıldı. İndi PDF kartı yükləyə bilərsiniz.');
   },
-  editExam(el){const e=examById(el.dataset.id);if(!e)return;examDraft={...freshExam(),id:e.id,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:(e.qmeta||[]).some(m=>m.tag)};render();window.scrollTo(0,0)},
-  cancelExam(){examDraft=freshExam();render()},
+  editExam(el){const e=examById(el.dataset.id);if(!e)return;examDraft={...freshExam(),id:e.id,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:(e.qmeta||[]).some(m=>m.tag)};render();toTop()},
+  cancelExam(){examDraft=freshExam();render();toTop()},
   async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);render()},
   card:el=>showCard(examById(el.dataset.id)),
   csv(){
