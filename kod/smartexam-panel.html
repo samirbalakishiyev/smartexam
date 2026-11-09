@@ -443,11 +443,19 @@ Məsələn, 3 bal:
 <script>
 'use strict';
 const N=25, TF=[3,20,24];
-const LAYOUT={'11':{tf:[3,20,24],ms:[]},'9':{tf:[3],ms:[19,24]}};
+const LAYOUT={'US-11':{tf:[3,20,24],ms:[]},'US-9':{tf:[3],ms:[19,24]},'LR-11':{tf:[3,7,11],ms:[]},'LR-9':{tf:[3],ms:[11]},'G20':{tf:[],ms:[]},'G40':{tf:[],ms:[]}};
+const FMTS=[['US','ÜS','Ümumi sınaq: 25 test + 5 bal yazı'],['LR','12-LR','Listening + Reading, 12 sual'],['G20','20 G','20 qapalı qrammatika sualı'],['G40','40 G','40 qapalı qrammatika sualı']];
+const fmtName=f=>(FMTS.find(x=>x[0]===f)||FMTS[0])[1];
+const exFmt=ex=>['LR','G20','G40'].includes(ex?.fmt)?ex.fmt:'US';
 const exType=ex=>ex?.type==='9'?'9':'11';
-const tfOf=ex=>LAYOUT[exType(ex)].tf;
-const msOf=ex=>LAYOUT[exType(ex)].ms;
-const kindAt=(t,i)=>LAYOUT[t].tf.includes(i)?'tf':LAYOUT[t].ms.includes(i)?'ms':'mc';
+const qN=ex=>({US:25,LR:12,G20:20,G40:40})[exFmt(ex)];
+const hasW=ex=>exFmt(ex)==='US';
+const maxTot=ex=>qN(ex)+(hasW(ex)?5:0);
+const layKey=ex=>{const f=exFmt(ex);return f==='US'||f==='LR'?f+'-'+exType(ex):f};
+const layOf=ex=>LAYOUT[layKey(ex)];
+const tfOf=ex=>layOf(ex).tf;
+const msOf=ex=>layOf(ex).ms;
+const kindAt=(ex,i)=>layOf(ex).tf.includes(i)?'tf':layOf(ex).ms.includes(i)?'ms':'mc';
 const wName=ex=>exType(ex)==='9'?'Hekayə':'Paraqraf';
 const normMS=v=>{const d=[...new Set(String(v||'').replace(/[^1-5]/g,''))].sort().join('');return d||'-'};
 const STORY_TASK='Look at the pictures. Make up a story according to the pictures in the given order.';
@@ -466,6 +474,7 @@ const azCmp=(a,b)=>String(a).localeCompare(String(b),'az');
 const fmt=n=>{n=Math.round(n*100)/100;return String(n).replace('.',',')};
 const norm=s=>String(s||'').toLocaleLowerCase('az').replace(/[əäçğıöşüİI]/g,c=>({'ə':'e','ä':'e','ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','i̇':'i','I':'i','İ':'i'}[c]||c)).replace(/\s+/g,' ').trim();
 const clean=o=>JSON.parse(JSON.stringify(o));
+const secFor=(ex,i)=>{const f=exFmt(ex);return f==='LR'?(i<4?'Dinləmə':'Oxu'):f==='G20'||f==='G40'?'Qrammatika':defSec(i,exType(ex))};
 const defSec=(i,t)=>t==='9'?(i<4?'Dinləmə':i<7?'Oxu':i<20?'Qrammatika':'Oxu'):(i<4?'Dinləmə':i<17?'Qrammatika':'Oxu');
 
 let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
@@ -475,8 +484,8 @@ const forms={group:'',sGroup:'',bulk:'',newTeacher:'',rows:[{name:'',phone:''},{
 const rf={examId:'',groupId:''};
 let xn={mode:'home',gid:'',examId:''},sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
-function loadDraft(e){examDraft={...freshExam(),id:e.id,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:false}}
-function freshExam(){return {id:null,type:'11',pics:'',name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
+function loadDraft(e){examDraft={...freshExam(),id:e.id,fmt:exFmt(e),fmtPicked:true,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:qN(e)},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:false}}
+function freshExam(){return {id:null,fmt:'US',fmtPicked:false,type:'11',pics:'',name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
 
 /* ---------- lookups & scoring ---------- */
 const groupById=i=>S.groups.find(g=>g.id===i);
@@ -489,7 +498,7 @@ const examsSorted=()=>S.exams.slice().sort((a,b)=>(b.date||'').localeCompare(a.d
 const groupsSorted=()=>S.groups.slice().sort((a,b)=>azCmp(a.name,b.name));
 const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.name,b.name));
 const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
-const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||defSec(i,exType(ex));
+const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||secFor(ex,i);
 const qTag=(ex,i)=>String(ex?.qmeta?.[i]?.tag||'').trim();
 const dispAns=v=>{v=String(v??'');if(/^[TF*-]{4}$/.test(v))return v==='----'?'boş':v.replace(/T/g,'A').replace(/F/g,'B').replace(/-/g,'–').replace(/\*/g,'(A/B)');return !v||v==='-'?'boş':v};
 const normTF=v=>/^[TF*-]{4}$/.test(v||'')?v:'----';
@@ -502,9 +511,10 @@ const testScore=(ans,key)=>ans.reduce((s,v,i)=>s+pointsFor(i,v,key[i]),0);
 function resTest(r){if(!Array.isArray(r.answers))return null;const ex=examById(r.examId);return ex?testScore(r.answers,ex.key):(r.score??null)}
 function resEssay(r){if(r.essay&&typeof r.essay.total==='number')return r.essay.total;if(r.essayScore!==null&&r.essayScore!==undefined&&r.essayScore!=='')return Number(r.essayScore);return null}
 const resTotal=r=>(resTest(r)||0)+(resEssay(r)||0);
-const dsHTML=r=>{const t=resTest(r),e=resEssay(r);const mx=(t===null?0:25)+(e===null?0:5);if(!mx)return '';const got=resTotal(r);return `<span class="ds"><span class="g">${fmt(got)} düz</span> · <span class="r">${fmt(Math.round((mx-got)*100)/100)} səhv</span></span>`};
-const totTxt=r=>`${fmt(resTotal(r))}/30 → (100/30)×${fmt(resTotal(r))} = ${fmt(resPct(r))}%`;
-const resPct=r=>Math.round(resTotal(r)*100/30*100)/100;
+const dsHTML=r=>{const ex=examById(r.examId),t=resTest(r),e=resEssay(r);const mx=(t===null?0:qN(ex))+(e===null||!hasW(ex)?0:5);if(!mx)return '';const got=resTotal(r);return `<span class="ds"><span class="g">${fmt(got)} düz</span> · <span class="r">${fmt(Math.round((mx-got)*100)/100)} səhv</span></span>`};
+const totTxt=r=>{const m=maxTot(examById(r.examId));return `${fmt(resTotal(r))}/${m} → (100/${m})×${fmt(resTotal(r))} = ${fmt(resPct(r))}%`};
+const scoreLine=r=>{const ex=examById(r.examId),t=resTest(r),e=resEssay(r);return hasW(ex)?`Test ${t===null?'–':fmt(t)}/25 + ${wName(ex).toLocaleLowerCase('az')} ${e===null?'–':fmt(e)}/5 = <b>${fmt(resTotal(r))}/30</b>`:`Test <b>${t===null?'–':fmt(t)}/${qN(ex)}</b>`};
+const resPct=r=>Math.round(resTotal(r)*100/maxTot(examById(r.examId))*100)/100;
 function wrongQs(r){const ex=examById(r.examId);if(!ex||!Array.isArray(r.answers))return [];return r.answers.map((v,i)=>({i,v,k:ex.key[i],p:pointsFor(i,v,ex.key[i]),sec:qSec(ex,i),tag:qTag(ex,i)})).filter(x=>x.p<1)}
 function secScores(r){const ex=examById(r.examId);const m={};if(!ex||!Array.isArray(r.answers))return m;r.answers.forEach((v,i)=>{const s=qSec(ex,i);m[s]=m[s]||{got:0,max:0};m[s].got+=pointsFor(i,v,ex.key[i]);m[s].max++});return m}
 function essayTotal(e){
@@ -672,22 +682,22 @@ async function readTwice(ex,blob,halves){
 async function aiFront(ex,blob,halves,onlyHalves){
   const tfs=tfOf(ex),mss=msOf(ex);
   const zoomTxt=halves?(onlyHalves?'Image 1 is the LEFT half and image 2 the RIGHT half of the answer grid area (they overlap a little in the middle — a question that appears in both is the same question). ':'Image 1 is the whole answer area; images 2 and 3 are zoomed LEFT and RIGHT halves of the same area (they overlap a little) — use the zoomed halves to read each bubble precisely and image 1 for the name boxes and overall layout. '):'';
-  const prompt=`${zoomTxt}This shows a student's answer sheet for a 25-question English exam. The answer grid is at the top of the page (questions numbered 1–25); ignore any handwritten text below it.
+  const prompt=`${zoomTxt}This shows a student's answer card for a ${qN(ex)}-question English ${exFmt(ex)==='US'?'exam':exFmt(ex)==='LR'?'listening and reading test':'grammar test'}. The answer grid has questions numbered 1–${qN(ex)}${hasW(ex)?'; it is at the top of the page — ignore any handwritten text below it':''}.
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
-2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
+2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.length?tfs.map(i=>i+1).join(', '):'(none)'} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
 IMPORTANT — a filled bubble hides its printed letter, so identify it by POSITION: count the bubbles of that row from the left — 1st = A, 2nd = B, 3rd = C, 4th = D, 5th = E (A/B sub-rows: 1st = A, 2nd = B; multiple-selection rows: 1st = 1 … 5th = 5). Then cross-check with the letters still visible in the empty bubbles on each side (e.g. if B is visible on its left and D on its right, the filled one is C). Never report a letter that is still visible in an empty bubble as the filled one.
 Work slowly and carefully, one question at a time, in number order: find the printed question number, then compare ALL bubbles of that row (or of that A/B sub-row, e.g. 4.4) and pick the one that is clearly darker / filled. Empty bubbles show only a small light-grey letter; a filled bubble is solid dark. Do not shift rows: double-check that the bubble you read belongs to the same printed number. Check every A/B sub-row (x.1, x.2, x.3, x.4) separately — do not leave one blank if a bubble in it is filled.
 A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same two-column row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for two-column put "?" only in the unclear position, e.g. "AB?A"). Do not guess.
 Reply with only JSON:
-{"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
+{"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[${qN(ex)} strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
   const fo={images:halves?(onlyHalves?halves:[blob,...halves]):[blob]};if(essayTier)fo.modelTier=essayTier;
   const r=await sample.json(prompt,fo);
   const a=Array.isArray(r?.answers)?r.answers:[];
-  const flags=new Set((Array.isArray(r?.unclear)?r.unclear:[]).map(Number).filter(n=>n>=1&&n<=N));
+  const flags=new Set((Array.isArray(r?.unclear)?r.unclear:[]).map(Number).filter(n=>n>=1&&n<=qN(ex)));
   const out=[];
-  for(let i=0;i<N;i++){
+  for(let i=0;i<qN(ex);i++){
     let v=String(a[i]??'-').toUpperCase().replace(/\s/g,'');
     if(mss.includes(i)){if(v.includes('?'))flags.add(i+1);v=normMS(v)}
     else if(tfs.includes(i)){v=v.replace(/A/g,'T').replace(/B/g,'F').replace(/[^TF?\-]/g,'');if(v.length!==4){flags.add(i+1);v=(v+'????').slice(0,4)}if(v.includes('?'))flags.add(i+1);v=v.replace(/\?/g,'-')}
@@ -777,7 +787,7 @@ async function addToQueue(kind,files){
   const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
   if(kind!=='front'&&exType(ex)==='9'&&!ex.pics)return toast('Bu sınağa 3 şəkil yüklənməyib. Sınaqlar bölməsində «Düzəlt» ilə şəkilləri əlavə edin.','err');
   if(kind!=='front'&&exType(ex)!=='9'&&!ex.topic?.trim())toast('Bu sınaqda paraqraf mövzusu yazılmayıb. Mövzu şəkildən oxunacaq.');
-  for(const f of files){try{const r=await shrink(f,kind==='sheet'?3200:kind==='back'?2100:1900);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
+  for(const f of files){try{const r=await shrink(f,kind==='sheet'?3200:kind==='back'?2100:2600);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
   render();runQueue();
 }
 async function runQueue(){
@@ -815,17 +825,72 @@ async function saveItem(it,sid){
   r.updated=now;
   await put('results',r);
   it.studentId=sid;it.resultId=r.id;it.state='done';photoOf[r.id]=it.blob;
-  let tm='';if(it.kind!=='back'){const t=testScore(r.answers,ex.key);tm=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(it.payload.note?'. '+it.payload.note:'')}
+  let tm='';if(it.kind!=='back'){const t=testScore(r.answers,ex.key);tm=`Test: ${fmt(t)}/${qN(ex)}`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(it.payload.note?'. '+it.payload.note:'')}
   if(it.kind==='front'||(it.kind==='sheet'&&!it.payload.essay))it.msg=tm;
   else{const e=r.essay,wn=wName(ex);it.msg=e.status!=='ok'?`${wn}: 0/5 (${{off_topic:'mövzudan kənar',not_english:'ingiliscə deyil',unreadable:'oxunmur'}[e.status]})`:e.kind==='9'?`${wn}: ${fmt(e.total)}/5 (Məzmun ${fmt(e.A)}, Ard. ${e.B===null?'–':fmt(e.B)}, Qr. ${e.C===null?'–':fmt(e.C)}, Söz ${e.D===null?'–':fmt(e.D)}, cərimə −${fmt(e.pen||0)}), ${e.words??'?'} söz`:`${wn}: ${fmt(e.total)}/5 (A ${fmt(e.A)}, B ${e.B===null?'–':fmt(e.B)}, C ${e.C===null?'–':fmt(e.C)}, D ${e.D===null?'–':fmt(e.D)}), ${e.words??'?'} söz`}
   if(it.kind==='sheet'&&it.payload.essay)it.msg=tm+' · '+it.msg;
-  it.msg+=` · Cəmi: ${totTxt(r)}`+(resTest(r)===null?' (test hələ yoxlanmayıb)':resEssay(r)===null?` (${wName(ex).toLocaleLowerCase('az')} hələ yoxlanmayıb)`:'');
+  it.msg+=` · Cəmi: ${totTxt(r)}`+(resTest(r)===null?' (test hələ yoxlanmayıb)':resEssay(r)===null&&hasW(ex)?` (${wName(ex).toLocaleLowerCase('az')} hələ yoxlanmayıb)`:'');
   if(old)it.msg='🔁 Köhnə nəticə yenisi ilə əvəz olundu. '+it.msg;
 }
 
 /* ---------- PDF answer card ---------- */
 function initials(n){const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?w.slice(0,3).map(x=>x[0].toLocaleUpperCase('az')+'.').join(''):'S.E.'}
-async function drawCard(ex){
+/* small cards (12-LR, 20 G: 4 per A4; 40 G: 2 per A4) */
+async function drawMini(ex,opt={}){
+  try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('700 40px Inter'),document.fonts.load('600 40px Inter')])}catch(e){}
+  const W=1654,H=2339,k=W/210,F='Inter, Arial, sans-serif',INK='#1f3a68',SOFT='#8a9bb8',FILL='#eef2f9';
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  const T=(t,px,py,size,weight=400,align='left',color='#111',font=F)=>{x.font=`${weight} ${size*k}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';x.fillText(t,px*k,py*k)};
+  const RR=(x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
+  const Ln=(x1,y1,x2,y2,w,col=INK,dash)=>{x.save();x.strokeStyle=col;x.lineWidth=w*k;if(dash)x.setLineDash(dash.map(d=>d*k));x.beginPath();x.moveTo(x1*k,y1*k);x.lineTo(x2*k,y2*k);x.stroke();x.restore()};
+  const Bub=(cx,cy,d,label,fs=2.5,mode='')=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.fillStyle=mode==='on'?'#1b1f27':'#fff';x.fill();x.strokeStyle=mode==='on'?'#1b1f27':INK;x.lineWidth=(mode==='thick'?.6:.3)*k;x.stroke();if(mode!=='on'&&label)T(label,cx,cy+.1,fs,700,'center',SOFT);if(mode==='x'){Ln(cx-d/2,cy-d/2,cx+d/2,cy+d/2,.4,'#1b1f27');Ln(cx-d/2,cy+d/2,cx+d/2,cy-d/2,.4,'#1b1f27')}if(mode==='dot'){x.beginPath();x.arc(cx*k,cy*k,d*.2*k,0,Math.PI*2);x.fillStyle='#1b1f27';x.fill()}};
+  const ini=(S.settings.logo||'').trim().slice(0,6)||initials(S.settings.teacherName);
+  const Logo=(cx,cy,d,fs)=>{x.beginPath();x.arc(cx*k,cy*k,d/2*k,0,Math.PI*2);x.strokeStyle=INK;x.lineWidth=.6*k;x.stroke();x.beginPath();x.arc(cx*k,cy*k,(d/2-.9)*k,0,Math.PI*2);x.lineWidth=.22*k;x.stroke();const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=fs;for(let t=0;t<30;t++){x.font=`700 ${f*k}px ${LF}`;if(x.measureText(ini).width<=(d-3.6)*k)break;f*=.94}T(ini,cx,cy+.2,f,700,'center',INK,LF)};
+  const tfs=tfOf(ex),mss=msOf(ex),n=qN(ex),f=exFmt(ex),is9=exType(ex)==='9';
+  const cols=f==='G40'?4:2,cw=f==='G40'?210:105,ch=148.5;
+  const cells=f==='G40'?[[0,0],[0,148.5]]:[[0,0],[105,0],[0,148.5],[105,148.5]];
+  const secTxt=f==='LR'?(is9?'Listening 1–4 · Short passages 5–7 · Reading 8–12':'Listening 1–4 · Reading 5–12'):`Grammar 1–${n}`;
+  const one=(ox,oy)=>{
+    const L=ox+6,Rr=ox+cw-6,wd=Rr-L;
+    if(opt.author&&S.settings.teacherName){T(S.settings.teacherName,L,oy+8,2.8,800,'left',INK);T('tərəfindən hazırlanıb',L,oy+12,2.3,600,'left','#4a5568')}
+    else Logo(L+6,oy+10,11,4);
+    const mid=f==='G40'?ox+cw/2:L+wd*.62;
+    T('CAVAB KARTI',mid,oy+7.8,4.3,800,'center',INK);
+    T(`${ex.name||''}${ex.name?' · ':''}${fmtName(f)} · ${n} SUAL`,mid,oy+12.6,2.5,600,'center','#4a5568');
+    T(secTxt,mid,oy+16.4,2.1,500,'center','#5b6577');
+    Ln(L,oy+19,Rr,oy+19,.45);
+    const fy=oy+21.5;
+    if(f==='G40'){[['AD',L,58],['SOYAD',L+61,58],['QRUP',L+122,30],['BAL',L+155,wd-155]].forEach(([l,x0,w])=>{T(l,x0,fy+1,2.2,700,'left',INK);RR(x0,fy+2.4,w,6.6,1,INK,.32)});}
+    else{[['AD',L,wd/2-1.5],['SOYAD',L+wd/2+1.5,wd/2-1.5]].forEach(([l,x0,w])=>{T(l,x0,fy+1,2.2,700,'left',INK);RR(x0,fy+2.4,w,6.6,1,INK,.32)});
+      [['QRUP',L,wd/2-1.5],['BAL (müəllim)',L+wd/2+1.5,wd/2-1.5]].forEach(([l,x0,w])=>{T(l,x0,fy+11.4,2.2,700,'left',INK);RR(x0,fy+12.8,w,6.6,1,INK,.32)})}
+    const top=f==='G40'?fy+12:fy+23,colW=wd/cols,rowH=6.4,BD=5,BS=6.6;
+    const units=i=>tfs.includes(i)?2:1;
+    let rows=Math.ceil(Array.from({length:n},(_,i)=>units(i)).reduce((a,b)=>a+b,0)/cols),place;
+    for(;;rows++){place=[];let col=0,row=0,ok=true;for(let i=0;i<n;i++){const u=units(i);if(row+u>rows){col++;row=0}if(col>=cols){ok=false;break}place.push({i,col,row,u});row+=u}if(ok)break}
+    for(let col=1;col<cols;col++)Ln(L+col*colW,top+.5,L+col*colW,top+2.4+rows*rowH,.25,'#c7d0de');
+    place.forEach(({i,col,row,u})=>{const x0=L+col*colW,y0=top+1.6+row*rowH,cy=y0+rowH/2;
+      if(row>0)Ln(x0+2,y0,x0+colW-2,y0,.2,'#d3dae6',[1,1]);
+      if(tfs.includes(i)){RR(x0+1,y0+.5,colW-2,u*rowH-1,1,null,0,FILL);T(String(i+1),x0+6.6,y0+u*rowH/2,3.1,800,'right',INK);
+        for(let q=0;q<4;q++){const sx=x0+8.6+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.1,700,'left',INK);Bub(sx+8.4,scy,4.8,'A',2.3);Bub(sx+13.9,scy,4.8,'B',2.3)}}
+      else if(mss.includes(i)){RR(x0+1,y0+.5,colW-2,rowH-1,1,null,0,FILL);T(String(i+1),x0+6.6,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,String(j+1),2.5)}
+      else{T(String(i+1),x0+6.6,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,'ABCDE'[j],2.5)}
+    });
+    let y=top+2.4+rows*rowH+3.2;
+    T('Düzgün:',L,y,2.2,700,'left','#2d3748');Bub(L+11.5,y,4,'',2,'on');T('— yalnız belə',L+14.2,y,2.1,600,'left','#1F7246');
+    const yx=L+33;T('Yanlış:',yx,y,2.2,700,'left','#2d3748');Bub(yx+10.5,y,4,'A',1.8,'x');Bub(yx+15.6,y,4,'✓',2);Bub(yx+20.7,y,4,'C',1.8,'thick');Bub(yx+25.8,y,4,'',2,'dot');T('— qəbul edilmir',yx+28.6,y,2.1,600,'left','#C2362F');
+    const notes=[];if(mss.length)notes.push(`${mss.map(i=>i+1).join(', ')}: doğruların hamısını qaraldın`);if(tfs.length)notes.push(`${tfs.map(i=>i+1).join(', ')}: 4 düz — tam bal, 3 düz — yarım bal`);
+    notes.forEach((t,j)=>T(t,L,y+4.4+j*3.6,2.1,600,'left','#4a5568'));
+    y+=2.6+notes.length*3.6+1.2;
+    RR(L-1.5,top-1.5,wd+3,y-top+1.5,1.6,INK,.45);
+  };
+  cells.forEach(([ox,oy])=>one(ox,oy));
+  if(f==='G40')Ln(4,148.5,206,148.5,.3,'#9aa6ba',[2,1.6]);
+  else{Ln(105,4,105,293,.3,'#9aa6ba',[2,1.6]);Ln(4,148.5,206,148.5,.3,'#9aa6ba',[2,1.6])}
+  T('✂',105,148.5,3.6,400,'center','#9aa6ba');
+  return [c];
+}
+async function drawCard(ex,opt){
+  if(!hasW(ex))return drawMini(ex,opt||{});
   try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('700 40px Inter'),document.fonts.load('500 40px Inter')])}catch(e){}
   const W=1654,H=2339,k=W/210,F='Inter, Arial, sans-serif',INK='#1f3a68',SOFT='#8a9bb8',FILL='#eef2f9';
   const tfs=tfOf(ex),mss=msOf(ex),is9=exType(ex)==='9';
@@ -916,7 +981,7 @@ async function showCard(ex){
   toast('Kart hazırlanır…');
   let pages;try{pages=await drawCard(ex)}catch(e){return toast('Kart hazırlanmadı.','err')}
   const prev=pages.map(c=>{const t=document.createElement('canvas');t.width=420;t.height=594;t.getContext('2d').drawImage(c,0,0,420,594);return t.toDataURL('image/jpeg',.8)});
-  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev" style="grid-template-columns:1fr;max-width:340px;margin:0 auto"><img src="${prev[0]}" alt="Cavab kartı"></div><p class="hint">A4, 1 səhifə: yuxarıda cavablar, aşağıda ${wName(ex).toLocaleLowerCase('az')}. Bir tərəfli çap edin.</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
+  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev" style="grid-template-columns:1fr;max-width:340px;margin:0 auto"><img src="${prev[0]}" alt="Cavab kartı"></div><p class="hint">${hasW(ex)?`A4, 1 səhifə: yuxarıda cavablar, aşağıda ${wName(ex).toLocaleLowerCase('az')}. Bir tərəfli çap edin.`:`A4 səhifədə ${exFmt(ex)==='G40'?2:4} kart — çap edib qırıq xətt üzrə kəsin.`}</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
   setTimeout(()=>{const b=document.querySelector('.ov [data-x="pdf"]');if(b)b.onclick=async e=>{e.stopPropagation();try{const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(err){toast('PDF hazırlanmadı.','err')}}},0);
 }
 async function saveFile(name,data){
@@ -938,14 +1003,14 @@ function classImage(ex,gid,rs){
   const H=head+colHead+n*rowH+foot+20;const [c,x]=shareCanvas(W,H);
   shHeader(x,W,head,ex.name,`${gid?gName(gid)+' · ':''}${ex.date||''} · ${n} şagird`);
   const fs=Math.max(20,Math.min(34,rowH*.46)),y0=head+colHead;
-  const cols=[[40,'№','left',''],[100,'Şagird','left',''],[555,'Test','center','/25'],[690,wName(ex),'center','/5'],[815,'Cəmi','center','/30'],[1040,'Faiz','right','']];
+  const w=hasW(ex),cols=w?[[40,'№','left',''],[100,'Şagird','left',''],[555,'Test','center','/25'],[690,wName(ex),'center','/5'],[815,'Cəmi','center','/30'],[1040,'Faiz','right','']]:[[40,'№','left',''],[100,'Şagird','left',''],[620,'Düz','center','/'+qN(ex)],[800,'Səhv','center',''],[1040,'Faiz','right','']];
   x.fillStyle='#EEF1FB';x.fillRect(0,head,W,colHead);cols.forEach(([px,t,a,u])=>{shTxt(x,t,px,head+colHead/2-(u?9:0),23,700,'#3B4A7A',a);if(u)shTxt(x,u,px,head+colHead/2+15,18,600,'#8A94A6',a)});
   rs.forEach((r,i)=>{const y=y0+i*rowH,cy=y+rowH/2;if(i%2){x.fillStyle='#F7F8FD';x.fillRect(0,y,W,rowH)}
     const t=resTest(r),e=resEssay(r),p=resPct(r);
     shTxt(x,String(i+1),40,cy,fs*.9,700,'#8A94A6');
     let nm=sName(r.studentId);x.font=`700 ${fs}px Inter, Arial, sans-serif`;while(x.measureText(nm).width>390&&nm.length>3)nm=nm.slice(0,-2)+'…';shTxt(x,nm,100,cy,fs,700,'#17233B');
-    shTxt(x,t===null?'–':fmt(t),555,cy,fs,600,'#17233B','center');shTxt(x,e===null?'–':fmt(e),690,cy,fs,600,'#17233B','center');
-    shTxt(x,fmt(resTotal(r)),815,cy,fs,800,'#17233B','center');shTxt(x,fmt(p)+'%',1040,cy,fs,800,pctCol(p),'right');});
+    if(w){shTxt(x,t===null?'–':fmt(t),555,cy,fs,600,'#17233B','center');shTxt(x,e===null?'–':fmt(e),690,cy,fs,600,'#17233B','center');
+    shTxt(x,fmt(resTotal(r)),815,cy,fs,800,'#17233B','center')}else{shTxt(x,t===null?'–':fmt(t),620,cy,fs,800,'#1C8A52','center');shTxt(x,t===null?'–':fmt(Math.round((qN(ex)-t)*100)/100),800,cy,fs,700,'#C2362F','center')}shTxt(x,fmt(p)+'%',1040,cy,fs,800,pctCol(p),'right');});
   const avg=n?rs.reduce((s,r)=>s+resPct(r),0)/n:0,fy=y0+n*rowH+20;
   x.fillStyle='#F3F5FC';x.fillRect(0,fy,W,foot);shTxt(x,'Sinfin orta nəticəsi',40,fy+foot/2,30,700,'#17233B');shTxt(x,fmt(Math.round(avg*100)/100)+'%',1040,fy+foot/2,40,800,pctCol(avg),'right');
   shTxt(x,S.settings.sign||S.settings.teacherName||'',W/2,H-14,20,500,'#8A94A6','center');
@@ -1007,13 +1072,13 @@ async function tagFromPhotos(files){
   const d=examDraft;d.tagging=true;d.tagMsg='Claude test suallarını oxuyur…';render();
   try{
     const blobs=[];for(const f of files.slice(0,maxImages))blobs.push((await shrink(f,2000)).blob);
-    const prompt=`The attached photo(s) show the question pages of a 25-question English exam for school students. Default layout: ${d.type==='9'?'questions 1–4 listening (4 is a True/False set), 5–7 short reading passages, 8–20 grammar and vocabulary (20 is a multiple-selection question), 21–25 one long reading text (25 is a multiple-selection question)':'questions 1–4 listening, 5–17 grammar and vocabulary, 18–21 reading text 1, 22–25 reading text 2; questions 4, 21 and 25 are True/False sets'}.
-For each question 1–25, give its section and a short topic tag that a teacher can use to track student weaknesses over the year.
+    const prompt=`The attached photo(s) show the question pages of a ${qN(d)}-question English test for school students. Default layout: ${exFmt(d)!=='US'?`questions 1–${qN(d)}`:d.type==='9'?'questions 1–4 listening (4 is a True/False set), 5–7 short reading passages, 8–20 grammar and vocabulary (20 is a multiple-selection question), 21–25 one long reading text (25 is a multiple-selection question)':'questions 1–4 listening, 5–17 grammar and vocabulary, 18–21 reading text 1, 22–25 reading text 2; questions 4, 21 and 25 are True/False sets'}.
+For each question 1–${qN(d)}, give its section and a short topic tag that a teacher can use to track student weaknesses over the year.
 Section must be one of: "Dinləmə", "Oxu", "Qrammatika", "Leksika" (Leksika = vocabulary, word choice, phrasal verbs, collocations, word formation).
 Topic: 1–4 words in English, consistent naming, e.g. "Present Perfect", "Passive Voice", "Conditionals", "Prepositions", "Articles", "Phrasal Verbs", "Word Formation", "Reported Speech", "Detail", "Main Idea", "True/False", "Vocabulary in context". For listening questions you cannot hear, use "Listening".
-Reply with only JSON: {"questions":[{"n":1,"section":"Dinləmə","topic":"Listening"}, ...25 items]}`;
+Reply with only JSON: {"questions":[{"n":1,"section":"Dinləmə","topic":"Listening"}, ...${qN(d)} items]}`;
     const r=await sample.json(prompt,{images:blobs});
-    let cnt=0;for(const q of (Array.isArray(r?.questions)?r.questions:[])){const i=Number(q?.n)-1;if(i>=0&&i<N){if(SECS.includes(q.section))d.qmeta[i].sec=q.section;if(q.topic)d.qmeta[i].tag=String(q.topic).slice(0,40);cnt++}}
+    let cnt=0;for(const q of (Array.isArray(r?.questions)?r.questions:[])){const i=Number(q?.n)-1;if(i>=0&&i<qN(d)){if(SECS.includes(q.section))d.qmeta[i].sec=q.section;if(q.topic)d.qmeta[i].tag=String(q.topic).slice(0,40);cnt++}}
     d.tagMsg=`${cnt} sualın mövzusu təyin edildi. Yoxlayın və lazım olsa düzəldin.`;d.showMeta=true;
   }catch(e){d.tagMsg=sErr(e)}
   finally{d.tagging=false;render()}
@@ -1036,8 +1101,8 @@ VIEWS.home=()=>{
 };
 function resRow(r,i){
   const st=studentById(r.studentId),t=resTest(r),e=resEssay(r);
-  const badges=[t===null?'<span class="badge warn">test yoxdur</span>':'',e===null?`<span class="badge">${wName(examById(r.examId)).toLocaleLowerCase('az')} yoxdur</span>`:'',(r.flags||[]).length?`<span class="badge warn">⚠ ${r.flags.length} sual</span>`:''].join(' ');
-  return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. Test ${t===null?'–':fmt(t)}/25 + ${wName(examById(r.examId)).toLocaleLowerCase('az')} ${e===null?'–':fmt(e)}/5 = <b>${fmt(resTotal(r))}/30</b></small><div>${badges}</div></div>${dsHTML(r)}<span class="pct" style="margin-left:14px">${fmt(resPct(r))}%</span></div>`;
+  const badges=[t===null?'<span class="badge warn">test yoxdur</span>':'',e===null&&hasW(examById(r.examId))?`<span class="badge">${wName(examById(r.examId)).toLocaleLowerCase('az')} yoxdur</span>`:'',(r.flags||[]).length?`<span class="badge warn">⚠ ${r.flags.length} sual</span>`:''].join(' ');
+  return `<div class="li click srow" data-act="profile" data-id="${r.studentId}" data-n="${esc(norm(st?.name))}">${typeof i==='number'?`<span class="rank">${i+1}</span>`:''}<div class="grow"><b>${esc(sName(r.studentId))}</b><small>${esc(gName(st?.groupId))}${typeof i==='number'?'':', '+esc(eName(r.examId))}. ${scoreLine(r)}</small><div>${badges}</div></div>${dsHTML(r)}<span class="pct" style="margin-left:14px">${fmt(resPct(r))}%</span></div>`;
 }
 
 VIEWS.yoxla=()=>{
@@ -1050,18 +1115,18 @@ VIEWS.yoxla=()=>{
   const doneB=new Set(S.results.filter(r=>r.examId===ex.id&&resEssay(r)!==null).map(r=>r.studentId));
   const busy=Q.items.some(x=>x.state==='busy'||x.state==='wait');
   return `<section class="box"><h2>Hansı sınağı yoxlayırıq?</h2><select data-bind="Q.examId" data-rr="1">${exs.map(x=>`<option value="${x.id}"${x.id===Q.examId?' selected':''}>${esc(x.name)}${x.date?' ('+esc(x.date)+')':''}</option>`).join('')}</select>
-  <p class="hint">${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup seçilməyib'}. ${exType(ex)==='9'?'9-cu sinif sınağı. ':''}Cavablar: ${doneF.size}/${sts.length}, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}.</p>
+  <p class="hint">${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup seçilməyib'}. <b>${fmtName(exFmt(ex))}</b>${exType(ex)==='9'&&(exFmt(ex)==='US'||exFmt(ex)==='LR')?' · 9-cu sinif':''}. Cavablar: ${doneF.size}/${sts.length}${hasW(ex)?`, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}`:''}.</p>
   ${!sts.length?`<div class="notice">Bu sınağın qruplarında şagird yoxdur. Şagirdlər bölməsindən əlavə edin.</div>`:''}
   ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
-  <label class="shoot" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="sheet"></label>
-  <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot">📷 Ön üz<small>Cavablar</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>${wName(ex)}</small><input type="file" accept="image/*" multiple data-file="back"></label></div></details>
+  ${hasW(ex)?`<label class="shoot" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="sheet"></label>
+  <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot">📷 Ön üz<small>Cavablar</small><input type="file" accept="image/*" multiple data-file="front"></label><label class="shoot">📝 Arxa üz<small>${wName(ex)}</small><input type="file" accept="image/*" multiple data-file="back"></label></div></details>`:`<label class="shoot" style="width:100%">📷 Kartın şəkli<small>${fmtName(exFmt(ex))} kartı — hər şəkildə bir kart. Bir və ya bir neçə şəkil</small><input type="file" accept="image/*" multiple data-file="front"></label>`}
   <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
   <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
   ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər</h2><div class="qcount">${(()=>{const c=k=>items.filter(x=>x.state===k).length;return [c('wait')?`<span class="badge">⏳ ${c('wait')} növbədə</span>`:'',c('busy')?`<span class="badge busy">🔄 ${c('busy')} yoxlanır</span>`:'',c('done')?`<span class="badge ok">✅ ${c('done')} hazır</span>`:'',c('need')?`<span class="badge warn">${c('need')} şagirdi seçin</span>`:'',c('err')?`<span class="badge err">${c('err')} xəta</span>`:''].join('')})()}</div>${busy?'<p class="hint" style="margin-top:0">Yoxlama gedərkən növbəti vərəqin şəklini çəkib göndərə bilərsiniz — sıraya düşəcək.</p>':''}<div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
 };
 function qItemHTML(it,ex,sts){
   const b={wait:'<span class="badge">⏳ növbədə</span>',busy:'<span class="badge busy">🔄 yoxlanır</span>',done:'<span class="badge ok">✅ hazır</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'}[it.state];
-  return `<div class="qitem st-${it.state}"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):({front:'Ön üz',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
+  return `<div class="qitem st-${it.state}"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):({front:hasW(ex)?'Ön üz':'Kart',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
   ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}</div>
   ${it.state==='done'?`<button class="btn sm ghost" data-act="editResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
 }
@@ -1078,7 +1143,7 @@ VIEWS.neticeler=()=>{
   const n=rs.length,withT=rs.filter(r=>resTest(r)!==null);
   const avgPct=n?rs.reduce((s,r)=>s+resPct(r),0)/n:0;
   const secs={};withT.forEach(r=>{const m=secScores(r);for(const k in m){secs[k]=secs[k]||{got:0,max:0};secs[k].got+=m[k].got;secs[k].max+=m[k].max}});
-  const hard=Array.from({length:N},(_,i)=>{const w=withT.filter(r=>pointsFor(i,r.answers[i],ex.key[i])<1).length;return {i,w,p:withT.length?Math.round(w*100/withT.length):0}}).filter(q=>q.w).sort((a,b)=>b.w-a.w).slice(0,5);
+  const hard=Array.from({length:qN(ex)},(_,i)=>{const w=withT.filter(r=>pointsFor(i,r.answers[i],ex.key[i])<1).length;return {i,w,p:withT.length?Math.round(w*100/withT.length):0}}).filter(q=>q.w).sort((a,b)=>b.w-a.w).slice(0,5);
   return `<section class="box"><h2>Nəticələr</h2><label class="l">Sınaq</label><select data-bind="rf.examId" data-rr="1">${exs.map(e=>`<option value="${e.id}"${e.id===rf.examId?' selected':''}>${esc(e.name)}${e.date?' ('+esc(e.date)+')':''}</option>`).join('')}</select>
   ${gs.length>1?`<div class="chips" style="margin-top:10px"><button class="chip${!rf.groupId?' on':''}" data-act="rfGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${rf.groupId===g.id?' on':''}" data-act="rfGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div>`:''}</section>
   ${n?`<div class="stats"><div class="stat"><b>${n}</b><span>Yoxlanmış iş</span></div><div class="stat"><b>${fmt(Math.round(avgPct*10)/10)}%</b><span>Orta nəticə</span></div><div class="stat"><b>${fmt(Math.round(resPct(rs[0])*10)/10)}%</b><span>Ən yüksək</span></div><div class="stat"><b>${missing.length}</b><span>Yoxlanmayıb</span></div></div>`:''}
@@ -1143,7 +1208,7 @@ VIEWS.profile=()=>{
 function examCard(r){
   const ex=examById(r.examId),t=resTest(r),e=r.essay,es=resEssay(r),open=profileOpen.has(r.id),wq=wrongQs(r);
   const ph=waPhone(studentById(r.studentId)?.phone);
-  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25 + ${wName(ex).toLocaleLowerCase('az')} ${es===null?'–':fmt(es)}/5 = <b>${fmt(resTotal(r))}/30</b>${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
+  return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. ${scoreLine(r)}${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
   <div class="acts">${e&&e.status==='ok'&&(e.mistakes||[]).length&&e.transcript?`<button class="btn sm" data-act="shareMist" data-id="${r.id}">📝 Səhvlər şəkli</button>`:''}<button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
   ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
   ${e?essayHTML(e):''}`:''}</div>`;
@@ -1158,8 +1223,8 @@ function essayHTML(e){
 }
 function examMsg(r){
   const ex=examById(r.examId),st=studentById(r.studentId),t=resTest(r),e=r.essay,es=resEssay(r);
-  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`,`Cəmi: test ${resTest(r)===null?'–':fmt(resTest(r))}/25 + ${wName(ex).toLocaleLowerCase('az')} ${resEssay(r)===null?'–':fmt(resEssay(r))}/5 = ${totTxt(r)}`];
-  if(t!==null){L.push(`Test: ${fmt(t)}/25`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
+  const L=[`Salam, ${st?.name||''}!`,`«${ex?.name}» nəticən: ${fmt(resPct(r))}%`,(hasW(ex)?`Cəmi: test ${resTest(r)===null?'–':fmt(resTest(r))}/25 + ${wName(ex).toLocaleLowerCase('az')} ${resEssay(r)===null?'–':fmt(resEssay(r))}/5 = ${totTxt(r)}`:`Cəmi: ${totTxt(r)}`)];
+  if(t!==null){L.push(`Test: ${fmt(t)}/${qN(ex)}`);const m=secScores(r);SECS.filter(k=>m[k]).forEach(k=>L.push(`  ${k}: ${fmt(m[k].got)}/${m[k].max}`));
     const w=wrongQs(r);if(w.length){L.push('','Səhv suallar:');w.forEach(q=>L.push(`  ${q.i+1}. ${q.tag?q.tag+' — ':''}sən: ${dispAns(q.v)}, düzgün: ${dispAns(q.k)}`))}}
   if(es!==null){L.push('',`${wName(ex)}: ${fmt(es)}/5`);if(e&&e.status==='ok')L.push(e.kind==='9'?`  Məzmun ${fmt(e.A)}/2, Ardıcıllıq ${e.B===null?'–':fmt(e.B)}/1, Qrammatika ${e.C===null?'–':fmt(e.C)}/1, Söz ehtiyatı ${e.D===null?'–':fmt(e.D)}/1, cərimə −${fmt(e.pen||0)}`:`  A ${fmt(e.A)}/1, B ${e.B===null?'–':fmt(e.B)}/2, C ${e.C===null?'–':fmt(e.C)}/1, D ${e.D===null?'–':fmt(e.D)}/1`);if(e?.feedback)L.push(e.feedback)}
   L.push('',S.settings.sign||S.settings.teacherName||'');
@@ -1184,33 +1249,37 @@ VIEWS.edit=()=>{
   const et=ed.hasEssay?essayTotal(normEssay(e)):null;
   return `<button class="back" data-act="back">← Geri</button>
   <section class="box"><h2>${ed.id?'Nəticəni düzəlt':'Yeni nəticə'}: ${esc(ex.name)}</h2><label class="l">Şagird</label><select data-bind="ed.studentId"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}"${s.id===ed.studentId?' selected':''}>${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select></section>
-  <section class="box"><h2>Test ${t!==null?`<span class="pen" style="margin-left:8px">${fmt(t)}/25</span>`:''}</h2>
+  <section class="box"><h2>Test ${t!==null?`<span class="pen" style="margin-left:8px">${fmt(t)}/${qN(ex)}</span>`:''}</h2>
   ${ed.photoUrl?`<details open style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">📷 Vərəqin şəkli (müqayisə üçün)</summary><div class="preview" style="max-height:60vh"><img src="${ed.photoUrl}" alt="Vərəqin şəkli"></div></details>`:''}
   ${ed.answers?`<p class="hint">Sarı sətirlər yoxlanmalıdır. ✓ düzgün, ½ yarım bal, ✗ səhv (altında düzgün cavab). Basmaqla dəyişin.</p>${gridHTML('ans',ed.answers,{key:ex.key,tf:tfOf(ex),ms:msOf(ex),flags:ed.flags})}`:`<p class="muted">Test cavabları yoxdur.</p><button class="btn ghost sm" data-act="edAddTest">Cavabları əl ilə daxil et</button>`}</section>
-  <section class="box"><h2>${wName(ex)} ${et!==null?`<span class="pen" style="margin-left:8px">${fmt(et)}/5</span>`:''}</h2>
+  ${hasW(ex)?`<section class="box"><h2>${wName(ex)} ${et!==null?`<span class="pen" style="margin-left:8px">${fmt(et)}/5</span>`:''}</h2>
   ${ed.hasEssay?(exType(ex)==='9'?`<div class="crit4"><div>${sel('A',[0,1,2])}<span>Məzmun / 2</span></div><div>${sel('B',[0,.5,1])}<span>Ardıcıllıq / 1</span></div><div>${sel('C',[0,.5,1])}<span>Qrammatika / 1</span></div><div>${sel('D',[0,.5,1])}<span>Söz / 1</span></div></div>
   <div class="crit4" style="grid-template-columns:1fr"><div>${sel('pen',[0,.5,1])}<span>Cərimə (çıxılır)${e.errors!=null?` · ${e.errors} səhv`:''}</span></div></div>
   <p class="hint">Məzmun=0 olarsa hekayə 0. Cərimə: 0–2 səhv → 0, 3–5 → 0,5, 6+ → 1.</p>`:`<div class="crit4"><div>${sel('A',[0,.5,1])}<span>A / 1</span></div><div>${sel('B',[0,1,2])}<span>B / 2</span></div><div>${sel('C',[0,.5,1])}<span>C / 1</span></div><div>${sel('D',[0,.5,1])}<span>D / 1</span></div></div>
   <p class="hint">A=0 olarsa ümumi bal 0, B=0 olarsa yalnız A sayılır.</p>`)+`
   <label class="l">Şagirdə rəy</label><textarea rows="3" data-bind="ed.essay.feedback">${esc(e.feedback||'')}</textarea>
-  <div class="acts"><button class="btn ghost sm" data-act="edNoEssay">${wName(ex)} balını sil</button></div>`:`<p class="muted">${wName(ex)} balı yoxdur.</p><button class="btn ghost sm" data-act="edAddEssay">${wName(ex)} balını əl ilə yaz</button>`}</section>
-  <div class="savebar"><div class="grow"><b>${fmt((t||0)+(et||0))}/30 → ${fmt(Math.round(((t||0)+(et||0))*100/30*100)/100)}%</b><br><span class="muted">${ed.studentId?esc(sName(ed.studentId)):'Şagird seçilməyib'}</span></div>${ed.id?`<button class="btn danger" data-act="edDelete">Sil</button>`:''}<button class="btn" data-act="edSave">Yadda saxla</button></div>`;
+  <div class="acts"><button class="btn ghost sm" data-act="edNoEssay">${wName(ex)} balını sil</button></div>`:`<p class="muted">${wName(ex)} balı yoxdur.</p><button class="btn ghost sm" data-act="edAddEssay">${wName(ex)} balını əl ilə yaz</button>`}</section>`:''}
+  <div class="savebar"><div class="grow"><b>${fmt((t||0)+(et||0))}/${maxTot(ex)} → ${fmt(Math.round(((t||0)+(et||0))*100/maxTot(ex)*100)/100)}%</b><br><span class="muted">${ed.studentId?esc(sName(ed.studentId)):'Şagird seçilməyib'}</span></div>${ed.id?`<button class="btn danger" data-act="edDelete">Sil</button>`:''}<button class="btn" data-act="edSave">Yadda saxla</button></div>`;
 };
 function normEssay(e){const o={...e,status:e.status||'ok'};for(const k of ['A','B','C','D'])o[k]=o[k]===''||o[k]===null||o[k]===undefined?null:Number(o[k]);if(o.A===null)o.A=0;if(o.kind==='9')o.pen=o.pen===''||o.pen==null?0:Number(o.pen);return o}
 function openEditor(r,examId){
   if(r){const e=r.essay?clean(r.essay):(resEssay(r)!==null?{status:'ok',A:null,B:null,C:null,D:null,feedback:'',legacy:resEssay(r)}:null);
     ed={id:r.id,examId:r.examId,studentId:r.studentId,answers:Array.isArray(r.answers)?r.answers.slice():null,flags:(r.flags||[]).slice(),hasEssay:!!e,essay:e||{status:'ok',A:null,B:null,C:null,D:null,feedback:''}}}
-  else ed={id:null,examId,studentId:'',answers:Array(N).fill('-'),flags:[],hasEssay:false,essay:{status:'ok',A:null,B:null,C:null,D:null,feedback:''}};
+  else ed={id:null,examId,studentId:'',answers:Array(qN(examById(examId))).fill('-'),flags:[],hasEssay:false,essay:{status:'ok',A:null,B:null,C:null,D:null,feedback:''}};
   if(exType(examById(ed.examId))==='9'&&!ed.essay.kind){ed.essay.kind='9';if(ed.essay.pen==null)ed.essay.pen=0}
   try{if(ed.photoUrl)URL.revokeObjectURL(ed.photoUrl)}catch(e){}ed.photoUrl=r&&photoOf[r.id]?URL.createObjectURL(photoOf[r.id]):'';
   go('edit');
 }
 
-function exInfoHTML(d,gs,hasRes){return `<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
-  <label class="l">Sınağın növü</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün növü dəyişmək olmaz.</p>':''}
-  <label class="l">Qruplar (siniflər)</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}`}
-function exKeyHTML(d,filled){return `<p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
-  ${gridHTML('key',d.key,{tf:LAYOUT[d.type].tf,ms:LAYOUT[d.type].ms})}
+function exInfoHTML(d,gs,hasRes){
+  const grp=`<label class="l" style="margin-top:0">1. Sinif (qrup)</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}`;
+  if(!d.groupIds.length&&!d.id)return grp+'<p class="hint">Sinfi seçin — sonra sınağın formatı çıxacaq.</p>';
+  const fm=`<label class="l">2. Sınağın formatı</label><div class="big2" style="grid-template-columns:1fr 1fr">${FMTS.map(([k,n,dsc])=>`<button type="button" class="shoot" data-act="setExamFmt" data-f="${k}" style="padding:10px 12px;font-size:16px;${d.fmtPicked&&d.fmt===k?'background:var(--c1);color:#fff;border-style:solid;border-color:var(--c1)':'background:var(--card);color:var(--ink);border-color:var(--line)'}">${n}<small style="${d.fmtPicked&&d.fmt===k?'color:#e8ecff':''}">${dsc}</small></button>`).join('')}</div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün formatı və növü dəyişmək olmaz.</p>':''}`;
+  if(!d.fmtPicked)return grp+fm;
+  const tp=d.fmt==='US'||d.fmt==='LR'?`<label class="l">3. Sinif səviyyəsi</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>`:'';
+  return grp+fm+tp+`<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>`}
+function exKeyHTML(d,filled){return `<p class="hint">${!hasW(d)?(tfOf(d).length||msOf(d).length?(tfOf(d).length?`${tfOf(d).map(i=>i+1).join(', ')}-ci suallarda 1–4 bəndləri üçün A və ya B seçin (iki doğru cavab varsa, ikisini də basın). `:'')+(msOf(d).length?`${msOf(d).map(i=>i+1).join(', ')}-ci sualda düzgün rəqəmlərin hamısını seçin.`:''):'Hər sual üçün düzgün variantı (A–E) seçin.'):d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
+  ${gridHTML('key',d.key,{tf:layOf(d).tf,ms:layOf(d).ms})}
   <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>`}
 function exWritingHTML(d){return d.type==='9'?`<label class="l">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartına çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l">26. Paraqrafın mövzusu (kartda çap olunur)</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
 function exMetaHTML(d){return `<p class="hint">Testin səhifələrinin şəklini göndərin — Claude 25 sualın bölməsini və mövzusunu (Present Perfect, Prepositions…) təyin edir. Bu, şagirdlərin zəif mövzularını izləmək üçündür. Yanlış şəkil göndərsəniz, düzgününü yenidən göndərin.</p>
@@ -1218,7 +1287,7 @@ function exMetaHTML(d){return `<p class="hint">Testin səhifələrinin şəklini
   ${maxImages>1?`<p class="hint">Ən çox ${maxImages} şəkil birdən.</p>`:''}
   ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
   ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}`}
-const keyFilled=d=>d.key.filter((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length;
+const keyFilled=d=>d.key.filter((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d,i)].test(v||'')).length;
 let cardPrev={stamp:'',url:'',busy:false};
 const cardStamp=ex=>ex?JSON.stringify([ex.id,ex.name,ex.type,ex.topic,ex.key,(ex.pics||'').length,S.settings.logo,S.settings.teacherName]):'';
 async function genCardPrev(ex){
@@ -1227,7 +1296,7 @@ async function genCardPrev(ex){
   if(tab==='sinaqlar')scheduleRender();
 }
 function draftDirty(){const d=examDraft;if(!d.id)return !!(d.name||d.topic||d.pics||d.key.some(v=>v!=='-'));const e=examById(d.id);if(!e)return false;
-  return JSON.stringify([d.name.trim(),d.date,d.type,d.groupIds.slice().sort(),d.topic.trim(),d.pics,d.key,d.qmeta.map(m=>[m.sec,String(m.tag||'').trim()])])!==JSON.stringify([e.name,e.date||today(),exType(e),(e.groupIds||[]).slice().sort(),e.topic||'',e.pics||'',e.key,Array.from({length:N},(_,i)=>[qSec(e,i),qTag(e,i)])])}
+  return JSON.stringify([d.fmt,d.name.trim(),d.date,d.type,d.groupIds.slice().sort(),d.topic.trim(),d.pics,d.key,d.qmeta.map(m=>[m.sec,String(m.tag||'').trim()])])!==JSON.stringify([exFmt(e),e.name,e.date||today(),exType(e),(e.groupIds||[]).slice().sort(),e.topic||'',e.pics||'',e.key,Array.from({length:qN(e)},(_,i)=>[qSec(e,i),qTag(e,i)])])}
 VIEWS.sinaqlar=()=>{
   const d=examDraft,gs=groupsSorted(),list=examsSorted();
   if(xn.mode==='detail'&&!examById(xn.examId))xn.mode='list';
@@ -1241,29 +1310,29 @@ VIEWS.sinaqlar=()=>{
     return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
     <section class="box"><h2>📚 Hazır sınaqlar</h2><label class="l" style="margin-top:0">Sinif (qrup)</label>
     <div class="chips"><button class="chip${!xn.gid?' on':''}" data-act="xnGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${xn.gid===g.id?' on':''}" data-act="xnGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div></section>
-    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · ${exType(e)==='9'?'9-cu sinif':'10–11-ci sinif'} · ${n} iş${exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
+    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · <b>${fmtName(exFmt(e))}</b>${exFmt(e)==='US'||exFmt(e)==='LR'?' · '+(exType(e)==='9'?'9-cu sinif':'10–11-ci sinif'):''} · ${n} iş${!hasW(e)?'':exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
   }
   const filled=keyFilled(d),hasRes=d.id&&S.results.some(r=>r.examId===d.id);
   if(xn.mode==='new')return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
   <section class="box"><h2>➕ Yeni sınaq</h2>${exInfoHTML(d,gs,false)}</section>
-  <section class="box"><h2>✅ Cavab açarı (1–25) <span class="muted" style="font-weight:500">${filled}/25</span></h2>${exKeyHTML(d,filled)}</section>
-  <section class="box"><h2>📄 Cavab kartı üçün</h2>${exWritingHTML(d)}</section>
+  ${d.fmtPicked&&d.groupIds.length?`<section class="box"><h2>✅ Cavab açarı (1–${qN(d)}) <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${exKeyHTML(d,filled)}</section>
+  ${hasW(d)?`<section class="box"><h2>📄 Cavab kartı üçün</h2>${exWritingHTML(d)}</section>`:''}
   <section class="box"><h2>🖼 Testin şəkilləri <span class="muted" style="font-weight:500;font-size:14px">(istəyə görə)</span></h2>${exMetaHTML(d)}</section>
-  <div class="savebar"><div class="grow muted">Hamısını doldurub sınağı yaradın.</div><button class="btn" data-act="saveExam">Sınağı yarat</button></div>`;
+  <div class="savebar"><div class="grow muted">Hamısını doldurub sınağı yaradın.</div><button class="btn" data-act="saveExam">Sınağı yarat</button></div>`:''}`;
   /* detail */
   const ex=examById(xn.examId),n=S.results.filter(r=>r.examId===ex.id).length,dirty=draftDirty();
   if(cardPrev.stamp!==cardStamp(ex))setTimeout(()=>genCardPrev(ex),0);
   return `<button class="back" data-act="xnBack">← Hazır sınaqlar</button>
-  <section class="box hero" style="padding:16px 16px"><h1 style="margin:0">${esc(ex.name)}</h1><p class="muted" style="margin:4px 0 0">${esc(ex.date||'')}${ex.date?' · ':''}${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · ${exType(ex)==='9'?'9-cu sinif':'10–11-ci sinif'} · ${n} yoxlanmış iş</p></section>
+  <section class="box hero" style="padding:16px 16px"><h1 style="margin:0">${esc(ex.name)}</h1><p class="muted" style="margin:4px 0 0">${esc(ex.date||'')}${ex.date?' · ':''}${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · <b>${fmtName(exFmt(ex))}</b>${exFmt(ex)==='US'||exFmt(ex)==='LR'?' · '+(exType(ex)==='9'?'9-cu sinif':'10–11-ci sinif'):''} · ${n} yoxlanmış iş</p></section>
   <section class="box"><h2>📄 Cavab kartı</h2>
-  ${exType(ex)==='9'?`<p style="margin:0 0 8px"><b>26.</b> ${ex.pics?'3 şəkil kartda çap olunur.':'<span style="color:var(--pen)">3 şəkil yüklənməyib.</span>'}</p>`:`<p style="margin:0 0 8px"><b>Mövzu:</b> ${ex.topic?`<i>${esc(ex.topic)}</i>`:'<span class="muted">yazılmayıb — kartda boş xətt olacaq</span>'}</p>`}
+  ${!hasW(ex)?`<p class="hint" style="margin:0 0 8px">A4 səhifədə ${exFmt(ex)==='G40'?2:4} kart — çap edib qırıq xətt üzrə kəsin.</p>`:exType(ex)==='9'?`<p style="margin:0 0 8px"><b>26.</b> ${ex.pics?'3 şəkil kartda çap olunur.':'<span style="color:var(--pen)">3 şəkil yüklənməyib.</span>'}</p>`:`<p style="margin:0 0 8px"><b>Mövzu:</b> ${ex.topic?`<i>${esc(ex.topic)}</i>`:'<span class="muted">yazılmayıb — kartda boş xətt olacaq</span>'}</p>`}
   <div style="max-width:330px;margin:0 auto;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff">${cardPrev.stamp===cardStamp(ex)&&cardPrev.url?`<img src="${cardPrev.url}" alt="Cavab kartı" style="display:block;width:100%">`:'<p class="empty" style="margin:0;padding:60px 10px">Kart hazırlanır…</p>'}</div>
   <div class="acts" style="justify-content:center"><button class="btn" data-act="cardPdf" data-id="${ex.id}">⬇️ PDF yüklə</button></div>
   ${dirty?'<p class="hint" style="text-align:center">Kartda saxlanmış variant görünür. Dəyişiklikləri saxlayandan sonra kart yenilənəcək.</p>':''}
-  <details style="margin-top:6px"><summary class="muted" style="cursor:pointer">${exType(ex)==='9'?'3 şəkli dəyiş':'Mövzunu dəyiş'}</summary><div style="margin-top:8px">${exWritingHTML(d)}</div></details></section>
-  <section class="box"><h2>✅ Cavab açarı <span class="muted" style="font-weight:500">${filled}/25</span></h2>${n?'<p class="hint">Açarı dəyişib saxlasanız, yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanır.</p>':''}${exKeyHTML(d,filled)}</section>
+  ${hasW(ex)?`<details style="margin-top:6px"><summary class="muted" style="cursor:pointer">${exType(ex)==='9'?'3 şəkli dəyiş':'Mövzunu dəyiş'}</summary><div style="margin-top:8px">${exWritingHTML(d)}</div></details>`:''}</section>
+  <section class="box"><h2>✅ Cavab açarı <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${n?'<p class="hint">Açarı dəyişib saxlasanız, yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanır.</p>':''}${exKeyHTML(d,filled)}</section>
   <section class="box"><h2>🖼 Testin şəkilləri və sualların mövzuları</h2>${exMetaHTML(d)}</section>
-  <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, sinif)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
+  <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, sinif, format)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
   <div class="savebar"><div class="grow muted">Açar, mövzu, şəkillər və məlumatlar «Saxla» basanda yazılır.</div><button class="btn" data-act="saveExam">💾 Saxla</button></div>`;
 };
 
@@ -1321,7 +1390,7 @@ const ACT={
   retry:el=>{const it=Q.items.find(x=>x.id===el.dataset.id);if(it){it.state='wait';it.msg='Növbədədir';runQueue()}},
   clearQueue:()=>{Q.items=Q.items.filter(x=>x.state==='wait'||x.state==='busy');render()},
   editResult:el=>{const r=S.results.find(x=>x.id===el.dataset.id);if(r)openEditor(r)},
-  edAddTest:()=>{ed.answers=Array(N).fill('-');render()},
+  edAddTest:()=>{ed.answers=Array(qN(examById(ed.examId))).fill('-');render()},
   edAddEssay:()=>{ed.hasEssay=true;render()},
   edNoEssay:()=>{ed.hasEssay=false;render()},
   async edSave(){
@@ -1355,18 +1424,22 @@ const ACT={
   async delGroup(el){const g=groupById(el.dataset.id);if(!g)return;const st=studentsOf(g.id);if(!await confirmBox('Qrup silinsin?',`${g.name} qrupu, ${st.length} şagird və onların nəticələri silinəcək.`))return;for(const s of st){for(const r of S.results.filter(r=>r.studentId===s.id))await del('results',r.id);await del('students',s.id)}await del('groups',g.id);render()},
   toggleExamGroup(el){const a=examDraft.groupIds,i=a.indexOf(el.dataset.id);if(i>=0)a.splice(i,1);else a.push(el.dataset.id);render()},
   toggleMeta(){examDraft.showMeta=!examDraft.showMeta;render()},
-  setExamType(el){const d=examDraft,t=el.dataset.t;if(t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, növü dəyişmək olmaz.','err');for(let i=0;i<N;i++){if(kindAt(d.type,i)!==kindAt(t,i))d.key[i]='-';d.qmeta[i].sec=defSec(i,t)}d.type=t;render()},
+  setExamFmt(el){const d=examDraft,f=el.dataset.f;if(d.id&&S.results.some(r=>r.examId===d.id)&&f!==d.fmt)return toast('Bu sınaqda nəticə var, formatı dəyişmək olmaz.','err');
+    if(f!==d.fmt||!d.fmtPicked){const nd={...d,fmt:f};const n=qN(nd);d.key=Array.from({length:n},(_,i)=>i<qN(d)&&kindAt(d,i)===kindAt(nd,i)?d.key[i]:'-');d.qmeta=Array.from({length:n},(_,i)=>({sec:secFor(nd,i),tag:''}));d.fmt=f}
+    d.fmtPicked=true;render()},
+  setExamType(el){const d=examDraft,t=el.dataset.t;if(t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, növü dəyişmək olmaz.','err');if(!d.fmtPicked)d.fmtPicked=true;const nd={...d,type:t};for(let i=0;i<qN(d);i++){if(kindAt(d,i)!==kindAt(nd,i))d.key[i]='-';d.qmeta[i].sec=secFor(nd,i)}d.type=t;render()},
   delPics(){examDraft.pics='';render()},
-  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';const kd=kindAt(examDraft.type,i);const vt=kd==='tf'&&/^[AB*]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF*]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
+  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<qN(examDraft);i++){const v=a[i]||'-';const kd=kindAt(examDraft,i);const vt=kd==='tf'&&/^[AB*]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF*]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===qN(examDraft)?'Açar köçürüldü.':`${a.length} cavab tapıldı, ${qN(examDraft)} olmalıdır.`,a.length===qN(examDraft)?'':'err')},
   async saveExam(){
     const d=examDraft;if(!d.name.trim())return toast('Sınağın adını yazın.','err');
     if(!d.groupIds.length)return toast('Ən azı bir qrup seçin.','err');
-    const miss=d.key.map((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')?0:i+1).filter(Boolean);
-    if(d.type==='9'&&!d.pics)return toast('26-cı sual üçün 3 şəkli yükləyin.','err');
+    const miss=d.key.map((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d,i)].test(v||'')?0:i+1).filter(Boolean);
+    if(!d.fmtPicked)return toast('Sınağın formatını seçin.','err');
+    if(hasW(d)&&d.type==='9'&&!d.pics)return toast('26-cı sual üçün 3 şəkli yükləyin.','err');
     if(miss.length)return toast('Açar tam deyil: '+miss.join(', ')+'-ci suallar.','err');
-    if(d.type!=='9'&&!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
+    if(hasW(d)&&d.type!=='9'&&!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
     const old=d.id&&examById(d.id);
-    const ex={id:d.id||newId(),type:d.type,pics:d.type==='9'?d.pics:'',name:d.name.trim(),date:d.date,groupIds:d.groupIds.slice(),topic:d.topic.trim(),key:d.key.slice(),qmeta:d.qmeta.map(m=>({sec:m.sec,tag:String(m.tag||'').trim()})),created:old?.created||new Date().toISOString()};
+    const ex={id:d.id||newId(),fmt:d.fmt,type:exFmt(d)==='G20'||exFmt(d)==='G40'?'11':d.type,pics:hasW(d)&&d.type==='9'?d.pics:'',name:d.name.trim(),date:d.date,groupIds:d.groupIds.slice(),topic:hasW(d)?d.topic.trim():'',key:d.key.slice(0,qN(d)),qmeta:d.qmeta.map(m=>({sec:m.sec,tag:String(m.tag||'').trim()})),created:old?.created||new Date().toISOString()};
     try{await put('exams',ex)}catch(e){return}
     loadDraft(ex);xn.mode='detail';xn.examId=ex.id;render();if(!old)toTop();
     toast(old?'Sınaq yeniləndi.':'Sınaq yaradıldı. Aşağıda cavab kartını PDF kimi yükləyə bilərsiniz.');
@@ -1394,7 +1467,7 @@ const ACT={
   csv(){
     const ex=examById(rf.examId);if(!ex)return;
     const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
-    const rows=[['Şagird','Qrup','Telefon','Test (25)',...SECS,'A','B','C','D','Cərimə','Yazı (5)','Cəmi (30)','Faiz','Səhv suallar']];
+    const rows=[['Şagird','Qrup','Telefon',`Test (${qN(ex)})`,...SECS,'A','B','C','D','Cərimə','Yazı (5)',`Cəmi (${maxTot(ex)})`,'Faiz','Səhv suallar']];
     for(const r of rs){const st=studentById(r.studentId),m=secScores(r),e=r.essay||{};rows.push([sName(r.studentId),gName(st?.groupId),st?.phone||'',resTest(r)===null?'':fmt(resTest(r)),...SECS.map(k=>m[k]?fmt(m[k].got)+'/'+m[k].max:''),...['A','B','C','D'].map(k=>e[k]===null||e[k]===undefined?'':fmt(e[k])),e.kind==='9'?fmt(e.pen||0):'',resEssay(r)===null?'':fmt(resEssay(r)),fmt(resTotal(r)),fmt(resPct(r)),wrongQs(r).map(q=>q.i+1).join(' ')])}
     saveFile('netice-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.csv','\ufeff'+rows.map(row=>row.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';')).join('\r\n'));
   },
@@ -1404,7 +1477,7 @@ const ACT={
   exportJson(){saveFile('smartexam-ehtiyat-'+today()+'.json',JSON.stringify({app:'SmartExam',version:3,exported:new Date().toISOString(),groups:S.groups,students:S.students,exams:S.exams,results:S.results,settings:S.settings},null,1))},
 };
 async function importData(v){
-  const exams=(v.exams||[]).map(e=>({id:e.id,type:e.type==='9'?'9':'11',pics:e.pics||'',name:e.name,date:e.date||(e.created||'').slice(0,10)||today(),groupIds:e.groupIds||(e.groupId?[e.groupId]:[]),topic:e.topic||'',key:e.key,qmeta:e.qmeta||Array.from({length:N},(_,i)=>({sec:defSec(i,e.type),tag:''})),created:e.created||''})).filter(e=>Array.isArray(e.key)&&e.key.length===N);
+  const exams=(v.exams||[]).map(e=>({id:e.id,fmt:exFmt(e),type:e.type==='9'?'9':'11',pics:e.pics||'',name:e.name,date:e.date||(e.created||'').slice(0,10)||today(),groupIds:e.groupIds||(e.groupId?[e.groupId]:[]),topic:e.topic||'',key:e.key,qmeta:e.qmeta||Array.from({length:qN(e)},(_,i)=>({sec:secFor(e,i),tag:''})),created:e.created||''})).filter(e=>Array.isArray(e.key)&&e.key.length===qN(e));
   const results=(v.results||[]).map(r=>({...r,answers:Array.isArray(r.answers)?r.answers:(Array.isArray(r.detail)?r.detail.map(d=>String(d.answer||'-')):null),flags:r.flags||[],essay:r.essay&&typeof r.essay.total==='number'?r.essay:null,essayScore:r.essay&&typeof r.essay.total==='number'?undefined:(r.essayScore??undefined)}));
   const all=[['groups',(v.groups||[]).map(g=>({id:g.id,name:g.name}))],['students',(v.students||[]).map(s=>({id:s.id,groupId:s.groupId,name:s.name,phone:s.phone||''}))],['exams',exams],['results',results]];
   const total=all.reduce((s,[,a])=>s+a.length,0);let k=0;
