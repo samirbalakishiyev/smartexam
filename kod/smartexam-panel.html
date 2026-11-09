@@ -443,7 +443,7 @@ Məsələn, 3 bal:
 <script>
 'use strict';
 const N=25, TF=[3,20,24];
-const LAYOUT={'US-11':{tf:[3,20,24],ms:[]},'US-9':{tf:[3],ms:[19,24]},'LR-11':{tf:[3,7,11],ms:[]},'LR-9':{tf:[3],ms:[11]},'G20':{tf:[],ms:[]},'G40':{tf:[],ms:[]}};
+const LAYOUT={'US-11':{tf:[3,20,24],ms:[]},'US-9':{tf:[3],ms:[19,24]},'LR-11':{tf:[3,7,11],ms:[]},'LR-9':{tf:[3],ms:[11],ms4:[11]},'G20':{tf:[],ms:[]},'G40':{tf:[],ms:[]}};
 const FMTS=[['US','ÜS','Ümumi sınaq: 25 test + 5 bal yazı'],['LR','12-LR','Listening + Reading, 12 sual'],['G20','20 G','20 qapalı qrammatika sualı'],['G40','40 G','40 qapalı qrammatika sualı']];
 const fmtName=f=>(FMTS.find(x=>x[0]===f)||FMTS[0])[1];
 const exFmt=ex=>['LR','G20','G40'].includes(ex?.fmt)?ex.fmt:'US';
@@ -455,6 +455,7 @@ const layKey=ex=>{const f=exFmt(ex);return f==='US'||f==='LR'?f+'-'+exType(ex):f
 const layOf=ex=>LAYOUT[layKey(ex)];
 const tfOf=ex=>layOf(ex).tf;
 const msOf=ex=>layOf(ex).ms;
+const msCnt=(ex,i)=>(layOf(ex).ms4||[]).includes(i)?4:5;
 const kindAt=(ex,i)=>layOf(ex).tf.includes(i)?'tf':layOf(ex).ms.includes(i)?'ms':'mc';
 const wName=ex=>exType(ex)==='9'?'Hekayə':'Paraqraf';
 const normMS=v=>{const d=[...new Set(String(v||'').replace(/[^1-5]/g,''))].sort().join('');return d||'-'};
@@ -605,10 +606,10 @@ function go(t){if(t!=='profile'&&t!=='edit')prevTab=t;tab=t;render();toTop()}
 function gridHTML(g,arr,opt={}){
   const flags=new Set(opt.flags||[]);
   return `<div class="grid25">`+arr.map((v,i)=>{
-    const n=i+1,tf=(opt.tf||TF).includes(i),ms=(opt.ms||[]).includes(i);let mark='',body;
+    const n=i+1,tf=(opt.tf||TF).includes(i),ms=(opt.ms||[]).includes(i),mc4=(opt.ms4||[]).includes(i);let mark='',body;
     if(opt.key){const k=opt.key[i],p=pointsFor(i,v,k);mark=`<span class="mk ${p===1?'ok':p>0?'half':'bad'}">${p===1?'✓':p>0?'½':'✗'}${p<1?`<span class="kh">${esc(dispAns(k))}</span>`:''}</span>`}
     if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t||s[j]==='*'?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t||s[j]==='*'}" aria-label="${n}.${j+1} ${t==='T'?'A':'B'}">${t==='T'?'A':'B'}</button>`).join('')}</span>`).join('')+`</div>`}
-    else if(ms){const sv=normMS(v);body=['1','2','3','4','5'].map(L=>`<button type="button" class="bub${sv.includes(L)?' on':''}" data-bub="${g}" data-q="${i}" data-m="1" data-v="${L}" aria-pressed="${sv.includes(L)}" aria-label="${n} ${L}">${L}</button>`).join('')+`<span class="muted" style="font-size:12px">bir neçə</span>`}
+    else if(ms){const sv=normMS(v);body=(mc4?['1','2','3','4']:['1','2','3','4','5']).map(L=>`<button type="button" class="bub${sv.includes(L)?' on':''}" data-bub="${g}" data-q="${i}" data-m="1" data-v="${L}" aria-pressed="${sv.includes(L)}" aria-label="${n} ${L}">${L}</button>`).join('')+`<span class="muted" style="font-size:12px">bir neçə</span>`}
     else body=['A','B','C','D','E'].map(L=>`<button type="button" class="bub${v===L?' on':''}" data-bub="${g}" data-q="${i}" data-v="${L}" aria-pressed="${v===L}" aria-label="${n} ${L}">${L}</button>`).join('');
     return `<div class="row${flags.has(n)?' flag':''}${tf?' tf':''}"><span class="qn">${n}</span><div class="opts">${body}</div>${mark}</div>`;
   }).join('')+`</div>`;
@@ -686,7 +687,7 @@ async function aiFront(ex,blob,halves,onlyHalves){
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
-2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.length?tfs.map(i=>i+1).join(', '):'(none)'} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
+2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`${mss.map(i=>`Question ${i+1} is a multiple-selection row with ${msCnt(ex,i)} bubbles numbered 1 to ${msCnt(ex,i)}`).join('; ')}; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.length?tfs.map(i=>i+1).join(', '):'(none)'} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
 IMPORTANT — a filled bubble hides its printed letter, so identify it by POSITION: count the bubbles of that row from the left — 1st = A, 2nd = B, 3rd = C, 4th = D, 5th = E (A/B sub-rows: 1st = A, 2nd = B; multiple-selection rows: 1st = 1 … 5th = 5). Then cross-check with the letters still visible in the empty bubbles on each side (e.g. if B is visible on its left and D on its right, the filled one is C). Never report a letter that is still visible in an empty bubble as the filled one.
 Work slowly and carefully, one question at a time, in number order: find the printed question number, then compare ALL bubbles of that row (or of that A/B sub-row, e.g. 4.4) and pick the one that is clearly darker / filled. Empty bubbles show only a small light-grey letter; a filled bubble is solid dark. Do not shift rows: double-check that the bubble you read belongs to the same printed number. Check every A/B sub-row (x.1, x.2, x.3, x.4) separately — do not leave one blank if a bubble in it is filled.
 A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same two-column row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for two-column put "?" only in the unclear position, e.g. "AB?A"). Do not guess.
@@ -699,7 +700,7 @@ Reply with only JSON:
   const out=[];
   for(let i=0;i<qN(ex);i++){
     let v=String(a[i]??'-').toUpperCase().replace(/\s/g,'');
-    if(mss.includes(i)){if(v.includes('?'))flags.add(i+1);v=normMS(v)}
+    if(mss.includes(i)){if(v.includes('?'))flags.add(i+1);v=normMS(v.replace(msCnt(ex,i)===4?/5/g:/$^/,''))}
     else if(tfs.includes(i)){v=v.replace(/A/g,'T').replace(/B/g,'F').replace(/[^TF?\-]/g,'');if(v.length!==4){flags.add(i+1);v=(v+'????').slice(0,4)}if(v.includes('?'))flags.add(i+1);v=v.replace(/\?/g,'-')}
     else if(v==='?'||!/^[A-E-]$/.test(v)){flags.add(i+1);v='-'}
     out.push(v);
@@ -872,7 +873,7 @@ async function drawMini(ex,opt={}){
       if(row>0)Ln(x0+2,y0,x0+colW-2,y0,.2,'#d3dae6',[1,1]);
       if(tfs.includes(i)){RR(x0+1,y0+.5,colW-2,u*rowH-1,1,null,0,FILL);T(String(i+1),x0+6.6,y0+u*rowH/2,3.1,800,'right',INK);
         for(let q=0;q<4;q++){const sx=x0+8.6+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.1,700,'left',INK);Bub(sx+8.4,scy,4.8,'A',2.3);Bub(sx+13.9,scy,4.8,'B',2.3)}}
-      else if(mss.includes(i)){RR(x0+1,y0+.5,colW-2,rowH-1,1,null,0,FILL);T(String(i+1),x0+6.6,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,String(j+1),2.5)}
+      else if(mss.includes(i)){RR(x0+1,y0+.5,colW-2,rowH-1,1,null,0,FILL);T(String(i+1),x0+6.6,cy,3.1,800,'right',INK);for(let j=0;j<msCnt(ex,i);j++)Bub(x0+11+j*BS,cy,BD,String(j+1),2.5)}
       else{T(String(i+1),x0+6.6,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,'ABCDE'[j],2.5)}
     });
     let y=top+2.4+rows*rowH+3.2;
@@ -1251,7 +1252,7 @@ VIEWS.edit=()=>{
   <section class="box"><h2>${ed.id?'Nəticəni düzəlt':'Yeni nəticə'}: ${esc(ex.name)}</h2><label class="l">Şagird</label><select data-bind="ed.studentId"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}"${s.id===ed.studentId?' selected':''}>${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select></section>
   <section class="box"><h2>Test ${t!==null?`<span class="pen" style="margin-left:8px">${fmt(t)}/${qN(ex)}</span>`:''}</h2>
   ${ed.photoUrl?`<details open style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">📷 Vərəqin şəkli (müqayisə üçün)</summary><div class="preview" style="max-height:60vh"><img src="${ed.photoUrl}" alt="Vərəqin şəkli"></div></details>`:''}
-  ${ed.answers?`<p class="hint">Sarı sətirlər yoxlanmalıdır. ✓ düzgün, ½ yarım bal, ✗ səhv (altında düzgün cavab). Basmaqla dəyişin.</p>${gridHTML('ans',ed.answers,{key:ex.key,tf:tfOf(ex),ms:msOf(ex),flags:ed.flags})}`:`<p class="muted">Test cavabları yoxdur.</p><button class="btn ghost sm" data-act="edAddTest">Cavabları əl ilə daxil et</button>`}</section>
+  ${ed.answers?`<p class="hint">Sarı sətirlər yoxlanmalıdır. ✓ düzgün, ½ yarım bal, ✗ səhv (altında düzgün cavab). Basmaqla dəyişin.</p>${gridHTML('ans',ed.answers,{key:ex.key,tf:tfOf(ex),ms:msOf(ex),ms4:layOf(ex).ms4||[],flags:ed.flags})}`:`<p class="muted">Test cavabları yoxdur.</p><button class="btn ghost sm" data-act="edAddTest">Cavabları əl ilə daxil et</button>`}</section>
   ${hasW(ex)?`<section class="box"><h2>${wName(ex)} ${et!==null?`<span class="pen" style="margin-left:8px">${fmt(et)}/5</span>`:''}</h2>
   ${ed.hasEssay?(exType(ex)==='9'?`<div class="crit4"><div>${sel('A',[0,1,2])}<span>Məzmun / 2</span></div><div>${sel('B',[0,.5,1])}<span>Ardıcıllıq / 1</span></div><div>${sel('C',[0,.5,1])}<span>Qrammatika / 1</span></div><div>${sel('D',[0,.5,1])}<span>Söz / 1</span></div></div>
   <div class="crit4" style="grid-template-columns:1fr"><div>${sel('pen',[0,.5,1])}<span>Cərimə (çıxılır)${e.errors!=null?` · ${e.errors} səhv`:''}</span></div></div>
@@ -1278,8 +1279,8 @@ function exInfoHTML(d,gs,hasRes){
   if(!d.fmtPicked)return grp+fm;
   const tp=d.fmt==='US'||d.fmt==='LR'?`<label class="l">3. Sinif səviyyəsi</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>`:'';
   return grp+fm+tp+`<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>`}
-function exKeyHTML(d,filled){return `<p class="hint">${!hasW(d)?(tfOf(d).length||msOf(d).length?(tfOf(d).length?`${tfOf(d).map(i=>i+1).join(', ')}-ci suallarda 1–4 bəndləri üçün A və ya B seçin (iki doğru cavab varsa, ikisini də basın). `:'')+(msOf(d).length?`${msOf(d).map(i=>i+1).join(', ')}-ci sualda düzgün rəqəmlərin hamısını seçin.`:''):'Hər sual üçün düzgün variantı (A–E) seçin.'):d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
-  ${gridHTML('key',d.key,{tf:layOf(d).tf,ms:layOf(d).ms})}
+function exKeyHTML(d,filled){return `<p class="hint">${!hasW(d)?(tfOf(d).length||msOf(d).length?(tfOf(d).length?`${tfOf(d).map(i=>i+1).join(', ')}-ci suallarda 1–4 bəndləri üçün A və ya B seçin (iki doğru cavab varsa, ikisini də basın). `:'')+(msOf(d).length?`${msOf(d).map(i=>i+1).join(', ')}-ci sualda düzgün rəqəmlərin hamısını seçin (1–${msCnt(d,msOf(d)[0])}).`:''):'Hər sual üçün düzgün variantı (A–E) seçin.'):d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
+  ${gridHTML('key',d.key,{tf:layOf(d).tf,ms:layOf(d).ms,ms4:layOf(d).ms4||[]})}
   <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>`}
 function exWritingHTML(d){return d.type==='9'?`<label class="l">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartına çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l">26. Paraqrafın mövzusu (kartda çap olunur)</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
 function exMetaHTML(d){return `<p class="hint">Testin səhifələrinin şəklini göndərin — Claude 25 sualın bölməsini və mövzusunu (Present Perfect, Prepositions…) təyin edir. Bu, şagirdlərin zəif mövzularını izləmək üçündür. Yanlış şəkil göndərsəniz, düzgününü yenidən göndərin.</p>
