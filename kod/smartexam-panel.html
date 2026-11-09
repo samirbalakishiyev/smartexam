@@ -471,7 +471,7 @@ const defSec=(i,t)=>t==='9'?(i<4?'Dinləmə':i<7?'Oxu':i<20?'Qrammatika':'Oxu'):
 let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
 let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,downloads=null;
 let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
-const forms={group:'',sGroup:'',bulk:'',newTeacher:''};
+const forms={group:'',sGroup:'',bulk:'',newTeacher:'',rows:[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]};
 const rf={examId:'',groupId:''};
 let xn={mode:'home',gid:'',examId:''},sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
@@ -1083,8 +1083,11 @@ VIEWS.sagirdler=()=>{
   <div class="acts">${!sel&&st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEditToggle" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
   <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, A1" aria-label="Qrup adı"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
   <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
-  <label class="l">Şagirdlər (hər sətirdə bir nəfər)</label><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67&#10;Tofiq Əliyev, 055 765 43 21">${esc(forms.bulk)}</textarea>
-  <p class="hint">Telefon nömrəsi WhatsApp ilə hesabat göndərmək üçündür. Nömrəsiz də yazmaq olar.</p><button class="btn" data-act="addStudents">Əlavə et</button>`:`<p class="muted">Əvvəl qrup yaradın.</p>`}</section>`;
+  <div style="display:flex;gap:6px;margin:12px 0 4px;font-size:13px;font-weight:600;color:var(--muted)"><span style="width:24px"></span><span style="flex:1.5">Ad və soyad</span><span style="flex:1">Telefon (istəyə görə)</span></div>
+  ${forms.rows.map((r,i)=>`<div style="display:flex;gap:6px;align-items:center;margin:0 0 6px"><span class="rank">${i+1}</span><input type="text" data-bind="forms.rows.${i}.name" value="${esc(r.name)}" placeholder="Ad Soyad" style="flex:1.5;min-width:0;padding:9px 10px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-bind="forms.rows.${i}.phone" value="${esc(r.phone)}" placeholder="Telefon" style="flex:1;min-width:0;padding:9px 10px" aria-label="${i+1}. şagirdin telefonu"></div>`).join('')}
+  <div class="acts" style="margin-top:4px"><button class="btn ghost sm" data-act="addRow">➕ Yeni sətir</button></div>
+  <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Siyahını mətn kimi yapışdır (çox şagird birdən)</summary><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67&#10;Tofiq Əliyev, 055 765 43 21" style="margin-top:8px">${esc(forms.bulk)}</textarea><p class="hint">Hər sətirdə bir şagird; nömrəni addan sonra vergüllə yazın.</p></details>
+  <p class="hint">Telefon nömrəsi WhatsApp ilə nəticə göndərmək üçündür. Nömrəsiz də əlavə etmək olar.</p><button class="btn" data-act="addStudents">Əlavə et</button>`:`<p class="muted">Əvvəl qrup yaradın.</p>`}</section>`;
 };
 
 function profileData(sid){
@@ -1315,10 +1318,14 @@ const ACT={
   },
   async edDelete(){if(!await confirmBox('Nəticə silinsin?',sName(ed.studentId)))return;await del('results',ed.id);go(prevTab)},
   async addGroup(){const n=forms.group.trim();if(!n)return toast('Qrup adını yazın.','err');if(S.groups.some(g=>norm(g.name)===norm(n)))return toast('Bu adda qrup var.','err');const g={id:newId(),name:n};forms.group='';forms.sGroup=g.id;await put('groups',g).catch(()=>{});render();toast('Qrup əlavə olundu.')},
+  addRow(){forms.rows.push({name:'',phone:''});render()},
   async addStudents(){
     const gid=forms.sGroup;if(!groupById(gid))return toast('Qrup seçin.','err');
-    const lines=forms.bulk.split('\n').map(x=>x.trim()).filter(Boolean);if(!lines.length)return toast('Şagirdlərin adını yazın.','err');
+    const rowsIn=forms.rows.map(r=>({name:String(r.name||'').trim(),phone:String(r.phone||'').trim()})).filter(r=>r.name);
+    const lines=forms.bulk.split('\n').map(x=>x.trim()).filter(Boolean);if(!lines.length&&!rowsIn.length)return toast('Şagirdlərin adını yazın.','err');
     let added=0;
+    for(const r of rowsIn){await put('students',{id:newId(),groupId:gid,name:r.name,phone:r.phone}).catch(()=>{});added++}
+    forms.rows=[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}];
     for(const ln of lines){let s=ln.replace(/^\d+[.)]\s*/,'');let phone='';const m=s.match(/(\+?\d[\d\s\-()]{6,}\d)\s*$/);if(m){phone=m[1].trim();s=s.slice(0,m.index)}const name=s.replace(/[,;\t\-–]+\s*$/,'').trim();if(!name)continue;await put('students',{id:newId(),groupId:gid,name,phone}).catch(()=>{});added++}
     forms.bulk='';render();toast(added+' şagird əlavə olundu.');
   },
