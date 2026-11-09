@@ -825,7 +825,7 @@ async function drawCard(ex){
   [['AD',12,58],['SOYAD',73,58],['QRUP',134,30],['BAL',167,31]].forEach(([l,x0,w])=>{T(l,x0,28.3,2.5,700,'left',INK,F,.2);RR(x0,29.9,w,7.6,1,INK,.35)});
   T('müəllim yazır',198,28.3,2.1,500,'right','#8a94a6');
   /* cavablar — 1-dən 25-ə ardıcıl, sütun-sütun */
-  const top=41,colW=46.5,rowH=5.8,BD=3.5,BS=5;
+  const top=41,colW=46.5,rowH=6.4,BD=5,BS=6.6;
   const units=i=>tfs.includes(i)?2:1;
   let rows=Math.ceil(Array.from({length:N},(_,i)=>units(i)).reduce((a,b)=>a+b,0)/4),place;
   for(;;rows++){place=[];let col=0,row=0,ok=true;for(let i=0;i<N;i++){const u=units(i);if(row+u>rows){col++;row=0}if(col>3){ok=false;break}place.push({i,col,row,u});row+=u}if(ok)break}
@@ -833,15 +833,15 @@ async function drawCard(ex){
   place.forEach(({i,col,row,u})=>{const x0=12+col*colW,y0=top+1.6+row*rowH,cy=y0+rowH/2;
     if(row>0)Ln(x0+2,y0,x0+colW-2,y0,.2,'#d3dae6',[1,1]);
     if(tfs.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,u*rowH-1,1,null,0,FILL);T(String(i+1),x0+7,y0+u*rowH/2,3.1,800,'right',INK);
-      for(let q=0;q<4;q++){const sx=x0+9.5+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.2,700,'left',INK);Bub(sx+8.6,scy,BD,'A',1.8);Bub(sx+13.4,scy,BD,'B',1.8)}}
-    else if(mss.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,rowH-1,1,null,0,FILL);T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,String(j+1),1.8);T('bir neçə',x0+colW-2.5,cy,1.9,700,'right','#4a5568')}
-    else{T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,'ABCDE'[j],1.8)}
+      for(let q=0;q<4;q++){const sx=x0+9.5+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.2,700,'left',INK);Bub(sx+8.6,scy,4.8,'A',2.3);Bub(sx+14.2,scy,4.8,'B',2.3)}}
+    else if(mss.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,rowH-1,1,null,0,FILL);T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11.5+j*BS,cy,BD,String(j+1),2.5)}
+    else{T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11.5+j*BS,cy,BD,'ABCDE'[j],2.5)}
   });
   let y=top+2.4+rows*rowH;
   const ry=y+3.4;
-  T('Düzgün:',14,ry,2.4,700,'left','#2d3748');Bub(27,ry,3.5,'',2,'on');T('— yalnız belə',29.8,ry,2.3,600,'left','#1F7246');
-  T('Yanlış:',50,ry,2.4,700,'left','#2d3748');Bub(62,ry,3.5,'A',1.7,'x');Bub(67,ry,3.5,'✓',1.9);Bub(72,ry,3.5,'C',1.7,'thick');Bub(77,ry,3.5,'',2,'dot');T('— qəbul edilmir',80,ry,2.3,600,'left','#C2362F');
-  T('Hər suala yalnız bir cavab.',104,ry,2.3,500,'left','#2d3748');
+  T('Düzgün:',14,ry,2.4,700,'left','#2d3748');Bub(27,ry,4.4,'',2,'on');T('— yalnız belə',30.2,ry,2.3,600,'left','#1F7246');
+  T('Yanlış:',50,ry,2.4,700,'left','#2d3748');Bub(62,ry,4.4,'A',2,'x');Bub(67.6,ry,4.4,'✓',2.2);Bub(73.2,ry,4.4,'C',2,'thick');Bub(78.8,ry,4.4,'',2,'dot');T('— qəbul edilmir',82,ry,2.3,600,'left','#C2362F');
+  T(mss.length?`${mss.map(i=>i+1).join(', ')}: doğruların hamısını qaraldın`:'Hər suala yalnız bir cavab.',104,ry,2.3,mss.length?700:500,'left','#2d3748');
   if(tfs.length)T(`${tfs.map(i=>i+1).join(', ')}: 4 düz — tam bal, 3 düz — yarım bal`,196,ry,2.2,500,'right','#5b6577');
   y=ry+3.6;
   RR(12,top-1,186,y-top+1,2,INK,.5);
@@ -902,6 +902,83 @@ async function showCard(ex){
 async function saveFile(name,data){
   if(!downloads)return toast('Fayl yükləmə bu görünüşdə mümkün deyil.','err');
   try{await downloads.save({filename:name,data})}catch(e){if(e?.code!=='declined')toast(e?.code==='rate_limited'?'Bir az gözləyib yenidən cəhd edin.':'Fayl yüklənmədi.','err')}
+}
+
+/* ---------- share images (WhatsApp) ---------- */
+function shareCanvas(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#ffffff';x.fillRect(0,0,W,H);return [c,x]}
+function shTxt(x,t,px,py,size,weight,color,align='left',font='Inter, Arial, sans-serif'){x.font=`${weight} ${size}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';x.fillText(t,px,py)}
+function shLogo(x,cx,cy,r){const ini=(S.settings.logo||'').trim().slice(0,6)||initials(S.settings.teacherName);x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.fillStyle='rgba(255,255,255,.18)';x.fill();x.strokeStyle='#fff';x.lineWidth=3;x.stroke();x.beginPath();x.arc(cx,cy,r-7,0,Math.PI*2);x.lineWidth=1.2;x.stroke();
+  const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=r*.62;for(let t=0;t<30;t++){x.font=`700 ${f}px ${LF}`;if(x.measureText(ini).width<=(r*2-22))break;f*=.94}shTxt(x,ini,cx,cy+2,f,700,'#fff','center',LF)}
+function shHeader(x,W,h,title,sub){const g=x.createLinearGradient(0,0,W,h);g.addColorStop(0,'#4C5FD5');g.addColorStop(1,'#7B4FD6');x.fillStyle=g;x.fillRect(0,0,W,h);shLogo(x,86,h/2,52);
+  let f=50;x.font=`800 ${f}px Inter, Arial, sans-serif`;while(x.measureText(title).width>W-200&&f>30){f-=2;x.font=`800 ${f}px Inter, Arial, sans-serif`}shTxt(x,title,166,h/2-22,f,800,'#fff');shTxt(x,sub,166,h/2+30,28,500,'rgba(255,255,255,.88)')}
+const pctCol=p=>p>=80?'#1C8A52':p>=50?'#B7791F':'#C2362F';
+function classImage(ex,gid,rs){
+  const W=1080,head=170,colHead=64,foot=120,n=rs.length;
+  const rowH=Math.max(36,Math.min(78,Math.floor((1880-head-colHead-foot)/Math.max(1,n))));
+  const H=head+colHead+n*rowH+foot+20;const [c,x]=shareCanvas(W,H);
+  shHeader(x,W,head,ex.name,`${gid?gName(gid)+' · ':''}${ex.date||''} · ${n} şagird`);
+  const fs=Math.max(20,Math.min(34,rowH*.46)),y0=head+colHead;
+  const cols=[[40,'№','left',''],[100,'Şagird','left',''],[555,'Test','center','/25'],[690,wName(ex),'center','/5'],[815,'Cəmi','center','/30'],[1040,'Faiz','right','']];
+  x.fillStyle='#EEF1FB';x.fillRect(0,head,W,colHead);cols.forEach(([px,t,a,u])=>{shTxt(x,t,px,head+colHead/2-(u?9:0),23,700,'#3B4A7A',a);if(u)shTxt(x,u,px,head+colHead/2+15,18,600,'#8A94A6',a)});
+  rs.forEach((r,i)=>{const y=y0+i*rowH,cy=y+rowH/2;if(i%2){x.fillStyle='#F7F8FD';x.fillRect(0,y,W,rowH)}
+    const t=resTest(r),e=resEssay(r),p=resPct(r);
+    shTxt(x,String(i+1),40,cy,fs*.9,700,'#8A94A6');
+    let nm=sName(r.studentId);x.font=`700 ${fs}px Inter, Arial, sans-serif`;while(x.measureText(nm).width>390&&nm.length>3)nm=nm.slice(0,-2)+'…';shTxt(x,nm,100,cy,fs,700,'#17233B');
+    shTxt(x,t===null?'–':fmt(t),555,cy,fs,600,'#17233B','center');shTxt(x,e===null?'–':fmt(e),690,cy,fs,600,'#17233B','center');
+    shTxt(x,fmt(resTotal(r)),815,cy,fs,800,'#17233B','center');shTxt(x,fmt(p)+'%',1040,cy,fs,800,pctCol(p),'right');});
+  const avg=n?rs.reduce((s,r)=>s+resPct(r),0)/n:0,fy=y0+n*rowH+20;
+  x.fillStyle='#F3F5FC';x.fillRect(0,fy,W,foot);shTxt(x,'Sinfin orta nəticəsi',40,fy+foot/2,30,700,'#17233B');shTxt(x,fmt(Math.round(avg*100)/100)+'%',1040,fy+foot/2,40,800,pctCol(avg),'right');
+  shTxt(x,S.settings.sign||S.settings.teacherName||'',W/2,H-14,20,500,'#8A94A6','center');
+  return c;
+}
+function markSegs(text,mistakes){
+  const marks=[];
+  (mistakes||[]).forEach((m,k)=>{const o=String(m.original||'').trim();if(!o)return;let from=0;for(;;){const at=text.indexOf(o,from);if(at<0)break;const end=at+o.length;if(!marks.some(q=>at<q.end&&end>q.start)){marks.push({start:at,end,k});break}from=at+1}});
+  marks.sort((a,b)=>a.start-b.start);const segs=[];let pos=0;
+  for(const m of marks){if(m.start>pos)segs.push({t:text.slice(pos,m.start)});segs.push({t:text.slice(m.start,m.end),k:m.k});pos=m.end}
+  if(pos<text.length)segs.push({t:text.slice(pos)});return {segs,found:new Set(marks.map(m=>m.k))};
+}
+function mistakesImage(r){
+  const ex=examById(r.examId),e=r.essay,W=1080,PAD=56,maxW=W-PAD*2,head=170;
+  const ms=(e.mistakes||[]).filter(m=>m.original&&m.correction&&m.original.trim()!==m.correction.trim());
+  const {segs,found}=markSegs(String(e.transcript||''),ms);
+  const crit=e.kind==='9'?`Məzmun ${fmt(e.A)}/2 · Ardıcıllıq ${e.B==null?'–':fmt(e.B)}/1 · Qrammatika ${e.C==null?'–':fmt(e.C)}/1 · Söz ${e.D==null?'–':fmt(e.D)}/1 · Cərimə −${fmt(e.pen||0)}`:`A ${fmt(e.A)}/1 · B ${e.B==null?'–':fmt(e.B)}/2 · C ${e.C==null?'–':fmt(e.C)}/1 · D ${e.D==null?'–':fmt(e.D)}/1`;
+  const meas=document.createElement('canvas').getContext('2d');
+  const layout=(fs,draw,x,top)=>{
+    const lh=fs*1.62;let cx=PAD,cy=top+lh/2;const sp=(st)=>{meas.font=`${st} ${fs}px Inter, Arial, sans-serif`;return meas.measureText(' ').width};
+    const put=(word,st,color,strike,sup)=>{const ctx=draw?x:meas;ctx.font=`${st} ${fs}px Inter, Arial, sans-serif`;const w=ctx.measureText(word).width;const sw=sup?(meas.font=`700 ${fs*.6}px Inter, Arial, sans-serif`,meas.measureText(sup).width+2):0;
+      if(cx+w+sw>PAD+maxW&&cx>PAD){cx=PAD;cy+=lh}
+      if(draw){if(strike){x.fillStyle='#FDECEA';x.fillRect(cx-2,cy-fs*.62,w+4,fs*1.24)}else if(color==='#1C8A52'){x.fillStyle='#E4F5EC';x.fillRect(cx-2,cy-fs*.62,w+4+sw,fs*1.24)}
+        shTxt(x,word,cx,cy,fs,st,color);if(strike){x.strokeStyle='#C2362F';x.lineWidth=Math.max(2,fs*.08);x.beginPath();x.moveTo(cx,cy+1);x.lineTo(cx+w,cy+1);x.stroke()}
+        if(sup)shTxt(x,sup,cx+w+2,cy-fs*.42,fs*.6,700,'#1C8A52')}
+      cx+=w+sw+sp(st)};
+    for(const s of segs){const words=s.t.split(/\s+/).filter(Boolean);
+      if(s.k===undefined)words.forEach(wd=>put(wd,400,'#17233B'));
+      else{const m=ms[s.k],num=String(ms.indexOf(m)+1);words.forEach(wd=>put(wd,500,'#C2362F',true));const cw=String(m.correction).split(/\s+/).filter(Boolean);cw.forEach((wd,j)=>put((j===0?'→ ':'')+wd,700,'#1C8A52',false,j===cw.length-1?num:''))}}
+    let y=cy+lh/2+fs*.9;
+    if(ms.length){if(draw){x.fillStyle='#E2E6F3';x.fillRect(PAD,y-fs*.4,maxW,2)}y+=fs*.5;
+      const efs=fs*.82,elh=efs*1.45;
+      ms.forEach((m,k)=>{const line=`${k+1}. ${m.original} → ${m.correction}${m.explanation?' — '+m.explanation:''}${found.has(k)?'':' (mətndə tapılmadı)'}`;
+        const ctx=draw?x:meas;ctx.font=`500 ${efs}px Inter, Arial, sans-serif`;const words=line.split(' ');let ln='',lines=[];for(const wd of words){const t=ln?ln+' '+wd:wd;if(ctx.measureText(t).width>maxW&&ln){lines.push(ln);ln=wd}else ln=t}if(ln)lines.push(ln);
+        lines.forEach((l,li)=>{if(draw)shTxt(x,l,PAD+(li?24:0),y+elh/2,efs,li?400:500,li?'#4A5568':'#17233B');y+=elh});y+=efs*.25})}
+    return y;
+  };
+  const top=head+150;let fs=34;while(fs>17&&layout(fs,false,null,top)>1900)fs-=1;
+  const H=Math.max(900,Math.ceil(layout(fs,false,null,top)+70));const [c,x]=shareCanvas(W,H);
+  shHeader(x,W,head,sName(r.studentId),`${ex.name}${ex.date?' · '+ex.date:''}`);
+  x.fillStyle='#F3F5FC';x.fillRect(0,head,W,130);
+  shTxt(x,`${wName(ex)}: ${fmt(e.total??0)}/5${e.words?` · ${e.words} söz`:''}`,PAD,head+42,38,800,'#3B5BDB');
+  let cf=26;x.font=`600 ${cf}px Inter, Arial, sans-serif`;while(x.measureText(crit).width>maxW&&cf>16){cf--;x.font=`600 ${cf}px Inter, Arial, sans-serif`}shTxt(x,crit,PAD,head+96,cf,600,'#4A5568');
+  layout(fs,true,x,top);
+  shTxt(x,'Qırmızı — səhv, yaşıl — düzgün forma',PAD,H-30,20,600,'#8A94A6');shTxt(x,S.settings.sign||S.settings.teacherName||'',W-PAD,H-30,20,500,'#8A94A6','right');
+  return c;
+}
+async function shareImage(canvas,fname,waUrl,hint){
+  const url=canvas.toDataURL('image/png');
+  modal({title:'Şəkil hazırdır',html:`<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:60vh;overflow-y:auto"><img src="${url}" alt="Göndəriləcək şəkil" style="display:block;width:100%"></div>
+  <p class="hint">1) Şəkli yükləyin və ya şəklin üstünə barmağınızı basılı saxlayıb «Şəkli saxla» seçin. 2) «WhatsApp-ı aç» basın${hint?', '+hint:''} və şəkli qalereyadan əlavə edin.</p>
+  <div class="acts"><button class="btn" data-x="dl">⬇️ Şəkli yüklə</button><a class="btn wa" href="${waUrl}" target="_blank" rel="noopener">WhatsApp-ı aç</a></div>`,ok:'Bağla',okOnly:true});
+  setTimeout(()=>{const b=document.querySelector('.ov [data-x="dl"]');if(b)b.onclick=e=>{e.stopPropagation();canvas.toBlob(bl=>{if(bl)saveFile(fname,bl);else toast('Şəkil hazırlanmadı.','err')},'image/png')}},0);
 }
 
 /* ---------- AI: question topics ---------- */
@@ -988,7 +1065,7 @@ VIEWS.neticeler=()=>{
   <section class="box"><div class="search"><input type="search" data-search="1" placeholder="Şagird axtar" aria-label="Şagird axtar"></div>
   ${n?`<div class="list">${rs.map((r,i)=>resRow(r,i)).join('')}</div>`:`<p class="empty">Bu sınaq üzrə hələ nəticə yoxdur.</p>`}
   ${missing.length?`<h3>Yoxlanmayanlar (${missing.length})</h3><p class="muted" style="font-size:14px">${missing.map(s=>esc(s.name)).join(', ')}</p>`:''}
-  <div class="acts"><button class="btn ghost sm${n?'':' off'}" data-act="csv">CSV yüklə</button></div></section>
+  <div class="acts"><button class="btn sm${n?'':' off'}" data-act="shareClass">📸 Valideynlər üçün şəkil</button><button class="btn ghost sm${n?'':' off'}" data-act="csv">CSV yüklə</button></div></section>
   ${withT.length?`<section class="box"><h2>Sınağın təhlili</h2>${SECS.filter(s=>secs[s]).map(s=>{const p=Math.round(secs[s].got*100/secs[s].max);return `<div class="arow"><div class="t"><span>${s}</span><b>${p}%</b></div><div class="bar${p<50?' red':''}"><i style="width:${p}%"></i></div></div>`}).join('')}
   <h3>Ən çox səhv edilən suallar</h3>${hard.map(q=>`<div class="arow"><div class="t"><span>${q.i+1}-ci sual <span class="muted">(${esc(qSec(ex,q.i))}${qTag(ex,q.i)?': '+esc(qTag(ex,q.i)):''})</span></span><b>${q.w} nəfər, ${q.p}%</b></div><div class="bar red"><i style="width:${q.p}%"></i></div></div>`).join('')||'<p class="muted">Səhv yoxdur.</p>'}</section>`:''}`;
 };
@@ -1044,7 +1121,7 @@ function examCard(r){
   const ex=examById(r.examId),t=resTest(r),e=r.essay,es=resEssay(r),open=profileOpen.has(r.id),wq=wrongQs(r);
   const ph=waPhone(studentById(r.studentId)?.phone);
   return `<div class="excard"><div class="hd"><div class="grow"><b>${esc(ex.name)}</b><br><small class="muted">${esc(ex.date||'')}. Test ${t===null?'–':fmt(t)}/25 + ${wName(ex).toLocaleLowerCase('az')} ${es===null?'–':fmt(es)}/5 = <b>${fmt(resTotal(r))}/30</b>${(r.flags||[]).length?' · ⚠ '+r.flags.length+' sual yoxlanmalı':''}</small></div><span class="pen">${fmt(resPct(r))}%</span></div>
-  <div class="acts"><button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
+  <div class="acts">${e&&e.status==='ok'&&(e.mistakes||[]).length&&e.transcript?`<button class="btn sm" data-act="shareMist" data-id="${r.id}">📝 Səhvlər şəkli</button>`:''}<button class="btn sm ghost" data-act="toggleOpen" data-id="${r.id}">${open?'Bağla':'Səhvlər'}</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
   ${open?`${t!==null?`<h3>Səhv və ya natamam suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> <span class="muted">${esc(q.sec)}${q.tag?': '+esc(q.tag):''}</span><br>Şagird: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted">Səhv yoxdur.</p>'}`:''}
   ${e?essayHTML(e):''}`:''}</div>`;
 }
@@ -1276,6 +1353,17 @@ const ACT={
   cancelExam(){examDraft=freshExam();xn.mode=xn.examId&&examById(xn.examId)?'list':'home';render();toTop()},
   async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);examDraft=freshExam();xn.mode='list';render();toTop()},
   card:el=>showCard(examById(el.dataset.id)),
+  shareClass(){
+    const ex=examById(rf.examId);if(!ex)return;
+    const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
+    if(!rs.length)return toast('Bu sınaqda nəticə yoxdur.','err');
+    const gid=rf.groupId||((ex.groupIds||[]).length===1?ex.groupIds[0]:'');
+    try{const c=classImage(ex,gid,rs);shareImage(c,'netice-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.png','https://wa.me/?text='+encodeURIComponent(`«${ex.name}» sınağının nəticələri`),'valideynlər qrupunu seçin')}catch(e){toast('Şəkil hazırlanmadı.','err')}
+  },
+  shareMist(el){
+    const r=S.results.find(x=>x.id===el.dataset.id);if(!r||!r.essay)return;const st=studentById(r.studentId),ex=examById(r.examId),ph=waPhone(st?.phone);
+    try{const c=mistakesImage(r);shareImage(c,'sehvler-'+(st?.name||'sagird').replace(/[^\p{L}\p{N}]+/gu,'-')+'.png',(ph?`https://wa.me/${ph}`:'https://wa.me/')+'?text='+encodeURIComponent(`Salam, ${st?.name||''}! «${ex?.name||''}» sınağında ${wName(ex).toLocaleLowerCase('az')}dakı səhvlərin şəkildədir.`),ph?'şagirdin söhbəti açılacaq':'şagirdi seçin')}catch(e){toast('Şəkil hazırlanmadı.','err')}
+  },
   csv(){
     const ex=examById(rf.examId);if(!ex)return;
     const rs=S.results.filter(r=>r.examId===ex.id&&(!rf.groupId||studentById(r.studentId)?.groupId===rf.groupId)).sort((a,b)=>resPct(b)-resPct(a));
