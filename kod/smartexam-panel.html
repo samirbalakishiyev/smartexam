@@ -795,11 +795,12 @@ async function saveItem(it,sid){
   r.updated=now;
   await put('results',r);
   it.studentId=sid;it.resultId=r.id;it.state='done';photoOf[r.id]=it.blob;
-  let tm='';if(it.kind!=='back'){const t=testScore(r.answers,ex.key);tm=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(old&&Array.isArray(old.answers)?' (yeniləndi)':'')+(it.payload.note?'. '+it.payload.note:'')}
+  let tm='';if(it.kind!=='back'){const t=testScore(r.answers,ex.key);tm=`Test: ${fmt(t)}/25`+(r.flags.length?` · ${r.flags.length} sual yoxlanmalı`:'')+(it.payload.note?'. '+it.payload.note:'')}
   if(it.kind==='front'||(it.kind==='sheet'&&!it.payload.essay))it.msg=tm;
   else{const e=r.essay,wn=wName(ex);it.msg=e.status!=='ok'?`${wn}: 0/5 (${{off_topic:'mövzudan kənar',not_english:'ingiliscə deyil',unreadable:'oxunmur'}[e.status]})`:e.kind==='9'?`${wn}: ${fmt(e.total)}/5 (Məzmun ${fmt(e.A)}, Ard. ${e.B===null?'–':fmt(e.B)}, Qr. ${e.C===null?'–':fmt(e.C)}, Söz ${e.D===null?'–':fmt(e.D)}, cərimə −${fmt(e.pen||0)}), ${e.words??'?'} söz`:`${wn}: ${fmt(e.total)}/5 (A ${fmt(e.A)}, B ${e.B===null?'–':fmt(e.B)}, C ${e.C===null?'–':fmt(e.C)}, D ${e.D===null?'–':fmt(e.D)}), ${e.words??'?'} söz`}
   if(it.kind==='sheet'&&it.payload.essay)it.msg=tm+' · '+it.msg;
   it.msg+=` · Cəmi: ${totTxt(r)}`+(resTest(r)===null?' (test hələ yoxlanmayıb)':resEssay(r)===null?` (${wName(ex).toLocaleLowerCase('az')} hələ yoxlanmayıb)`:'');
+  if(old)it.msg='🔁 Köhnə nəticə yenisi ilə əvəz olundu. '+it.msg;
 }
 
 /* ---------- PDF answer card ---------- */
