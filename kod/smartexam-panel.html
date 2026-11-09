@@ -465,7 +465,7 @@ let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,
 let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
 const forms={group:'',sGroup:'',bulk:'',newTeacher:''};
 const rf={examId:'',groupId:''};
-let sel=null,setDraft=null,examDraft=freshExam(),ed=null;
+let sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
 function freshExam(){return {id:null,type:'11',pics:'',name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
 
@@ -979,9 +979,10 @@ VIEWS.sagirdler=()=>{
   return `<section class="box"><div class="search" style="margin:0"><input type="search" data-search="1" placeholder="Şagird axtar (bütün qruplarda)" aria-label="Şagird axtar"></div>
   <div class="selbar">${sel?`<b>Seçildi: ${sel.size}</b><button class="btn sm danger${sel.size?'':' off'}" data-act="delSelected">🗑 Seçilənləri sil</button><button class="btn sm ghost" data-act="selOff">Ləğv et</button>`:(S.students.length?`<button class="btn sm ghost" data-act="selOn">☑ Seç və sil</button>`:'')}</div>
   ${sel?'<p class="hint" style="margin-bottom:0">Silmək istədiyiniz şagirdlərə basın və ya qrupda «Hamısını seç» düyməsini basın.</p>':''}</section>
-  ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));return `<details class="grp"${sel?' open':''}><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
-  ${st.length?`<div class="list">${st.map(s=>{const l=last(s.id);const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:''}<div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`<span class="pct">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
-  <div class="acts">${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
+  ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));const ed=stuEdit.has(g.id)&&!sel;return `<details class="grp" data-g="${g.id}"${sel||ed||openGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
+  ${ed&&st.length?'<p class="hint" style="margin-top:0">Adı və ya nömrəni dəyişin — xanadan çıxanda avtomatik saxlanır. Nömrə istəyə görədir (WhatsApp üçün).</p>':''}
+  ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"></div>`;const l=last(s.id);const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:''}<div class="grow"><b>${esc(s.name)}</b><small>${l?esc(eName(l.examId)):'Hələ nəticə yoxdur'}</small></div>${l?`<span class="pct">${fmt(resPct(l))}%</span>`:''}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
+  <div class="acts">${!sel&&st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEditToggle" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
   <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, A1" aria-label="Qrup adı"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
   <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
   <label class="l">Şagirdlər (hər sətirdə bir nəfər)</label><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67&#10;Tofiq Əliyev, 055 765 43 21">${esc(forms.bulk)}</textarea>
@@ -1135,6 +1136,7 @@ const ACT={
   go:el=>go(el.dataset.to),
   back:()=>go(prevTab),
   async saveTeacher(){const n=forms.newTeacher.trim();if(!n)return toast('Adınızı yazın.','err');await saveSettings({...S.settings,teacherName:n});render()},
+  stuEditToggle(el){const id=el.dataset.id;stuEdit.has(id)?stuEdit.delete(id):stuEdit.add(id);openGrp.add(id);render()},
   selOn(){sel=new Set();render()},
   selOff(){sel=null;render()},
   selStu(el){const id=el.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);render()},
@@ -1236,8 +1238,15 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
 });
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset.search){applySearch(el);return}if(el.dataset.bind&&el.tagName!=='SELECT')setBind(el.dataset.bind,el.value)});
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.grp')&&d.dataset.g){d.open?openGrp.add(d.dataset.g):openGrp.delete(d.dataset.g)}},true);
 document.addEventListener('change',async e=>{
   const el=e.target;
+  if(el.dataset.sname||el.dataset.sphone){
+    const s=studentById(el.dataset.sname||el.dataset.sphone);if(!s)return;const v=el.value.trim();
+    if(el.dataset.sname){if(!v){el.value=s.name;return toast('Ad boş ola bilməz.','err')}if(v===s.name)return;try{await put('students',{...s,name:v});toast('Saxlanıldı: '+v)}catch(err){}}
+    else{if(v===(s.phone||''))return;const d=v.replace(/\D/g,'');try{await put('students',{...s,phone:v});toast(!v?'Nömrə silindi.':d.length<9?'Saxlanıldı, amma nömrə natamam görünür.':'Nömrə saxlanıldı.',v&&d.length<9?'err':'')}catch(err){}}
+    return;
+  }
   if(el.dataset.qitem){const it=Q.items.find(x=>x.id===el.dataset.qitem);if(it&&el.value){try{await saveItem(it,el.value)}catch(err){}render()}return}
   if(el.dataset.bind&&el.tagName==='SELECT'){setBind(el.dataset.bind,el.value);if(el.dataset.rr)render();return}
   if(!el.dataset.file)return;
