@@ -465,8 +465,9 @@ let mode='loading',store=null,sample=null,canImages=false,maxImages=1,essayTier,
 let tab='home',prevTab='home',pendingRender=false,profileId='',profileOpen=new Set();
 const forms={group:'',sGroup:'',bulk:'',newTeacher:''};
 const rf={examId:'',groupId:''};
-let sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
+let xn={mode:'home',gid:'',examId:''},sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
 const Q={examId:'',items:[],running:false,paused:false};
+function loadDraft(e){examDraft={...freshExam(),id:e.id,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:false}}
 function freshExam(){return {id:null,type:'11',pics:'',name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
 
 /* ---------- lookups & scoring ---------- */
@@ -1083,25 +1084,65 @@ function openEditor(r,examId){
   go('edit');
 }
 
-VIEWS.sinaqlar=()=>{
-  const d=examDraft,gs=groupsSorted(),filled=d.key.filter((v,i)=>({tf:/^[TF]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length,hasRes=d.id&&S.results.some(r=>r.examId===d.id);
-  const list=examsSorted();
-  return `${d.id?`<button class="back" data-act="cancelExam">← Sınaqlar siyahısına qayıt</button>`:''}<section class="box"${d.id?' style="box-shadow:0 0 0 2px var(--accent),var(--shadow)"':''}><h2>${d.id?`✏️ «${esc(d.name)}» sınağını düzəlt`:'Yeni sınaq'}</h2>${d.id?`<p class="hint">Cavab açarını, adı, tarixi, qrupları və mövzunu dəyişib aşağıda «Dəyişiklikləri saxla» basın.${S.results.some(r=>r.examId===d.id)?' Yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanacaq.':''}</p>`:''}
-  <div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
+function exInfoHTML(d,gs,hasRes){return `<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
   <label class="l">Sınağın növü</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün növü dəyişmək olmaz.</p>':''}
-  <label class="l">Qruplar</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}
-  <h3>Cavab açarı (1–25) <span class="muted" style="font-weight:500">${filled}/25</span></h3>
-  <p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin. 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin.'}</p>
+  <label class="l">Qruplar (siniflər)</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}`}
+function exKeyHTML(d,filled){return `<p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin. 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin.'}</p>
   ${gridHTML('key',d.key,{tf:LAYOUT[d.type].tf,ms:LAYOUT[d.type].ms})}
-  <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>
-  ${d.type==='9'?`<label class="l" style="margin-top:18px">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartının arxa üzünə çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l" style="margin-top:18px">26. Paraqrafın mövzusu</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
-  <h3>Sualların mövzuları <span class="muted" style="font-weight:500">(istəyə görə, il boyu zəif mövzuları izləmək üçün)</span></h3>
-  <div class="acts"><label class="btn ghost sm${d.tagging?' off':''}" style="position:relative">📄 Testin şəklindən təyin et<input type="file" accept="image/*" ${maxImages>1?'multiple':''} data-file="tagphotos" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn ghost sm" data-act="toggleMeta">${d.showMeta?'Gizlət':'Əl ilə yaz'}</button></div>
-  ${maxImages>1?`<p class="hint">Test səhifələrinin şəkli (ən çox ${maxImages}).</p>`:''}
+  <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>`}
+function exWritingHTML(d){return d.type==='9'?`<label class="l">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartına çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l">26. Paraqrafın mövzusu (kartda çap olunur)</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
+function exMetaHTML(d){return `<p class="hint">Testin səhifələrinin şəklini göndərin — Claude 25 sualın bölməsini və mövzusunu (Present Perfect, Prepositions…) təyin edir. Bu, şagirdlərin zəif mövzularını izləmək üçündür. Yanlış şəkil göndərsəniz, düzgününü yenidən göndərin.</p>
+  <div class="acts"><label class="btn sm${d.tagging?' off':''}" style="position:relative">📷 Testin şəkillərini göndər<input type="file" accept="image/*" ${maxImages>1?'multiple':''} data-file="tagphotos" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn ghost sm" data-act="toggleMeta">${d.showMeta?'Siyahını gizlət':'Mövzuları gör / əl ilə yaz'}</button></div>
+  ${maxImages>1?`<p class="hint">Ən çox ${maxImages} şəkil birdən.</p>`:''}
   ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
-  ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}
-  <div class="acts" style="margin-top:16px"><button class="btn" data-act="saveExam">${d.id?'Dəyişiklikləri saxla':'Sınağı yarat'}</button>${d.id?`<button class="btn ghost" data-act="cancelExam">Ləğv et</button>`:''}</div></section>
-  ${d.id?'':`<section class="box"><h2>Sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li" style="flex-wrap:wrap"><div class="grow click" style="flex-basis:100%;cursor:pointer" data-act="editExam" data-id="${e.id}"><b style="color:var(--c1)">${esc(e.name)} ✏️</b><small>${esc(e.date||'')}${e.date?', ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'}, ${n} iş${exType(e)==='9'?', 9-cu sinif'+(e.pics?'':', şəkil yoxdur'):(e.topic?'':', mövzu yoxdur')}</small></div><button class="btn sm" data-act="card" data-id="${e.id}">📄 Cavab kartı</button><button class="btn sm ghost" data-act="editExam" data-id="${e.id}">Düzəlt</button><button class="btn sm danger" data-act="delExam" data-id="${e.id}" aria-label="Sil">Sil</button></div>`}).join('')}</div>`:`<p class="empty">Hələ sınaq yoxdur.</p>`}</section>`}`;
+  ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}`}
+const keyFilled=d=>d.key.filter((v,i)=>({tf:/^[TF]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length;
+let cardPrev={stamp:'',url:'',busy:false};
+const cardStamp=ex=>ex?JSON.stringify([ex.id,ex.name,ex.type,ex.topic,ex.key,(ex.pics||'').length,S.settings.logo,S.settings.teacherName]):'';
+async function genCardPrev(ex){
+  const st=cardStamp(ex);if(cardPrev.busy===st)return;cardPrev.busy=st;
+  try{const pages=await drawCard(ex);const t=document.createElement('canvas');t.width=620;t.height=877;t.getContext('2d').drawImage(pages[0],0,0,620,877);cardPrev={stamp:st,url:t.toDataURL('image/jpeg',.85),busy:false}}catch(e){cardPrev={stamp:st,url:'',busy:false}}
+  if(tab==='sinaqlar')scheduleRender();
+}
+function draftDirty(){const d=examDraft;if(!d.id)return !!(d.name||d.topic||d.pics||d.key.some(v=>v!=='-'));const e=examById(d.id);if(!e)return false;
+  return JSON.stringify([d.name.trim(),d.date,d.type,d.groupIds.slice().sort(),d.topic.trim(),d.pics,d.key,d.qmeta.map(m=>[m.sec,String(m.tag||'').trim()])])!==JSON.stringify([e.name,e.date||today(),exType(e),(e.groupIds||[]).slice().sort(),e.topic||'',e.pics||'',e.key,Array.from({length:N},(_,i)=>[qSec(e,i),qTag(e,i)])])}
+VIEWS.sinaqlar=()=>{
+  const d=examDraft,gs=groupsSorted(),list=examsSorted();
+  if(xn.mode==='detail'&&!examById(xn.examId))xn.mode='list';
+  if(xn.mode==='home')return `<section class="box"><h2>Sınaqlar</h2><div class="big2">
+    <button type="button" class="shoot" data-act="xnGo" data-m="list" style="text-align:left;background:var(--t1);border-color:var(--c1);color:var(--c1)">📚 Hazır sınaqlar<small>${list.length} sınaq. Sinfi seçin, sınağı açın: cavab kartı, cavab açarı, testin şəkilləri.</small></button>
+    <button type="button" class="shoot" data-act="xnGo" data-m="new" style="text-align:left;background:var(--t2);border-color:var(--c2);color:var(--c2)">➕ Yeni sınaq hazırla<small>Ad, sinif, cavab açarı və paraqraf mövzusu və ya 3 şəkil.</small></button>
+  </div></section>`;
+  if(xn.mode==='list'){
+    if(xn.gid&&!groupById(xn.gid))xn.gid='';
+    const rows=list.filter(e=>!xn.gid||(e.groupIds||[]).includes(xn.gid));
+    return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
+    <section class="box"><h2>📚 Hazır sınaqlar</h2><label class="l" style="margin-top:0">Sinif (qrup)</label>
+    <div class="chips"><button class="chip${!xn.gid?' on':''}" data-act="xnGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${xn.gid===g.id?' on':''}" data-act="xnGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div></section>
+    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · ${exType(e)==='9'?'9-cu sinif':'10–11-ci sinif'} · ${n} iş${exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
+  }
+  const filled=keyFilled(d),hasRes=d.id&&S.results.some(r=>r.examId===d.id);
+  if(xn.mode==='new')return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
+  <section class="box"><h2>➕ Yeni sınaq</h2>${exInfoHTML(d,gs,false)}</section>
+  <section class="box"><h2>✅ Cavab açarı (1–25) <span class="muted" style="font-weight:500">${filled}/25</span></h2>${exKeyHTML(d,filled)}</section>
+  <section class="box"><h2>📄 Cavab kartı üçün</h2>${exWritingHTML(d)}</section>
+  <section class="box"><h2>🖼 Testin şəkilləri <span class="muted" style="font-weight:500;font-size:14px">(istəyə görə)</span></h2>${exMetaHTML(d)}</section>
+  <div class="savebar"><div class="grow muted">Hamısını doldurub sınağı yaradın.</div><button class="btn" data-act="saveExam">Sınağı yarat</button></div>`;
+  /* detail */
+  const ex=examById(xn.examId),n=S.results.filter(r=>r.examId===ex.id).length,dirty=draftDirty();
+  if(cardPrev.stamp!==cardStamp(ex))setTimeout(()=>genCardPrev(ex),0);
+  return `<button class="back" data-act="xnBack">← Hazır sınaqlar</button>
+  <section class="box hero" style="padding:16px 16px"><h1 style="margin:0">${esc(ex.name)}</h1><p class="muted" style="margin:4px 0 0">${esc(ex.date||'')}${ex.date?' · ':''}${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · ${exType(ex)==='9'?'9-cu sinif':'10–11-ci sinif'} · ${n} yoxlanmış iş</p></section>
+  <section class="box"><h2>📄 Cavab kartı</h2>
+  ${exType(ex)==='9'?`<p style="margin:0 0 8px"><b>26.</b> ${ex.pics?'3 şəkil kartda çap olunur.':'<span style="color:var(--pen)">3 şəkil yüklənməyib.</span>'}</p>`:`<p style="margin:0 0 8px"><b>Mövzu:</b> ${ex.topic?`<i>${esc(ex.topic)}</i>`:'<span class="muted">yazılmayıb — kartda boş xətt olacaq</span>'}</p>`}
+  <div style="max-width:330px;margin:0 auto;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff">${cardPrev.stamp===cardStamp(ex)&&cardPrev.url?`<img src="${cardPrev.url}" alt="Cavab kartı" style="display:block;width:100%">`:'<p class="empty" style="margin:0;padding:60px 10px">Kart hazırlanır…</p>'}</div>
+  <div class="acts" style="justify-content:center"><button class="btn" data-act="cardPdf" data-id="${ex.id}">⬇️ PDF yüklə</button></div>
+  ${dirty?'<p class="hint" style="text-align:center">Kartda saxlanmış variant görünür. Dəyişiklikləri saxlayandan sonra kart yenilənəcək.</p>':''}
+  <details style="margin-top:6px"><summary class="muted" style="cursor:pointer">${exType(ex)==='9'?'3 şəkli dəyiş':'Mövzunu dəyiş'}</summary><div style="margin-top:8px">${exWritingHTML(d)}</div></details></section>
+  <section class="box"><h2>✅ Cavab açarı <span class="muted" style="font-weight:500">${filled}/25</span></h2>${n?'<p class="hint">Açarı dəyişib saxlasanız, yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanır.</p>':''}${exKeyHTML(d,filled)}</section>
+  <section class="box"><h2>🖼 Testin şəkilləri və sualların mövzuları</h2>${exMetaHTML(d)}</section>
+  <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, sinif)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
+  <div class="savebar"><div class="grow muted">Açar, mövzu, şəkillər və məlumatlar «Saxla» basanda yazılır.</div><button class="btn" data-act="saveExam">💾 Saxla</button></div>`;
 };
 
 VIEWS.parametrler=()=>{
@@ -1200,13 +1241,18 @@ const ACT={
     if(d.type!=='9'&&!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
     const old=d.id&&examById(d.id);
     const ex={id:d.id||newId(),type:d.type,pics:d.type==='9'?d.pics:'',name:d.name.trim(),date:d.date,groupIds:d.groupIds.slice(),topic:d.topic.trim(),key:d.key.slice(),qmeta:d.qmeta.map(m=>({sec:m.sec,tag:String(m.tag||'').trim()})),created:old?.created||new Date().toISOString()};
-    await put('exams',ex).catch(()=>{});
-    examDraft=freshExam();render();toTop();
-    toast(old?'Sınaq yeniləndi.':'Sınaq yaradıldı. İndi PDF kartı yükləyə bilərsiniz.');
+    try{await put('exams',ex)}catch(e){return}
+    loadDraft(ex);xn.mode='detail';xn.examId=ex.id;render();if(!old)toTop();
+    toast(old?'Sınaq yeniləndi.':'Sınaq yaradıldı. Aşağıda cavab kartını PDF kimi yükləyə bilərsiniz.');
   },
-  editExam(el){const e=examById(el.dataset.id);if(!e)return;examDraft={...freshExam(),id:e.id,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:N},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:(e.qmeta||[]).some(m=>m.tag)};render();toTop()},
-  cancelExam(){examDraft=freshExam();render();toTop()},
-  async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);render()},
+  editExam(el){const e=examById(el.dataset.id);if(!e)return;loadDraft(e);xn.mode='detail';xn.examId=e.id;tab='sinaqlar';render();toTop()},
+  xnGo(el){const m=el.dataset.m;if(m==='new'&&(xn.mode!=='new'||examDraft.id))examDraft=freshExam();if(m==='new'&&xn.gid&&!examDraft.groupIds.length)examDraft.groupIds=[xn.gid];xn.mode=m;render();toTop()},
+  xnGroup(el){xn.gid=el.dataset.id;render()},
+  xnOpen(el){const e=examById(el.dataset.id);if(!e)return;loadDraft(e);xn.mode='detail';xn.examId=e.id;render();toTop()},
+  async xnBack(){if(draftDirty()&&!await modal({title:'Dəyişikliklər saxlanmayıb',html:'<p class="muted">Saxlanmamış dəyişikliklər itəcək. Çıxılsın?</p>',ok:'Çıx',danger:true}))return;examDraft=freshExam();xn.mode='list';render();toTop()},
+  async cardPdf(el){const ex=examById(el.dataset.id);if(!ex)return;toast('PDF hazırlanır…');try{const pages=await drawCard(ex);const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(e){toast('PDF hazırlanmadı.','err')}},
+  cancelExam(){examDraft=freshExam();xn.mode=xn.examId&&examById(xn.examId)?'list':'home';render();toTop()},
+  async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);examDraft=freshExam();xn.mode='list';render();toTop()},
   card:el=>showCard(examById(el.dataset.id)),
   csv(){
     const ex=examById(rf.examId);if(!ex)return;
@@ -1233,7 +1279,7 @@ async function importData(v){
 /* ---------- events ---------- */
 function setBind(path,val){const p=path.split('.');const roots={forms,rf,examDraft,ed,setDraft,Q};let o=roots[p[0]];if(!o)return;for(let i=1;i<p.length-1;i++){o=o[p[i]];if(o==null)return}o[p[p.length-1]]=val}
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-tab]');if(t){sel=null;if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
+  const t=e.target.closest('[data-tab]');if(t){sel=null;if(t.dataset.tab==='sinaqlar'&&!(xn.mode==='detail'&&draftDirty())){xn.mode='home';examDraft=freshExam()}if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
   const b=e.target.closest('[data-bub]');if(b){tapBubble(b);return}
   const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
 });
