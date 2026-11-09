@@ -487,7 +487,7 @@ let tab='yoxla',prevTab='yoxla',resId='',pendingRender=false,profileId='',profil
 const forms={group:'',sGroup:'',bulk:'',newTeacher:'',rows:[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]};
 const rf={examId:'',groupId:'',studentId:''};
 let xn={mode:'home',gid:'',examId:''},sel=null,stuEdit=new Set(),openGrp=new Set(),setDraft=null,examDraft=freshExam(),ed=null;
-const Q={examId:'',items:[],running:false,paused:false};
+const Q={examId:'',groupId:'',items:[],running:false,paused:false};
 function loadDraft(e){examDraft={...freshExam(),id:e.id,fmt:exFmt(e),fmtPicked:true,type:exType(e),pics:e.pics||'',name:e.name,date:e.date||today(),groupIds:(e.groupIds||[]).slice(),topic:e.topic||'',key:e.key.slice(),qmeta:Array.from({length:qN(e)},(_,i)=>({sec:qSec(e,i),tag:qTag(e,i)})),showMeta:false}}
 function freshExam(){return {id:null,fmt:'US',fmtPicked:false,type:'11',pics:'',name:'',date:today(),groupIds:[],topic:'',key:Array(N).fill('-'),qmeta:Array.from({length:N},(_,i)=>({sec:defSec(i),tag:''})),paste:'',tagging:false,tagMsg:'',showMeta:false}}
 
@@ -501,6 +501,11 @@ const eName=i=>examById(i)?.name||'Silinmiş sınaq';
 const examsSorted=()=>S.exams.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||azCmp(a.name,b.name));
 const groupsSorted=()=>S.groups.slice().sort((a,b)=>azCmp(a.name,b.name));
 const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.name,b.name));
+const roster=()=>{const g=Q.groupId;return S.students.slice().sort((a,b)=>(a.groupId===g?0:1)-(b.groupId===g?0:1)||azCmp(gName(a.groupId),gName(b.groupId))||azCmp(a.name,b.name))};
+const exGroups=e=>{const ids=new Set(e.groupIds||[]);S.results.forEach(r=>{if(r.examId===e.id){const g=studentById(r.studentId)?.groupId;if(g)ids.add(g)}});return [...ids].filter(groupById)};
+const exGroupsTxt=e=>exGroups(e).map(gName).map(esc).join(', ');
+const TPL=[['US','11','ÜS · 11','25 test + paraqraf'],['US','9','ÜS · 9','25 test + hekayə (3 şəkil)'],['T25','11','25 · 11','Yalnız 25 test'],['T25','9','25 · 9','Yalnız 25 test'],['LR','11','12-LR · 11','Listening + Reading, 12 sual'],['LR','9','12-LR · 9','Listening + Reading, 12 sual'],['G20','11','20 G','20 qrammatika sualı'],['G40','11','40 G','40 qrammatika sualı']];
+const tplName=e=>{const f=exFmt(e),t=hasLvl(f)?exType(e):'11';return (TPL.find(x=>x[0]===f&&x[1]===t)||TPL[0])[2]};
 const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
 const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||secFor(ex,i);
 const qTag=(ex,i)=>String(ex?.qmeta?.[i]?.tag||'').trim();
@@ -647,17 +652,21 @@ async function picsData(file){
 const imgSrc=src=>new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=src});
 
 /* ---------- AI prompts ---------- */
-function rosterText(ex){return examStudents(ex).map((s,i)=>`${i+1}. ${s.name} (${gName(s.groupId)})`).join('\n')||'(no students)'}
+function rosterText(ex){return roster().map((s,i)=>`${i+1}. ${s.name} (${gName(s.groupId)})`).join('\n')||'(no students)'}
 function pickStudent(ex,idx,written,group){
-  const all=examStudents(ex);
-  const n=Number(idx);if(Number.isInteger(n)&&n>=1&&n<=all.length)return all[n-1];
-  const w=norm(written);if(!w)return null;
-  const gw=norm(group).replace(/[^a-z0-9]/g,'');
-  const inG=gw?all.filter(s=>norm(gName(s.groupId)).replace(/[^a-z0-9]/g,'')===gw):[];
-  const list=inG.length?inG:all;
-  const wt=w.split(' ');
+  const all=roster();
+  const w=norm(written);
+  const wt=w?w.split(' '):[];
   const tiers=[s=>norm(s.name)===w,s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.includes(x))},s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.some(y=>y.startsWith(x)||x.startsWith(y)))}];
-  for(const f of tiers){const h=list.filter(f);if(h.length===1)return h[0];if(h.length>1)return null}
+  const gk=x=>norm(x).replace(/[^a-z0-9]/g,'');const gw=gk(group);
+  const sel=Q.groupId?all.filter(s=>s.groupId===Q.groupId):[];
+  const inW=gw?all.filter(s=>gk(gName(s.groupId))===gw):[];
+  const n=Number(idx);
+  if(Number.isInteger(n)&&n>=1&&n<=all.length){const c=all[n-1];
+    if(w&&c.groupId!==Q.groupId){for(const f of tiers){const h=sel.filter(f);if(h.length===1)return h[0];if(h.length>1)break}}
+    return c}
+  if(!w)return null;
+  for(const pool of [sel,inW,all]){if(!pool.length)continue;let amb=false;for(const f of tiers){const h=pool.filter(f);if(h.length===1)return h[0];if(h.length>1){amb=true;break}}if(amb&&pool===sel)return null}
   return null;
 }
 async function cropBox(blob,x0,x1,y0,y1){
@@ -749,11 +758,10 @@ If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
 
 function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/data:([^;]+)/)||[])[1]||'image/jpeg'})}
 async function aiBack9(ex,blob){
-  if(!ex.pics)throw {code:'nopics'};
   const prompt=`Image 1 shows a 9th-grade student's exam sheet with a handwritten English story (it may be only the lower part of the page; then the name is not visible — use null for the name). On a one-page sheet the story is in the large lined box at the bottom, below the printed answer grid and the printed pictures — ignore the answer grid. Image 2 shows the three pictures (in order, left to right) that the story must be based on.
 Step 1. Read the student's name (AD and SOYAD boxes, or the "AD, SOYAD" line at the top) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
 ${rosterText(ex)}
-Step 2. Look carefully at the three pictures, then grade the story strictly by the teacher's rubric below (A2 level). The pictures ARE provided (image 2). Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
+Step 2. Look carefully at the three pictures, then grade the story strictly by the teacher's rubric below (A2 level). ${ex.pics?'The pictures ARE provided (image 2).':'The three pictures are not provided separately. If they are visible on the sheet, use them; otherwise judge A by whether the text is a complete, logical story with a clear sequence of events (do not give 0 only because the pictures are missing).'} Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
 """
 ${rubric9()}
 """
@@ -770,7 +778,7 @@ Reply with only JSON:
  "mistakes":[{"original":"","correction":"","explanation":"short, simple, Azerbaijani","type":one of ${JSON.stringify(ERR_TYPES)}}],
  "feedback":"2-3 sentences to the student in Azerbaijani"}
 If A is 0, set B, C, D to null.`;
-  const opts={images:[blob,dataUrlBlob(ex.pics)]};if(essayTier)opts.modelTier=essayTier;
+  const opts={images:ex.pics?[blob,dataUrlBlob(ex.pics)]:[blob]};if(essayTier)opts.modelTier=essayTier;
   const r=await sample.json(prompt,opts);
   const status=['ok','off_topic','not_english','unreadable'].includes(r?.status)?r.status:'ok';
   const ec=Number.isFinite(Number(r?.error_count))&&r?.error_count!==null?Math.max(0,Math.round(Number(r.error_count))):null;
@@ -789,7 +797,6 @@ If A is 0, set B, C, D to null.`;
 /* ---------- queue ---------- */
 async function addToQueue(kind,files){
   const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
-  if(kind!=='front'&&exType(ex)==='9'&&!ex.pics)return toast('Bu sınağa 3 şəkil yüklənməyib. Sınaqlar bölməsində «Düzəlt» ilə şəkilləri əlavə edin.','err');
   if(kind!=='front'&&exType(ex)!=='9'&&!ex.topic?.trim())toast('Bu sınaqda paraqraf mövzusu yazılmayıb. Mövzu şəkildən oxunacaq.');
   for(const f of files){try{const r=await shrink(f,kind==='sheet'?3200:kind==='back'?2100:2600);Q.items.push({id:newId(),kind,examId:ex.id,blob:r.blob,thumb:r.thumb,state:'wait',msg:'Növbədədir',studentId:'',written:'',payload:null})}catch(e){toast('Şəkil açılmadı.','err')}}
   render();runQueue();
@@ -1161,24 +1168,28 @@ function yoxlaBody(){
   const exs=examsSorted();
   if(!exs.length)return `<section class="box"><h2>Sınağı yoxla</h2><p class="muted">Əvvəl cavab açarı ilə sınaq yaradın.</p><button class="btn" data-act="go" data-to="sinaqlar">Sınaq yarat</button></section>`;
   if(!Q.examId||!examById(Q.examId))Q.examId=exs[0].id;
-  const ex=examById(Q.examId),sts=examStudents(ex);
+  const ex=examById(Q.examId),gs=groupsSorted();
+  if(!groupById(Q.groupId))Q.groupId=(exGroups(ex)[0])||(gs[0]?.id)||'';
+  const sts=studentsOf(Q.groupId),all=roster();
   const items=Q.items.filter(x=>x.examId===ex.id).slice().reverse();
-  const doneF=new Set(S.results.filter(r=>r.examId===ex.id&&Array.isArray(r.answers)).map(r=>r.studentId));
-  const doneB=new Set(S.results.filter(r=>r.examId===ex.id&&resEssay(r)!==null).map(r=>r.studentId));
+  const inG=id=>studentById(id)?.groupId===Q.groupId;
+  const doneF=new Set(S.results.filter(r=>r.examId===ex.id&&Array.isArray(r.answers)&&inG(r.studentId)).map(r=>r.studentId));
+  const doneB=new Set(S.results.filter(r=>r.examId===ex.id&&resEssay(r)!==null&&inG(r.studentId)).map(r=>r.studentId));
   const busy=Q.items.some(x=>x.state==='busy'||x.state==='wait');
-  return `<section class="box"><h2>Hansı sınağı yoxlayırıq?</h2><select data-bind="Q.examId" data-rr="1">${exs.map(x=>`<option value="${x.id}"${x.id===Q.examId?' selected':''}>${esc(x.name)}${x.date?' ('+esc(x.date)+')':''}</option>`).join('')}</select>
-  <p class="hint">${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup seçilməyib'}. <b>${fmtName(exFmt(ex))}</b>${exType(ex)==='9'&&hasLvl(exFmt(ex))?' · 9-cu sinif':''}. Cavablar: ${doneF.size}/${sts.length}${hasW(ex)?`, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}`:''}.</p>
-  ${!sts.length?`<div class="notice">Bu sınağın qruplarında şagird yoxdur. Şagirdlər bölməsindən əlavə edin.</div>`:''}
+  return `<section class="box"><h2>Hansı sınağı yoxlayırıq?</h2><div class="two"><div><label class="l" style="margin-top:0">Sınaq</label><select data-bind="Q.examId" data-rr="1">${exs.map(x=>`<option value="${x.id}"${x.id===Q.examId?' selected':''}>${esc(x.name)}${x.date?' ('+esc(x.date)+')':''}</option>`).join('')}</select></div>
+  <div><label class="l" style="margin-top:0">Qrup</label><select data-bind="Q.groupId" data-rr="1">${gs.length?gs.map(g=>`<option value="${g.id}"${g.id===Q.groupId?' selected':''}>${esc(g.name)}</option>`).join(''):'<option value="">Qrup yoxdur</option>'}</select></div></div>
+  <p class="hint"><b>${tplName(ex)}</b>. ${esc(gName(Q.groupId))} qrupu — cavablar: ${doneF.size}/${sts.length}${hasW(ex)?`, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}`:''}.</p>
+  ${!all.length?`<div class="notice">Hələ şagird yoxdur. Şagirdlər bölməsində qrup yaradıb şagirdləri əlavə edin.</div>`:!sts.length?`<div class="notice">Bu qrupda şagird yoxdur. Vərəqlər digər qruplarda axtarılacaq.</div>`:''}
   ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
   ${hasW(ex)?`<label class="shoot" for="pk-sheet" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small></label>
   <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot" for="pk-front">📷 Ön üz<small>Cavablar</small></label><label class="shoot" for="pk-back">📝 Arxa üz<small>${wName(ex)}</small></label></div></details>`:`<label class="shoot" for="pk-front" style="width:100%">📷 Kartın şəkli<small>${fmtName(exFmt(ex))} kartı — hər şəkildə bir kart. Bir və ya bir neçə şəkil</small></label>`}
-  <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur və siyahıdan avtomatik tapılır.</p>
+  <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur: əvvəl seçdiyiniz qrupda, tapılmasa digər qruplarda axtarılır və nəticə şagirdin öz qrupuna yazılır.</p>
   <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
-  ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər</h2><div class="qcount">${(()=>{const c=k=>items.filter(x=>x.state===k).length;return [c('wait')?`<span class="badge">⏳ ${c('wait')} növbədə</span>`:'',c('busy')?`<span class="badge busy">🔄 ${c('busy')} yoxlanır</span>`:'',c('done')?`<span class="badge ok">✅ ${c('done')} hazır</span>`:'',c('need')?`<span class="badge warn">${c('need')} şagirdi seçin</span>`:'',c('err')?`<span class="badge err">${c('err')} xəta</span>`:''].join('')})()}</div>${busy?'<p class="hint" style="margin-top:0">Yoxlama gedərkən növbəti vərəqin şəklini göndərə bilərsiniz — sıraya düşəcək. Hər nəticə hazır olan kimi şagirdin adına avtomatik saxlanır.</p>':''}<div class="list">${items.map(it=>qItemHTML(it,ex,sts)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
+  ${items.length?`<section class="box"><h2>Yoxlanan vərəqlər</h2><div class="qcount">${(()=>{const c=k=>items.filter(x=>x.state===k).length;return [c('wait')?`<span class="badge">⏳ ${c('wait')} növbədə</span>`:'',c('busy')?`<span class="badge busy">🔄 ${c('busy')} yoxlanır</span>`:'',c('done')?`<span class="badge ok">✅ ${c('done')} hazır</span>`:'',c('need')?`<span class="badge warn">${c('need')} şagirdi seçin</span>`:'',c('err')?`<span class="badge err">${c('err')} xəta</span>`:''].join('')})()}</div>${busy?'<p class="hint" style="margin-top:0">Yoxlama gedərkən növbəti vərəqin şəklini göndərə bilərsiniz — sıraya düşəcək. Hər nəticə hazır olan kimi şagirdin adına avtomatik saxlanır.</p>':''}<div class="list">${items.map(it=>qItemHTML(it,ex,all)).join('')}</div><div class="acts"><button class="btn ghost sm" data-act="clearQueue">Siyahını təmizlə</button></div></section>`:''}`;
 }
 function qItemHTML(it,ex,sts){
   const b={wait:'<span class="badge">⏳ növbədə</span>',busy:'<span class="badge busy">🔄 yoxlanır</span>',done:'<span class="badge ok">✅ hazır</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'}[it.state];
-  return `<div class="qitem st-${it.state}"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId?esc(sName(it.studentId)):({front:hasW(ex)?'Ön üz':'Kart',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
+  return `<div class="qitem st-${it.state}"><img src="${it.thumb}" alt=""><div class="grow"><b>${it.studentId&&studentById(it.studentId)?.groupId!==Q.groupId?`<span class="badge warn">${esc(gName(studentById(it.studentId)?.groupId))} qrupundan</span> `:''}${it.studentId?esc(sName(it.studentId)):({front:hasW(ex)?'Ön üz':'Kart',back:'Arxa üz',sheet:'Vərəq'}[it.kind])} ${b}</b><span class="muted">${it.kind==='front'?'Cavablar':it.kind==='sheet'?'Cavablar + '+wName(ex).toLocaleLowerCase('az'):wName(ex)}. ${esc(it.msg)}</span>
   ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${sts.map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}</div>
   ${it.state==='done'?`<button class="btn sm ghost" data-act="viewResult" data-id="${it.resultId}">Bax</button>`:''}${it.state==='err'?`<button class="btn sm ghost" data-act="retry" data-id="${it.id}">Yenidən</button>`:''}</div>`;
 }
@@ -1325,7 +1336,7 @@ function reportMsg(sid){
 
 VIEWS.edit=()=>{
   const ex=examById(ed.examId);if(!ex)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Sınaq tapılmadı.</div>`;
-  const sts=examStudents(ex),e=ed.essay;
+  const sts=roster(),e=ed.essay;
   const sel=(k,vals)=>`<select data-bind="ed.essay.${k}" data-rr="1" aria-label="${k}"><option value=""${e[k]===null?' selected':''}>–</option>${vals.map(v=>`<option value="${v}"${e[k]!==null&&+e[k]===v?' selected':''}>${fmt(v)}</option>`).join('')}</select>`;
   const t=ed.answers?testScore(ed.answers,ex.key):null;
   const et=ed.hasEssay?essayTotal(normEssay(e)):null;
@@ -1354,12 +1365,10 @@ function openEditor(r,examId){
 }
 
 function exInfoHTML(d,gs,hasRes){
-  const grp=`<label class="l" style="margin-top:0">1. Sinif (qrup)</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}`;
-  if(!d.groupIds.length&&!d.id)return grp+'<p class="hint">Sinfi seçin — sonra sınağın formatı çıxacaq.</p>';
-  const fm=`<label class="l">2. Sınağın formatı</label><div class="big2" style="grid-template-columns:1fr 1fr">${FMTS.map(([k,n,dsc])=>`<button type="button" class="shoot" data-act="setExamFmt" data-f="${k}" style="padding:10px 12px;font-size:16px;${d.fmtPicked&&d.fmt===k?'background:var(--c1);color:#fff;border-style:solid;border-color:var(--c1)':'background:var(--card);color:var(--ink);border-color:var(--line)'}">${n}<small style="${d.fmtPicked&&d.fmt===k?'color:#e8ecff':''}">${dsc}</small></button>`).join('')}</div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün formatı və növü dəyişmək olmaz.</p>':''}`;
-  if(!d.fmtPicked)return grp+fm;
-  const tp=hasLvl(d.fmt)?`<label class="l">3. Sinif səviyyəsi</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>`:'';
-  return grp+fm+tp+`<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>`}
+  const fm=`<label class="l" style="margin-top:0">1. Şablon</label><div class="big2" style="grid-template-columns:1fr 1fr">${TPL.map(([k,t,n,dsc])=>{const on=d.fmtPicked&&d.fmt===k&&(!hasLvl(k)||d.type===t);return `<button type="button" class="shoot" data-act="setExamTpl" data-f="${k}" data-t="${t}" style="padding:10px 12px;font-size:16px;${on?'background:var(--c1);color:#fff;border-style:solid;border-color:var(--c1)':'background:var(--card);color:var(--ink);border-color:var(--line)'}">${n}<small style="${on?'color:#e8ecff':''}">${dsc}</small></button>`}).join('')}</div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün şablonu dəyişmək olmaz.</p>':''}`;
+  if(!d.fmtPicked)return fm+'<p class="hint">Şablonu seçin — sonra ad və cavab açarı çıxacaq.</p>';
+  const tp='';
+  return fm+tp+`<div class="two"><div><label class="l">2. Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>`}
 function exKeyHTML(d,filled){return `<p class="hint">${!hasW(d)?(tfOf(d).length||msOf(d).length?(tfOf(d).length?`${tfOf(d).map(i=>i+1).join(', ')}-ci suallarda 1–4 bəndləri üçün A və ya B seçin (iki doğru cavab varsa, ikisini də basın). `:'')+(msOf(d).length?`${msOf(d).map(i=>i+1).join(', ')}-ci sualda düzgün rəqəmlərin hamısını seçin (1–${msCnt(d,msOf(d)[0])}).`:''):'Hər sual üçün düzgün variantı (A–E) seçin.'):d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
   ${gridHTML('key',d.key,{tf:layOf(d).tf,ms:layOf(d).ms,ms4:layOf(d).ms4||[]})}
   <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>`}
@@ -1384,20 +1393,20 @@ VIEWS.sinaqlar=()=>{
   if(xn.mode==='detail'&&!examById(xn.examId))xn.mode='list';
   if(xn.mode==='home')return `<section class="box"><h2>Sınaqlar</h2><div class="big2">
     <button type="button" class="shoot" data-act="xnGo" data-m="list" style="text-align:left;background:var(--t1);border-color:var(--c1);color:var(--c1)">📚 Hazır sınaqlar<small>${list.length} sınaq. Sinfi seçin, sınağı açın: cavab kartı, cavab açarı, testin şəkilləri.</small></button>
-    <button type="button" class="shoot" data-act="xnGo" data-m="new" style="text-align:left;background:var(--t2);border-color:var(--c2);color:var(--c2)">➕ Yeni sınaq hazırla<small>Ad, sinif, cavab açarı və paraqraf mövzusu və ya 3 şəkil.</small></button>
+    <button type="button" class="shoot" data-act="xnGo" data-m="new" style="text-align:left;background:var(--t2);border-color:var(--c2);color:var(--c2)">➕ Yeni sınaq hazırla<small>Şablonu seçin, ad verin, cavab açarını yazın.</small></button>
   </div></section>`;
   if(xn.mode==='list'){
     if(xn.gid&&!groupById(xn.gid))xn.gid='';
-    const rows=list.filter(e=>!xn.gid||(e.groupIds||[]).includes(xn.gid));
+    const rows=list.filter(e=>!xn.gid||exGroups(e).includes(xn.gid));
     return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
     <section class="box"><h2>📚 Hazır sınaqlar</h2><label class="l" style="margin-top:0">Sinif (qrup)</label>
     <div class="chips"><button class="chip${!xn.gid?' on':''}" data-act="xnGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${xn.gid===g.id?' on':''}" data-act="xnGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div></section>
-    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${(e.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · <b>${fmtName(exFmt(e))}</b>${hasLvl(exFmt(e))?' · '+(exType(e)==='9'?'9-cu sinif':'10–11-ci sinif'):''} · ${n} iş${!hasW(e)?'':exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
+    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${exGroupsTxt(e)||'hələ yoxlanmayıb'} · <b>${tplName(e)}</b> · ${n} iş${!hasW(e)?'':exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
   }
   const filled=keyFilled(d),hasRes=d.id&&S.results.some(r=>r.examId===d.id);
   if(xn.mode==='new')return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
   <section class="box"><h2>➕ Yeni sınaq</h2>${exInfoHTML(d,gs,false)}</section>
-  ${d.fmtPicked&&d.groupIds.length?`<section class="box"><h2>✅ Cavab açarı (1–${qN(d)}) <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${exKeyHTML(d,filled)}</section>
+  ${d.fmtPicked?`<section class="box"><h2>✅ Cavab açarı (1–${qN(d)}) <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${exKeyHTML(d,filled)}</section>
   ${hasW(d)?`<section class="box"><h2>📄 Cavab kartı üçün</h2>${exWritingHTML(d)}</section>`:''}
   <section class="box"><h2>🖼 Testin şəkilləri <span class="muted" style="font-weight:500;font-size:14px">(istəyə görə)</span></h2>${exMetaHTML(d)}</section>
   <div class="savebar"><div class="grow muted">Hamısını doldurub sınağı yaradın.</div><button class="btn" data-act="saveExam">Sınağı yarat</button></div>`:''}`;
@@ -1405,7 +1414,7 @@ VIEWS.sinaqlar=()=>{
   const ex=examById(xn.examId),n=S.results.filter(r=>r.examId===ex.id).length,dirty=draftDirty();
   if(cardPrev.stamp!==cardStamp(ex))setTimeout(()=>genCardPrev(ex),0);
   return `<button class="back" data-act="xnBack">← Hazır sınaqlar</button>
-  <section class="box hero" style="padding:16px 16px"><h1 style="margin:0">${esc(ex.name)}</h1><p class="muted" style="margin:4px 0 0">${esc(ex.date||'')}${ex.date?' · ':''}${(ex.groupIds||[]).map(gName).map(esc).join(', ')||'Qrup yoxdur'} · <b>${fmtName(exFmt(ex))}</b>${hasLvl(exFmt(ex))?' · '+(exType(ex)==='9'?'9-cu sinif':'10–11-ci sinif'):''} · ${n} yoxlanmış iş</p></section>
+  <section class="box hero" style="padding:16px 16px"><h1 style="margin:0">${esc(ex.name)}</h1><p class="muted" style="margin:4px 0 0">${esc(ex.date||'')}${ex.date?' · ':''}${exGroupsTxt(ex)||'hələ yoxlanmayıb'} · <b>${tplName(ex)}</b> · ${n} yoxlanmış iş</p></section>
   <section class="box"><h2>📄 Cavab kartı</h2>
   ${!hasW(ex)?`<p class="hint" style="margin:0 0 8px">A4 səhifədə ${cardsPer(ex)} kart — çap edib qırıq xətt üzrə kəsin.</p>`:exType(ex)==='9'?`<p style="margin:0 0 8px"><b>26.</b> ${ex.pics?'3 şəkil kartda çap olunur.':'<span style="color:var(--pen)">3 şəkil yüklənməyib.</span>'}</p>`:`<p style="margin:0 0 8px"><b>Mövzu:</b> ${ex.topic?`<i>${esc(ex.topic)}</i>`:'<span class="muted">yazılmayıb — kartda boş xətt olacaq</span>'}</p>`}
   <div style="max-width:330px;margin:0 auto;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff">${cardPrev.stamp===cardStamp(ex)&&cardPrev.url?`<img src="${cardPrev.url}" alt="Cavab kartı" style="display:block;width:100%">`:'<p class="empty" style="margin:0;padding:60px 10px">Kart hazırlanır…</p>'}</div>
@@ -1414,7 +1423,7 @@ VIEWS.sinaqlar=()=>{
   ${hasW(ex)?`<details style="margin-top:6px"><summary class="muted" style="cursor:pointer">${exType(ex)==='9'?'3 şəkli dəyiş':'Mövzunu dəyiş'}</summary><div style="margin-top:8px">${exWritingHTML(d)}</div></details>`:''}</section>
   <section class="box"><h2>✅ Cavab açarı <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${n?'<p class="hint">Açarı dəyişib saxlasanız, yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanır.</p>':''}${exKeyHTML(d,filled)}</section>
   <section class="box"><h2>🖼 Testin şəkilləri və sualların mövzuları</h2>${exMetaHTML(d)}</section>
-  <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, sinif, format)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
+  <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, şablon)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
   <div class="savebar"><div class="grow muted">Açar, mövzu, şəkillər və məlumatlar «Saxla» basanda yazılır.</div><button class="btn" data-act="saveExam">💾 Saxla</button></div>`;
 };
 
@@ -1511,15 +1520,15 @@ const ACT={
   setExamFmt(el){const d=examDraft,f=el.dataset.f;if(d.id&&S.results.some(r=>r.examId===d.id)&&f!==d.fmt)return toast('Bu sınaqda nəticə var, formatı dəyişmək olmaz.','err');
     if(f!==d.fmt||!d.fmtPicked){const nd={...d,fmt:f};const n=qN(nd);d.key=Array.from({length:n},(_,i)=>i<qN(d)&&kindAt(d,i)===kindAt(nd,i)?d.key[i]:'-');d.qmeta=Array.from({length:n},(_,i)=>({sec:secFor(nd,i),tag:''}));d.fmt=f}
     d.fmtPicked=true;render()},
+  setExamTpl(el){const d=examDraft,f=el.dataset.f,t=hasLvl(el.dataset.f)?el.dataset.t:'11';if(d.fmtPicked&&f===d.fmt&&t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, şablonu dəyişmək olmaz.','err');
+    const nd={...d,fmt:f,type:t};const n=qN(nd);d.key=Array.from({length:n},(_,i)=>d.fmtPicked&&i<qN(d)&&kindAt(d,i)===kindAt(nd,i)?d.key[i]:'-');d.qmeta=Array.from({length:n},(_,i)=>({sec:secFor(nd,i),tag:''}));d.fmt=f;d.type=t;d.fmtPicked=true;render()},
   setExamType(el){const d=examDraft,t=el.dataset.t;if(t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, növü dəyişmək olmaz.','err');if(!d.fmtPicked)d.fmtPicked=true;const nd={...d,type:t};for(let i=0;i<qN(d);i++){if(kindAt(d,i)!==kindAt(nd,i))d.key[i]='-';d.qmeta[i].sec=secFor(nd,i)}d.type=t;render()},
   delPics(){examDraft.pics='';render()},
   applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<qN(examDraft);i++){const v=a[i]||'-';const kd=kindAt(examDraft,i);const vt=kd==='tf'&&/^[AB*]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF*]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===qN(examDraft)?'Açar köçürüldü.':`${a.length} cavab tapıldı, ${qN(examDraft)} olmalıdır.`,a.length===qN(examDraft)?'':'err')},
   async saveExam(){
     const d=examDraft;if(!d.name.trim())return toast('Sınağın adını yazın.','err');
-    if(!d.groupIds.length)return toast('Ən azı bir qrup seçin.','err');
     const miss=d.key.map((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d,i)].test(v||'')?0:i+1).filter(Boolean);
     if(!d.fmtPicked)return toast('Sınağın formatını seçin.','err');
-    if(hasW(d)&&d.type==='9'&&!d.pics)return toast('26-cı sual üçün 3 şəkli yükləyin.','err');
     if(miss.length)return toast('Açar tam deyil: '+miss.join(', ')+'-ci suallar.','err');
     if(hasW(d)&&d.type!=='9'&&!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
     const old=d.id&&examById(d.id);
