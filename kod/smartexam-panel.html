@@ -483,10 +483,10 @@ const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.
 const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
 const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||defSec(i,exType(ex));
 const qTag=(ex,i)=>String(ex?.qmeta?.[i]?.tag||'').trim();
-const dispAns=v=>{v=String(v??'');if(/^[TF-]{4}$/.test(v))return v==='----'?'boş':v.replace(/T/g,'A').replace(/F/g,'B').replace(/-/g,'–');return !v||v==='-'?'boş':v};
-const normTF=v=>/^[TF-]{4}$/.test(v||'')?v:'----';
+const dispAns=v=>{v=String(v??'');if(/^[TF*-]{4}$/.test(v))return v==='----'?'boş':v.replace(/T/g,'A').replace(/F/g,'B').replace(/-/g,'–').replace(/\*/g,'(A/B)');return !v||v==='-'?'boş':v};
+const normTF=v=>/^[TF*-]{4}$/.test(v||'')?v:'----';
 function pointsFor(i,v,k){
-  if(/^[TF]{4}$/.test(k||'')){const s=normTF(v);let n=0;for(let j=0;j<4;j++)if(s[j]!=='-'&&s[j]===(k||'')[j])n++;return n===4?1:n===3?.5:0}
+  if(/^[TF*]{4}$/.test(k||'')){const s=normTF(v);let n=0;for(let j=0;j<4;j++){const kj=(k||'')[j];if(s[j]!=='-'&&s[j]!=='*'&&(kj==='*'||s[j]===kj))n++}return n===4?1:n===3?.5:0}
   if(/^[1-5]+$/.test(k||''))return normMS(v)===normMS(k)?1:0;
   return v&&v!=='-'&&v===k?1:0;
 }
@@ -588,7 +588,7 @@ function gridHTML(g,arr,opt={}){
   return `<div class="grid25">`+arr.map((v,i)=>{
     const n=i+1,tf=(opt.tf||TF).includes(i),ms=(opt.ms||[]).includes(i);let mark='',body;
     if(opt.key){const k=opt.key[i],p=pointsFor(i,v,k);mark=`<span class="mk ${p===1?'ok':p>0?'half':'bad'}">${p===1?'✓':p>0?'½':'✗'}${p<1?`<span class="kh">${esc(dispAns(k))}</span>`:''}</span>`}
-    if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t}" aria-label="${n}.${j+1} ${t==='T'?'A':'B'}">${t==='T'?'A':'B'}</button>`).join('')}</span>`).join('')+`</div>`}
+    if(tf){const s=normTF(v);body=`<div class="tfwrap">`+[0,1,2,3].map(j=>`<span class="tfi"><i>${n}.${j+1}</i>${['T','F'].map(t=>`<button type="button" class="bub${s[j]===t||s[j]==='*'?' on':''}" data-bub="${g}" data-q="${i}" data-j="${j}" data-v="${t}" aria-pressed="${s[j]===t||s[j]==='*'}" aria-label="${n}.${j+1} ${t==='T'?'A':'B'}">${t==='T'?'A':'B'}</button>`).join('')}</span>`).join('')+`</div>`}
     else if(ms){const sv=normMS(v);body=['1','2','3','4','5'].map(L=>`<button type="button" class="bub${sv.includes(L)?' on':''}" data-bub="${g}" data-q="${i}" data-m="1" data-v="${L}" aria-pressed="${sv.includes(L)}" aria-label="${n} ${L}">${L}</button>`).join('')+`<span class="muted" style="font-size:12px">bir neçə</span>`}
     else body=['A','B','C','D','E'].map(L=>`<button type="button" class="bub${v===L?' on':''}" data-bub="${g}" data-q="${i}" data-v="${L}" aria-pressed="${v===L}" aria-label="${n} ${L}">${L}</button>`).join('');
     return `<div class="row${flags.has(n)?' flag':''}${tf?' tf':''}"><span class="qn">${n}</span><div class="opts">${body}</div>${mark}</div>`;
@@ -598,7 +598,7 @@ function tapBubble(b){
   const g=b.dataset.bub,i=+b.dataset.q,v=b.dataset.v;
   const arr=g==='key'?examDraft.key:ed.answers;
   if(b.dataset.m!==undefined){const sv=normMS(arr[i]).replace('-','');arr[i]=normMS(sv.includes(v)?sv.replace(v,''):sv+v)}
-  else if(b.dataset.j!==undefined){const j=+b.dataset.j;const s=normTF(arr[i]).split('');s[j]=s[j]===v?'-':v;arr[i]=s.join('')}
+  else if(b.dataset.j!==undefined){const j=+b.dataset.j;const s=normTF(arr[i]).split('');const c=s[j];if(g==='key'){s[j]=c===v?'-':c==='-'?v:c==='*'?(v==='T'?'F':'T'):'*'}else s[j]=c===v?'-':v;arr[i]=s.join('')}
   else arr[i]=arr[i]===v?'-':v;
   if(g==='ans')ed.flags=ed.flags.filter(n=>n!==i+1);
   render();
@@ -805,24 +805,23 @@ async function drawCard(ex){
   Ln(12,25,198,25,.5);
   [['AD',12,58],['SOYAD',73,58],['QRUP',134,30],['BAL',167,31]].forEach(([l,x0,w])=>{T(l,x0,28.3,2.5,700,'left',INK,F,.2);RR(x0,29.9,w,7.6,1,INK,.35)});
   T('müəllim yazır',198,28.3,2.1,500,'right','#8a94a6');
-  /* cavablar */
-  const top=41,colW=46.5,rowH=6.3;
-  const mc=[];for(let i=0;i<N;i++)if(!tfs.includes(i)&&!mss.includes(i))mc.push(i);
-  const rows=Math.ceil(mc.length/4);
-  for(let r=1;r<rows;r++)Ln(14,top+1.85+r*rowH,196,top+1.85+r*rowH,.2,'#d3dae6',[1,1]);
-  for(let col=1;col<4;col++)Ln(12+col*colW,top+.5,12+col*colW,top+3.2+rows*rowH-1,.25,'#c7d0de');
-  mc.forEach((i,idx)=>{const col=Math.floor(idx/rows),row=idx%rows,x0=12+col*colW,cy=top+5+row*rowH;T(String(i+1),x0+8,cy,3.3,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+12.8+j*6.6,cy,5,'ABCDE'[j])});
-  let y=top+3.2+rows*rowH+1.2;
-  const sp=[...tfs,...mss].sort((a,b)=>a-b);
-  sp.forEach((i,idx)=>{const half=idx%2,r=Math.floor(idx/2),x0=12+half*93,cy=y+4.4+r*9;
-    RR(x0+1.5,cy-3.7,90,7.4,1.2,null,0,FILL);T(String(i+1),x0+8,cy,3.3,800,'right',INK);
-    if(tfs.includes(i)){for(let q=0;q<4;q++){const bx=x0+10.5+q*20;T(`${i+1}.${q+1}`,bx,cy,2.4,700,'left',INK);Bub(bx+9.6,cy,4.8,'A',2.3);Bub(bx+15.2,cy,4.8,'B',2.3)}}
-    else{for(let j=0;j<5;j++)Bub(x0+12.8+j*6.6,cy,5,String(j+1));T('doğruların hamısını qaraldın',x0+46.5,cy,2.4,700,'left','#4a5568')}
+  /* cavablar — 1-dən 25-ə ardıcıl, sütun-sütun */
+  const top=41,colW=46.5,rowH=5.8,BD=3.5,BS=5;
+  const units=i=>tfs.includes(i)?2:1;
+  let rows=Math.ceil(Array.from({length:N},(_,i)=>units(i)).reduce((a,b)=>a+b,0)/4),place;
+  for(;;rows++){place=[];let col=0,row=0,ok=true;for(let i=0;i<N;i++){const u=units(i);if(row+u>rows){col++;row=0}if(col>3){ok=false;break}place.push({i,col,row,u});row+=u}if(ok)break}
+  for(let col=1;col<4;col++)Ln(12+col*colW,top+.5,12+col*colW,top+2.4+rows*rowH,.25,'#c7d0de');
+  place.forEach(({i,col,row,u})=>{const x0=12+col*colW,y0=top+1.6+row*rowH,cy=y0+rowH/2;
+    if(row>0)Ln(x0+2,y0,x0+colW-2,y0,.2,'#d3dae6',[1,1]);
+    if(tfs.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,u*rowH-1,1,null,0,FILL);T(String(i+1),x0+7,y0+u*rowH/2,3.1,800,'right',INK);
+      for(let q=0;q<4;q++){const sx=x0+9.5+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.2,700,'left',INK);Bub(sx+8.6,scy,BD,'A',1.8);Bub(sx+13.4,scy,BD,'B',1.8)}}
+    else if(mss.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,rowH-1,1,null,0,FILL);T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,String(j+1),1.8);T('bir neçə',x0+colW-2.5,cy,1.9,700,'right','#4a5568')}
+    else{T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11+j*BS,cy,BD,'ABCDE'[j],1.8)}
   });
-  y+=Math.ceil(sp.length/2)*9+.8;
+  let y=top+2.4+rows*rowH;
   const ry=y+3.4;
-  T('Düzgün:',14,ry,2.4,700,'left','#2d3748');Bub(27,ry,4.4,'',2,'on');T('— yalnız belə',30.2,ry,2.3,600,'left','#1F7246');
-  T('Yanlış:',50,ry,2.4,700,'left','#2d3748');Bub(62,ry,4.4,'A',2,'x');Bub(67.6,ry,4.4,'✓',2.2);Bub(73.2,ry,4.4,'C',2,'thick');Bub(78.8,ry,4.4,'',2,'dot');T('— qəbul edilmir',82,ry,2.3,600,'left','#C2362F');
+  T('Düzgün:',14,ry,2.4,700,'left','#2d3748');Bub(27,ry,3.5,'',2,'on');T('— yalnız belə',29.8,ry,2.3,600,'left','#1F7246');
+  T('Yanlış:',50,ry,2.4,700,'left','#2d3748');Bub(62,ry,3.5,'A',1.7,'x');Bub(67,ry,3.5,'✓',1.9);Bub(72,ry,3.5,'C',1.7,'thick');Bub(77,ry,3.5,'',2,'dot');T('— qəbul edilmir',80,ry,2.3,600,'left','#C2362F');
   T('Hər suala yalnız bir cavab.',104,ry,2.3,500,'left','#2d3748');
   if(tfs.length)T(`${tfs.map(i=>i+1).join(', ')}: 4 düz — tam bal, 3 düz — yarım bal`,196,ry,2.2,500,'right','#5b6577');
   y=ry+3.6;
@@ -1089,7 +1088,7 @@ function openEditor(r,examId){
 function exInfoHTML(d,gs,hasRes){return `<div class="two"><div><label class="l">Sınağın adı</label><input type="text" data-bind="examDraft.name" value="${esc(d.name)}" placeholder="Məsələn, 8 Noyabr sınağı"></div><div><label class="l">Tarix</label><input type="date" data-bind="examDraft.date" value="${esc(d.date)}"></div></div>
   <label class="l">Sınağın növü</label><div class="chips"><button type="button" class="chip${d.type==='11'?' on':''}" data-act="setExamType" data-t="11">10–11-ci sinif</button><button type="button" class="chip${d.type==='9'?' on':''}" data-act="setExamType" data-t="9">9-cu sinif</button></div>${hasRes?'<p class="hint">Bu sınaqda nəticə olduğu üçün növü dəyişmək olmaz.</p>':''}
   <label class="l">Qruplar (siniflər)</label>${gs.length?`<div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="toggleExamGroup" data-id="${g.id}" aria-pressed="${d.groupIds.includes(g.id)}">${esc(g.name)}</button>`).join('')}</div>`:`<p class="hint">Əvvəl Şagirdlər bölməsində qrup yaradın.</p>`}`}
-function exKeyHTML(d,filled){return `<p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin. 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin.'}</p>
+function exKeyHTML(d,filled){return `<p class="hint">${d.type==='9'?'4-cü sualda 1–4 bəndləri üçün A və ya B seçin (bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır). 20 və 25-ci suallarda düzgün rəqəmlərin hamısını seçin (məs. 1 və 3).':'4, 21 və 25-ci suallarda 1–4 bəndləri üçün A və ya B seçin. Bənddə hər iki cavab doğrudursa, ikisini də basın — şagirdin hansını seçməsi düz sayılır.'}</p>
   ${gridHTML('key',d.key,{tf:LAYOUT[d.type].tf,ms:LAYOUT[d.type].ms})}
   <details style="margin-top:12px"><summary class="muted" style="cursor:pointer">Açarı mətn kimi yapışdır</summary><textarea rows="3" data-bind="examDraft.paste" placeholder="${d.type==='9'?'B D A ABBA C … 13 … 245 (25 cavab)':'B, D, A, ABBA, C, … (25 cavab)'}" style="margin-top:8px">${esc(d.paste)}</textarea><div class="acts"><button class="btn sm ghost" data-act="applyPaste">Açara köçür</button></div></details>`}
 function exWritingHTML(d){return d.type==='9'?`<label class="l">26. Hekayə üçün 3 şəkil (bir foto, soldan sağa ardıcıl)</label>${d.pics?`<div class="preview" style="max-height:none;background:#fff"><img src="${d.pics}" alt="3 şəkil"></div><div class="acts"><label class="btn ghost sm" style="position:relative">🔄 Şəkli dəyiş<input type="file" accept="image/*" data-file="pics" style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="delPics">Sil</button></div>`:`<label class="shoot" style="margin-top:4px">🖼 Şəkilləri yüklə<small>3 şəkil bir fotoda. Cavab kartına çap olunacaq.</small><input type="file" accept="image/*" data-file="pics"></label>`}`:`<label class="l">26. Paraqrafın mövzusu (kartda çap olunur)</label><input type="text" data-bind="examDraft.topic" value="${esc(d.topic)}" placeholder="Məsələn, Would you like to have tech-free adventure days? Why or why not?">`}
@@ -1098,7 +1097,7 @@ function exMetaHTML(d){return `<p class="hint">Testin səhifələrinin şəklini
   ${maxImages>1?`<p class="hint">Ən çox ${maxImages} şəkil birdən.</p>`:''}
   ${d.tagMsg?`<div class="status">${esc(d.tagMsg)}</div>`:''}
   ${d.showMeta?`<div style="margin-top:10px">${d.qmeta.map((m,i)=>`<div class="qmeta"><span>${i+1}</span><select data-bind="examDraft.qmeta.${i}.sec">${SECS.map(s=>`<option${s===m.sec?' selected':''}>${s}</option>`).join('')}</select><input type="text" data-bind="examDraft.qmeta.${i}.tag" value="${esc(m.tag)}" placeholder="Mövzu" aria-label="${i+1}-ci sualın mövzusu"></div>`).join('')}</div>`:''}`}
-const keyFilled=d=>d.key.filter((v,i)=>({tf:/^[TF]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length;
+const keyFilled=d=>d.key.filter((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')).length;
 let cardPrev={stamp:'',url:'',busy:false};
 const cardStamp=ex=>ex?JSON.stringify([ex.id,ex.name,ex.type,ex.topic,ex.key,(ex.pics||'').length,S.settings.logo,S.settings.teacherName]):'';
 async function genCardPrev(ex){
@@ -1233,11 +1232,11 @@ const ACT={
   toggleMeta(){examDraft.showMeta=!examDraft.showMeta;render()},
   setExamType(el){const d=examDraft,t=el.dataset.t;if(t===d.type)return;if(d.id&&S.results.some(r=>r.examId===d.id))return toast('Bu sınaqda nəticə var, növü dəyişmək olmaz.','err');for(let i=0;i<N;i++){if(kindAt(d.type,i)!==kindAt(t,i))d.key[i]='-';d.qmeta[i].sec=defSec(i,t)}d.type=t;render()},
   delPics(){examDraft.pics='';render()},
-  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';const kd=kindAt(examDraft.type,i);const vt=kd==='tf'&&/^[AB]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
+  applyPaste(){const a=examDraft.paste.split(/[\s,;]+/).map(x=>x.trim().toUpperCase().replace(/^\d+[.)\-:]+(?=.)/,'')).filter(Boolean);if(!a.length)return toast('Mətn boşdur.','err');for(let i=0;i<N;i++){const v=a[i]||'-';const kd=kindAt(examDraft.type,i);const vt=kd==='tf'&&/^[AB*]{4}$/.test(v)?v.replace(/A/g,'T').replace(/B/g,'F'):v;examDraft.key[i]=kd==='tf'?(/^[TF*]{4}$/.test(vt)?vt:'----'):kd==='ms'?normMS(v):(/^[A-E]$/.test(v)?v:'-')}render();toast(a.length===N?'Açar köçürüldü.':`${a.length} cavab tapıldı, 25 olmalıdır.`,a.length===N?'':'err')},
   async saveExam(){
     const d=examDraft;if(!d.name.trim())return toast('Sınağın adını yazın.','err');
     if(!d.groupIds.length)return toast('Ən azı bir qrup seçin.','err');
-    const miss=d.key.map((v,i)=>({tf:/^[TF]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')?0:i+1).filter(Boolean);
+    const miss=d.key.map((v,i)=>({tf:/^[TF*]{4}$/,ms:/^[1-5]+$/,mc:/^[A-E]$/})[kindAt(d.type,i)].test(v||'')?0:i+1).filter(Boolean);
     if(d.type==='9'&&!d.pics)return toast('26-cı sual üçün 3 şəkli yükləyin.','err');
     if(miss.length)return toast('Açar tam deyil: '+miss.join(', ')+'-ci suallar.','err');
     if(d.type!=='9'&&!d.topic.trim()&&!await modal({title:'Paraqraf mövzusu yoxdur',html:'<p class="muted">26-cı sətirdə mövzu yazılmayıb. Paraqraf şagirdin vərəqə yazdığı mövzuya görə yoxlanacaq. Yenə də saxlansın?</p>',ok:'Saxla'}))return;
