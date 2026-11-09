@@ -646,23 +646,43 @@ function pickStudent(ex,idx,written,group){
   for(const f of tiers){const h=list.filter(f);if(h.length===1)return h[0];if(h.length>1)return null}
   return null;
 }
+async function cropBox(blob,x0,x1,y0,y1){
+  const im=await loadImg(blob);const w=im.naturalWidth,h=im.naturalHeight,sx=Math.round(w*x0),sw=Math.round(w*(x1-x0)),sy=Math.round(h*y0),sh=Math.round(h*(y1-y0));
+  const c=document.createElement('canvas');c.width=sw;c.height=sh;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,sw,sh);
+  return await new Promise(ok=>c.toBlob(ok,'image/jpeg',.92));
+}
 async function cropBlob(blob,y0,y1){
   const im=await loadImg(blob);const w=im.naturalWidth,h=im.naturalHeight,sy=Math.round(h*y0),sh=Math.round(h*(y1-y0));
   const c=document.createElement('canvas');c.width=w;c.height=sh;c.getContext('2d').drawImage(im,0,sy,w,sh,0,0,w,sh);
   return await new Promise(ok=>c.toBlob(ok,'image/jpeg',.92));
 }
-async function aiFront(ex,blob){
+async function gridHalves(blob){return [await cropBox(blob,0,.54,0,1),await cropBox(blob,.46,1,0,1)]}
+/* two independent readings; questions where they disagree are marked for the teacher */
+async function readTwice(ex,blob,halves){
+  if(!halves||maxImages<3)return aiFront(ex,blob);
+  const [a,b]=await Promise.allSettled([aiFront(ex,blob,halves,false),aiFront(ex,blob,halves,true)]);
+  if(a.status==='rejected'&&b.status==='rejected')throw a.reason;
+  if(a.status==='rejected')return b.value;if(b.status==='rejected')return a.value;
+  const p=a.value,q=b.value,flags=new Set([...p.flags,...q.flags]);let diff=0;
+  p.answers.forEach((v,i)=>{if(v!==q.answers[i]){flags.add(i+1);diff++}});
+  p.flags=[...flags].sort((x,y)=>x-y);if(!p.student)p.student=q.student;
+  if(diff)p.note=(p.note?p.note+' ':'')+`İki oxunuşda ${diff} sual fərqli çıxdı — sarı sətirlərə baxın.`;
+  return p;
+}
+async function aiFront(ex,blob,halves,onlyHalves){
   const tfs=tfOf(ex),mss=msOf(ex);
-  const prompt=`This photo shows a student's answer sheet for a 25-question English exam. The answer grid is at the top of the page (questions numbered 1–25); ignore any handwritten text below it.
+  const zoomTxt=halves?(onlyHalves?'Image 1 is the LEFT half and image 2 the RIGHT half of the answer grid area (they overlap a little in the middle — a question that appears in both is the same question). ':'Image 1 is the whole answer area; images 2 and 3 are zoomed LEFT and RIGHT halves of the same area (they overlap a little) — use the zoomed halves to read each bubble precisely and image 1 for the name boxes and overall layout. '):'';
+  const prompt=`${zoomTxt}This shows a student's answer sheet for a 25-question English exam. The answer grid is at the top of the page (questions numbered 1–25); ignore any handwritten text below it.
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
 2) Read which option the student marked for each question (find each question by its printed number). ${mss.length?`Questions ${mss.map(i=>i+1).join(' and ')} are multiple-selection rows with five bubbles numbered 1 to 5; the student may fill several — give the filled numbers as a string in ascending order, e.g. "13" or "134"; none → "-"; if any bubble is unclear put "?". `:''}Questions ${tfs.map(i=>i+1).join(', ')} are two-column blocks: four rows numbered like 4.1 to 4.4, each row has two bubbles A and B; give the marked letters of the four rows as a 4-letter string in order, e.g. "ABBA". Every other question has exactly one answer from A, B, C, D, E (no other letters). Ignore the example bubbles in the fill-rule line ("Düzgün" / "Yanlış", or the "DOLDURMA QAYDASI" box) and the teacher's "BAL" / "NƏTİCƏ" box.
+IMPORTANT — a filled bubble hides its printed letter, so identify it by POSITION: count the bubbles of that row from the left — 1st = A, 2nd = B, 3rd = C, 4th = D, 5th = E (A/B sub-rows: 1st = A, 2nd = B; multiple-selection rows: 1st = 1 … 5th = 5). Then cross-check with the letters still visible in the empty bubbles on each side (e.g. if B is visible on its left and D on its right, the filled one is C). Never report a letter that is still visible in an empty bubble as the filled one.
 Work slowly and carefully, one question at a time, in number order: find the printed question number, then compare ALL bubbles of that row (or of that A/B sub-row, e.g. 4.4) and pick the one that is clearly darker / filled. Empty bubbles show only a small light-grey letter; a filled bubble is solid dark. Do not shift rows: double-check that the bubble you read belongs to the same printed number. Check every A/B sub-row (x.1, x.2, x.3, x.4) separately — do not leave one blank if a bubble in it is filled.
 A mark can be a filled bubble, a circle or a tick. CORRECTIONS: if a filled or marked bubble has an X drawn over it and another bubble in the same question (or the same two-column row) is filled, the X means the student cancelled it — take the other filled bubble as the answer. Only if an X is the sole mark in that question/row, treat the X as the student's answer. Blank → "-". Two or more marked, or you cannot tell → "?" (for two-column put "?" only in the unclear position, e.g. "AB?A"). Do not guess.
 Reply with only JSON:
 {"name_as_written":"", "group_as_written":"", "student_number": number from the list or null if you are not sure, "answers":[25 strings in order], "unclear":[question numbers], "note":"one short sentence in Azerbaijani about problems, or empty"}`;
-  const fo={images:[blob]};if(essayTier)fo.modelTier=essayTier;
+  const fo={images:halves?(onlyHalves?halves:[blob,...halves]):[blob]};if(essayTier)fo.modelTier=essayTier;
   const r=await sample.json(prompt,fo);
   const a=Array.isArray(r?.answers)?r.answers:[];
   const flags=new Set((Array.isArray(r?.unclear)?r.unclear:[]).map(Number).filter(n=>n>=1&&n<=N));
@@ -773,11 +793,11 @@ async function runQueue(){
 async function processItem(it){
   const ex=examById(it.examId);if(!ex)throw new Error('exam');
   if(!sample||!canImages){it.state='err';it.msg='Foto oxuma bu görünüşdə işləmir.';return}
-  if(it.kind==='front'){const p=await aiFront(ex,it.blob);it.payload={answers:p.answers,flags:p.flags,note:p.note};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
+  if(it.kind==='front'){let hv=null;try{hv=await gridHalves(it.blob)}catch(e){}const p=await readTwice(ex,it.blob,hv);it.payload={answers:p.answers,flags:p.flags,note:p.note};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
   else if(it.kind==='sheet'){
     it.msg='Test və '+wName(ex).toLocaleLowerCase('az')+' yoxlanılır…';render();
-    let topB=it.blob,botB=it.blob;try{topB=await cropBlob(it.blob,0,.56);botB=await cropBlob(it.blob,.3,1)}catch(e){}
-    const [s1,s2]=await Promise.allSettled([aiFront(ex,topB),aiBack(ex,botB)]);
+    let topB=it.blob,botB=it.blob,halves=null;try{topB=await cropBlob(it.blob,0,.56);botB=await cropBlob(it.blob,.3,1);halves=await gridHalves(topB)}catch(e){}
+    const [s1,s2]=await Promise.allSettled([readTwice(ex,topB,halves),aiBack(ex,botB)]);
     if(s1.status==='rejected')throw s1.reason;
     const p1=s1.value,p2=s2.status==='fulfilled'?s2.value:null,err2=s2.status==='rejected'?s2.reason:null;
     it.payload={answers:p1.answers,flags:p1.flags,note:p1.note,essay:p2?p2.essay:null,err2:err2?sErr(err2):''};
