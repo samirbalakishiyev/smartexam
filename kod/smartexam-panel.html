@@ -1478,7 +1478,6 @@ VIEWS.sinaqlar=()=>{
   <section class="box"><h2>➕ Yeni sınaq</h2>${exInfoHTML(d,gs,false)}</section>
   ${d.fmtPicked?`<section class="box"><h2>✅ Cavab açarı (1–${qN(d)}) <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${exKeyHTML(d,filled)}</section>
   ${hasW(d)?`<section class="box"><h2>📄 Cavab kartı üçün</h2>${exWritingHTML(d)}</section>`:''}
-  <section class="box"><h2>🖼 Testin şəkilləri <span class="muted" style="font-weight:500;font-size:14px">(istəyə görə)</span></h2>${exMetaHTML(d)}</section>
   <div class="savebar"><div class="grow muted">Hamısını doldurub sınağı yaradın.</div><button class="btn" data-act="saveExam">Sınağı yarat</button></div>`:''}`;
   /* detail */
   const ex=examById(xn.examId),n=S.results.filter(r=>r.examId===ex.id).length,dirty=draftDirty();
@@ -1492,7 +1491,6 @@ VIEWS.sinaqlar=()=>{
   ${dirty?'<p class="hint" style="text-align:center">Kartda saxlanmış variant görünür. Dəyişiklikləri saxlayandan sonra kart yenilənəcək.</p>':''}
   ${hasW(ex)?`<details style="margin-top:6px"${exType(ex)==='9'&&!ex.pics?' open':''}><summary class="muted" style="cursor:pointer">${exType(ex)==='9'?(ex.pics?'3 şəkli dəyiş':'3 şəkli yüklə'):'Mövzunu dəyiş'}</summary><div style="margin-top:8px">${exWritingHTML(d)}</div></details>`:''}</section>
   <section class="box"><h2>✅ Cavab açarı <span class="muted" style="font-weight:500">${filled}/${qN(d)}</span></h2>${n?'<p class="hint">Açarı dəyişib saxlasanız, yoxlanmış işlərin balı yeni açara görə avtomatik yenidən hesablanır.</p>':''}${exKeyHTML(d,filled)}</section>
-  <section class="box"><h2>🖼 Testin şəkilləri və sualların mövzuları</h2>${exMetaHTML(d)}</section>
   <details class="box" style="padding:0"><summary style="padding:16px;cursor:pointer;font-weight:700">⚙️ Sınağın məlumatları (ad, tarix, şablon)</summary><div style="padding:0 16px 16px">${exInfoHTML(d,gs,hasRes)}<div class="acts"><button class="btn danger sm" data-act="delExam" data-id="${ex.id}">🗑 Sınağı sil</button></div></div></details>
   <div class="savebar"><div class="grow muted">Açar, mövzu, şəkillər və məlumatlar «Saxla» basanda yazılır.</div><button class="btn" data-act="saveExam">💾 Saxla</button></div>`;
 };
