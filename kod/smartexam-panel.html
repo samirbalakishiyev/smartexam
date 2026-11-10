@@ -602,13 +602,13 @@ function render(){
   else if(mode==='local'){el.className='pill local';el.textContent='Yalnız bu brauzerdə'}
   else if(mode==='slow'){el.className='pill local';el.textContent='Bağlantı gecikir'}
   else{el.className='pill';el.textContent='Yüklənir…'}
-  const navTab=(tab==='profile'||tab==='edit'||tab==='res')?prevTab:tab;
+  const navTab=(tab==='profile'||tab==='edit'||tab==='res'||tab==='send')?prevTab:tab;
   $('#nav').innerHTML=TABS.map(([k,n])=>`<button type="button" data-tab="${k}" class="${k===navTab?'on':''}" aria-current="${k===navTab?'page':'false'}">${n}</button>`).join('');
   $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.yoxla)();
   if(tab==='neticeler'||tab==='sagirdler'){const s=$('[data-search]');if(s&&s.value)applySearch(s)}
 }
 function toTop(){try{window.scrollTo(0,0)}catch(e){}try{const v=document.querySelector('.top');if(v)v.scrollIntoView({block:'start'})}catch(e){}}
-function go(t){if(t!=='profile'&&t!=='edit'&&t!=='res')prevTab=t;tab=t;render();toTop()}
+function go(t){if(t!=='profile'&&t!=='edit'&&t!=='res'&&t!=='send')prevTab=t;tab=t;render();toTop()}
 
 /* ---------- answer grid ---------- */
 function gridHTML(g,arr,opt={}){
@@ -1083,7 +1083,43 @@ function markSegs(text,mistakes){
   for(const m of marks){if(m.start>pos)segs.push({t:text.slice(pos,m.start)});segs.push({t:text.slice(m.start,m.end),k:m.k});pos=m.end}
   if(pos<text.length)segs.push({t:text.slice(pos)});return {segs,found:new Set(marks.map(m=>m.k))};
 }
-function mistakesImage(r){
+function resultImage(r){
+  const ex=examById(r.examId),st=studentById(r.studentId),W=1080,PAD=56,head=170,t=resTest(r),e=r.essay,es=resEssay(r),wq=t===null?[]:wrongQs(r);
+  const mist=e&&e.status==='ok'&&(e.mistakes||[]).length&&e.transcript&&hasW(ex);
+  const mc=mist?mistakesImage(r,0):null;
+  const rowH=64,tH=t===null?0:110+(wq.length?60+wq.length*rowH:70);
+  const eH=e&&hasW(ex)&&!mist?110:0;
+  const H=head+190+tH+eH+(mc?mc.height-head+20:90);
+  const [c,x]=shareCanvas(W,H);
+  shHeader(x,W,head,st?.name||'Şagird',`${ex.name}${ex.date?' · '+ex.date:''}${st?.groupId?' · '+gName(st.groupId):''}`);
+  let y=head;x.fillStyle='#F3F5FC';x.fillRect(0,y,W,190);
+  const p=resPct(r),pc=pctCol(p);
+  x.save();x.translate(W-PAD-120,y+95);x.rotate(-.08);x.strokeStyle=pc;x.lineWidth=6;x.beginPath();x.ellipse(0,0,118,62,0,0,Math.PI*2);x.stroke();{let f=58;x.font=`800 ${f}px Inter, Arial, sans-serif`;while(x.measureText(fmt(p)+'%').width>200&&f>30){f-=2;x.font=`800 ${f}px Inter, Arial, sans-serif`}shTxt(x,fmt(p)+'%',0,4,f,800,pc,'center')}x.restore();
+  shTxt(x,`Test: ${t===null?'–':fmt(t)}/${qN(ex)}`,PAD,y+52,40,800,'#17233B');
+  if(hasW(ex)){shTxt(x,`${wName(ex)}: ${es===null?'–':fmt(es)}/5`,PAD,y+104,34,700,'#3B5BDB');shTxt(x,`Cəmi: ${fmt(resTotal(r))}/${maxTot(ex)}`,PAD,y+152,34,700,'#4A5568')}
+  else shTxt(x,`Düz: ${qN(ex)-wq.length} · Səhv: ${wq.length}`,PAD,y+110,32,600,'#4A5568');
+  y+=190;
+  if(t!==null){
+    y+=40;shTxt(x,wq.length?`Səhv suallar (${wq.length})`:'Testdə səhv yoxdur — əla!',PAD,y+20,38,800,wq.length?'#17233B':'#1C8A52');y+=70;
+    if(wq.length){
+      shTxt(x,'Sual',PAD,y+20,24,700,'#8A94A6');shTxt(x,'Sənin cavabın',PAD+190,y+20,24,700,'#8A94A6');shTxt(x,'Düzgün cavab',PAD+560,y+20,24,700,'#8A94A6');y+=50;
+      wq.forEach((q,k)=>{if(k%2===0){x.fillStyle='#F7F8FC';x.fillRect(PAD-16,y,W-PAD*2+32,rowH)}const cy=y+rowH/2;
+        shTxt(x,`${q.i+1}.`,PAD,cy,34,800,'#17233B');
+        x.fillStyle='#FDECEA';const sp=v=>{const d=dispAns(v)||'—';return d.length===4&&/^[AB*(\/)]+$/.test(d)?d.split('').join(' '):d};const yv=sp(q.v);x.font='800 34px Inter, Arial, sans-serif';const w1=x.measureText(yv).width;x.fillRect(PAD+184,cy-24,w1+20,48);shTxt(x,yv,PAD+194,cy,34,800,'#C2362F');
+        x.strokeStyle='#C2362F';x.lineWidth=3;x.beginPath();x.moveTo(PAD+192,cy+2);x.lineTo(PAD+196+w1,cy+2);x.stroke();
+        const kv=sp(q.k);x.font='800 34px Inter, Arial, sans-serif';const w2=x.measureText(kv).width;x.fillStyle='#E4F5EC';x.fillRect(PAD+554,cy-24,w2+20,48);shTxt(x,kv,PAD+564,cy,34,800,'#1C8A52');
+        if(q.p>0)shTxt(x,'½ bal',W-PAD,cy,26,700,'#B7791F','right');
+        y+=rowH});
+    }
+  }
+  if(mc){y+=20;x.drawImage(mc,0,head,W,mc.height-head,0,y,W,mc.height-head)}
+  else{
+    if(eH){y+=30;const v=(k,m)=>e[k]==null?'–':fmt(e[k])+'/'+m;shTxt(x,`${wName(ex)}: ${fmt(e.total??0)}/5`,PAD,y+20,36,800,'#3B5BDB');shTxt(x,e.status&&e.status!=='ok'?({off_topic:'Mövzudan kənar yazılıb.',not_english:'İngilis dilində deyil.',unreadable:'Yazı oxunmur.'}[e.status]||''):e.kind==='9'?`Məzmun ${v('A',2)} · Ardıcıllıq ${v('B',1)} · Qrammatika ${v('C',1)} · Söz ${v('D',1)}`:`A ${v('A',1)} · B ${v('B',2)} · C ${v('C',1)} · D ${v('D',1)}`,PAD,y+70,26,600,'#4A5568')}
+    shTxt(x,'Qırmızı — sənin cavabın, yaşıl — düzgün cavab',PAD,H-36,20,600,'#8A94A6');shTxt(x,S.settings.sign||S.settings.teacherName||'',W-PAD,H-36,20,500,'#8A94A6','right');
+  }
+  return c;
+}
+function mistakesImage(r,minH=900){
   const ex=examById(r.examId),e=r.essay,W=1080,PAD=56,maxW=W-PAD*2,head=170;
   const ms=(e.mistakes||[]).filter(m=>m.original&&m.correction&&m.original.trim()!==m.correction.trim());
   const {segs,found}=markSegs(String(e.transcript||''),ms);
@@ -1109,7 +1145,7 @@ function mistakesImage(r){
     return y;
   };
   const top=head+150;let fs=34;while(fs>17&&layout(fs,false,null,top)>1900)fs-=1;
-  const H=Math.max(900,Math.ceil(layout(fs,false,null,top)+70));const [c,x]=shareCanvas(W,H);
+  const H=Math.max(minH,Math.ceil(layout(fs,false,null,top)+70));const [c,x]=shareCanvas(W,H);
   shHeader(x,W,head,sName(r.studentId),`${ex.name}${ex.date?' · '+ex.date:''}`);
   x.fillStyle='#F3F5FC';x.fillRect(0,head,W,130);
   shTxt(x,`${wName(ex)}: ${fmt(e.total??0)}/5${e.words?` · ${e.words} söz`:''}`,PAD,head+42,38,800,'#3B5BDB');
@@ -1223,7 +1259,38 @@ VIEWS.neticeler=()=>{
   const rs=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===g).sort((a,b)=>resPct(b)-resPct(a));
   return flt+`<section class="box"><h2>${esc(ex.name)} <span class="muted" style="font-weight:500">${esc(gName(g))}</span></h2>
   ${rs.length?`<div class="list">${rs.map((r,i)=>`<div class="li click srow" data-act="viewResult" data-id="${r.id}"><span class="rank">${i+1}</span><div class="grow"><b>${esc(sName(r.studentId))}</b></div>${dsHTML(r)}<span class="pct" style="margin-left:14px">${fmt(resPct(r))}%</span></div>`).join('')}</div>
-  <div class="acts"><button class="btn sm" data-act="shareClass">📸 Valideynlər üçün şəkil</button></div>`:'<p class="empty">Bu sınaq üzrə bu qrupda hələ nəticə yoxdur.</p>'}</section>`;
+  <div class="acts"><button class="btn sm wa" data-act="openSend">📤 WhatsApp: hamısına göndər</button><button class="btn sm" data-act="shareClass">📸 Valideynlər üçün şəkil</button></div>`:'<p class="empty">Bu sınaq üzrə bu qrupda hələ nəticə yoxdur.</p>'}</section>`;
+};
+const SND={mode:'text',cur:'',sent:new Set(),key:''};
+const sndKey=()=>'se-sent-'+rf.examId+'-'+rf.groupId;
+function sndLoad(){if(SND.key===sndKey())return;SND.key=sndKey();SND.cur='';try{SND.sent=new Set(JSON.parse(localStorage.getItem(SND.key)||'[]'))}catch(e){SND.sent=new Set()}}
+function sndSave(){try{localStorage.setItem(SND.key,JSON.stringify([...SND.sent]))}catch(e){}}
+function sndRows(){return S.results.filter(r=>r.examId===rf.examId&&studentById(r.studentId)?.groupId===rf.groupId).sort((a,b)=>azCmp(sName(a.studentId),sName(b.studentId)))}
+function examMsgFull(r){
+  const ex=examById(r.examId),t=resTest(r),e=r.essay,L=[examMsg(r).split('\n').filter((l,i,a)=>!(i===a.length-1&&l===(S.settings.sign||S.settings.teacherName||''))).join('\n').trim()];
+  const wq=t===null?[]:wrongQs(r);
+  if(t!==null)L.push('',wq.length?'Səhv suallar:':'Testdə səhv yoxdur 👏',...wq.map(q=>`${q.i+1}) sənin: ${dispAns(q.v)||'—'} → düzgün: ${dispAns(q.k)}${q.p>0?' (½ bal)':''}`));
+  if(e&&hasW(ex)){const ms=(e.mistakes||[]).filter(m=>m.original&&m.correction);if(e.status&&e.status!=='ok')L.push('',`${wName(ex)}: 0/5`);else if(ms.length)L.push('',`${wName(ex)}dakı səhvlər:`,...ms.map(m=>`❌ ${m.original} → ✅ ${m.correction}${m.explanation?' ('+m.explanation+')':''}`))}
+  const sg=S.settings.sign||S.settings.teacherName||'';if(sg)L.push('',sg);
+  return L.join('\n');
+}
+VIEWS.send=()=>{
+  const ex=examById(rf.examId);if(!ex||!rf.groupId)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Əvvəl Nəticələrdə qrupu və sınağı seçin.</div>`;
+  sndLoad();const rs=sndRows(),withPh=rs.filter(r=>waPhone(studentById(r.studentId)?.phone));
+  if(!SND.cur||!rs.find(r=>r.id===SND.cur))SND.cur=(withPh.find(r=>!SND.sent.has(r.id))||{}).id||'';
+  const done=withPh.filter(r=>SND.sent.has(r.id)).length,noPh=rs.length-withPh.length;
+  const cur=rs.find(r=>r.id===SND.cur);
+  const msg=r=>SND.mode==='text'?examMsgFull(r):examMsg(r);
+  return `<button class="back" data-act="back">← Geri</button>
+  <section class="box"><h2>📤 WhatsApp-a göndərmə</h2><p class="muted" style="margin:0 0 8px">${esc(ex.name)} · ${esc(gName(rf.groupId))}</p>
+  <div class="chips"><button class="chip${SND.mode==='text'?' on':''}" data-act="sndMode" data-m="text">📝 Mətn — səhvlər mesajda</button><button class="chip${SND.mode==='img'?' on':''}" data-act="sndMode" data-m="img">📸 Şəkil ilə</button></div>
+  <p class="hint">${SND.mode==='text'?'Mesajda bal, faiz, səhv suallar və paraqraf səhvləri yazılır. «Göndər» basın → WhatsApp-da göndər oxuna basın → panelə qayıdın.':'Əvvəl «Hamısının şəklini yüklə» basın — şəkillər «01 Ad Soyad» adı ilə telefona yüklənir. Sonra «Göndər» → WhatsApp-da 📎 ilə həmin şagirdin şəklini əlavə edin → göndərin.'}</p>
+  ${SND.mode==='img'?`<div class="acts"><button class="btn" data-act="sndAllImg">📸 Hamısının şəklini yüklə (${rs.length})</button></div>`:''}
+  <p style="margin:10px 0 0;font-weight:700">Göndərildi: ${done}/${withPh.length}${noPh?` <span class="muted" style="font-weight:500">· ${noPh} şagirdin nömrəsi yoxdur</span>`:''}</p></section>
+  ${cur?`<section class="box" style="border:2px solid var(--c1)"><h2>Növbəti: ${esc(sName(cur.studentId))} <span class="pct" style="margin-left:6px">${fmt(resPct(cur))}%</span></h2><div style="white-space:pre-wrap;font-size:14px;background:var(--soft,#f3f5fc);border-radius:10px;padding:10px;max-height:220px;overflow:auto">${esc(msg(cur))}</div>
+  <div class="acts"><a class="btn wa" data-sent="${cur.id}" href="https://wa.me/${waPhone(studentById(cur.studentId)?.phone)}?text=${encodeURIComponent(msg(cur))}" target="_blank" rel="noopener">📤 Göndər</a>${SND.mode==='img'?`<button class="btn sm" data-act="shareRes" data-id="${cur.id}">📸 Şəkli</button>`:''}<button class="btn ghost sm" data-act="sndSkip">Keç ›</button></div></section>`:withPh.length?`<section class="box"><p style="margin:0;font-weight:700;color:#1C8A52">✅ Hamısına göndərildi.</p></section>`:''}
+  <section class="box"><div class="list">${rs.map((r,i)=>{const st=studentById(r.studentId),ph=waPhone(st?.phone),ok=SND.sent.has(r.id);return `<div class="li${ph?' click':''} srow${r.id===SND.cur?' selon':''}" ${ph?`data-act="sndPick" data-id="${r.id}"`:''}><span class="rank">${ok?'✅':i+1}</span><div class="grow"><b>${esc(st?.name||'')}</b>${ph?'':`<small style="color:var(--pen)">nömrə yoxdur</small>`}</div>${ph?`<span class="pct">${fmt(resPct(r))}%</span>`:`<button class="btn sm ghost" data-act="editStudent" data-id="${st?.id}">Nömrə yaz</button>`}</div>`}).join('')}</div>
+  ${done?`<div class="acts"><button class="btn ghost sm" data-act="sndReset">↺ İşarələri sıfırla</button></div>`:''}</section>`;
 };
 function resCard(r){
   const ex=examById(r.examId);if(!ex)return '';
@@ -1234,7 +1301,7 @@ function resCard(r){
   <p style="margin:8px 0 4px">${parts.join(' · ')}</p>${(r.flags||[]).length?`<p class="hint" style="margin:0">⚠ ${r.flags.length} sual yoxlanmalıdır — «Düzəlt» ilə baxın.</p>`:''}
   ${t!==null?`<h3>Səhv suallar (${wq.length})</h3>${wq.length?wq.map(q=>`<div class="wq"><b>${q.i+1}.</b> Yazıb: <span class="y">${esc(dispAns(q.v))}</span>, düzgün: <span class="c">${esc(dispAns(q.k))}</span>${q.p>0?' (½ bal)':''}</div>`).join(''):'<p class="muted" style="margin:0">Səhv yoxdur.</p>'}`:''}
   ${e&&hasW(ex)?essayShort(e):''}
-  <div class="acts">${mist?`<button class="btn sm" data-act="shareMist" data-id="${r.id}">📝 Səhvlər şəkli</button>`:''}${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
+  <div class="acts"><button class="btn sm" data-act="shareRes" data-id="${r.id}">📸 Nəticə şəkli</button>${ph?`<a class="btn sm wa" href="https://wa.me/${ph}?text=${encodeURIComponent(examMsg(r))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn sm ghost" data-act="editResult" data-id="${r.id}">Düzəlt</button></div>
   ${!ph?'<p class="hint" style="margin:4px 0 0">WhatsApp üçün Şagirdlər bölməsində şagirdin nömrəsini yazın.</p>':''}</div>`;
 }
 function essayShort(e){
@@ -1404,7 +1471,7 @@ VIEWS.sinaqlar=()=>{
     return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
     <section class="box"><h2>📚 Hazır sınaqlar</h2><label class="l" style="margin-top:0">Sinif (qrup)</label>
     <div class="chips"><button class="chip${!xn.gid?' on':''}" data-act="xnGroup" data-id="">Hamısı</button>${gs.map(g=>`<button class="chip${xn.gid===g.id?' on':''}" data-act="xnGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')}</div></section>
-    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${exGroupsTxt(e)||'hələ yoxlanmayıb'} · <b>${tplName(e)}</b> · ${n} iş${!hasW(e)?'':exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
+    <section class="box">${rows.length?`<div class="list">${rows.map(e=>{const n=S.results.filter(r=>r.examId===e.id).length;return `<div class="li click" data-act="xnOpen" data-id="${e.id}"><div class="grow"><b style="color:var(--c1)">${esc(e.name)}</b><small>${esc(e.date||'')}${e.date?' · ':''}${exGroupsTxt(e)||'hələ yoxlanmayıb'} · <b>${tplName(e)}</b> · ${n} iş${!hasW(e)?'':exType(e)==='9'?(e.pics?'':' · şəkil yoxdur'):(e.topic?'':' · mövzu yoxdur')}</small></div><button class="btn sm ghost" data-act="delExam" data-id="${e.id}" aria-label="Sil" style="color:var(--pen);padding:6px 10px">🗑</button><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div>`:`<p class="empty">${xn.gid?'Bu sinifdə sınaq yoxdur.':'Hələ sınaq yoxdur.'}</p><div class="acts" style="justify-content:center"><button class="btn sm" data-act="xnGo" data-m="new">➕ Yeni sınaq hazırla</button></div>`}</section>`;
   }
   const filled=keyFilled(d),hasRes=d.id&&S.results.some(r=>r.examId===d.id);
   if(xn.mode==='new')return `<button class="back" data-act="xnGo" data-m="home">← Sınaqlar</button>
@@ -1480,6 +1547,14 @@ const ACT={
   toggleOpen:el=>{const id=el.dataset.id;profileOpen.has(id)?profileOpen.delete(id):profileOpen.add(id);render()},
   rfGroup:el=>{rf.groupId=el.dataset.id;render()},
   rfClearStu:()=>{rf.studentId='';render()},
+  openSend:()=>{go('send');toTop()},
+  sndMode:el=>{SND.mode=el.dataset.m;render()},
+  sndPick:el=>{SND.cur=el.dataset.id;render();toTop()},
+  sndSkip:()=>{const rs=sndRows().filter(r=>waPhone(studentById(r.studentId)?.phone));const i=rs.findIndex(r=>r.id===SND.cur);const nx=rs.slice(i+1).find(r=>!SND.sent.has(r.id))||rs.find(r=>!SND.sent.has(r.id)&&r.id!==SND.cur);SND.cur=nx?nx.id:'';render()},
+  sndReset:async()=>{if(!await modal({title:'İşarələr sıfırlansın?',html:'<p class="muted">✅ işarələri silinəcək, göndərmə əvvəldən başlayacaq.</p>',ok:'Bəli'}))return;SND.sent=new Set();sndSave();SND.cur='';render()},
+  async sndAllImg(el){const rs=sndRows(),ex=examById(rf.examId);if(!rs.length)return;el.disabled=true;let k=0;
+    for(const r of rs){k++;el.textContent=`Hazırlanır… ${k}/${rs.length}`;try{const c=resultImage(r);const bl=await new Promise(ok=>c.toBlob(ok,'image/png'));if(bl)await saveFile(`${String(k).padStart(2,'0')} ${sName(r.studentId)} - ${ex.name}.png`.replace(/[\\/:*?"<>|]+/g,'-'),bl)}catch(e){}}
+    el.disabled=false;el.textContent=`📸 Hamısının şəklini yüklə (${rs.length})`;toast(`${rs.length} şəkil yükləndi.`)},
   viewResult:el=>{resId=el.dataset.id;go('res')},
   manual:()=>openEditor(null,Q.examId),
   resume:()=>runQueue(),
@@ -1547,7 +1622,7 @@ const ACT={
   async xnBack(){if(draftDirty()&&!await modal({title:'Dəyişikliklər saxlanmayıb',html:'<p class="muted">Saxlanmamış dəyişikliklər itəcək. Çıxılsın?</p>',ok:'Çıx',danger:true}))return;examDraft=freshExam();xn.mode='list';render();toTop()},
   async cardPdf(el){const ex=examById(el.dataset.id);if(!ex)return;toast('PDF hazırlanır…');try{const pages=await drawCard(ex);const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(e){toast('PDF hazırlanmadı.','err')}},
   cancelExam(){examDraft=freshExam();xn.mode=xn.examId&&examById(xn.examId)?'list':'home';render();toTop()},
-  async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`${e.name} və ${rs.length} nəticə silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);examDraft=freshExam();xn.mode='list';render();toTop()},
+  async delExam(el){const e=examById(el.dataset.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Silmək istəyirsiniz?',`«${e.name}» sınağı${rs.length?' və onun '+rs.length+' nəticəsi':''} silinəcək. Bu geri qaytarılmır.`,'Bəli, sil'))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);examDraft=freshExam();xn.mode='list';render();toTop()},
   card:el=>showCard(examById(el.dataset.id)),
   shareClass(){
     const ex=examById(rf.examId);if(!ex)return;
@@ -1555,6 +1630,10 @@ const ACT={
     if(!rs.length)return toast('Bu sınaqda nəticə yoxdur.','err');
     const gid=rf.groupId||((ex.groupIds||[]).length===1?ex.groupIds[0]:'');
     try{const c=classImage(ex,gid,rs);shareImage(c,'netice-'+ex.name.replace(/[^\p{L}\p{N}]+/gu,'-')+'.png','https://wa.me/?text='+encodeURIComponent(`«${ex.name}» sınağının nəticələri`),'valideynlər qrupunu seçin')}catch(e){toast('Şəkil hazırlanmadı.','err')}
+  },
+  shareRes(el){
+    const r=S.results.find(x=>x.id===el.dataset.id);if(!r)return;const st=studentById(r.studentId),ex=examById(r.examId),ph=waPhone(st?.phone);
+    try{const c=resultImage(r);shareImage(c,'netice-'+(st?.name||'sagird').replace(/[^\p{L}\p{N}]+/gu,'-')+'.png',(ph?`https://wa.me/${ph}`:'https://wa.me/')+'?text='+encodeURIComponent(examMsg(r)),ph?'şagirdin söhbəti açılacaq':'şagirdi seçin')}catch(e){try{console.error(e)}catch(_){}toast('Şəkil hazırlanmadı.','err')}
   },
   shareMist(el){
     const r=S.results.find(x=>x.id===el.dataset.id);if(!r||!r.essay)return;const st=studentById(r.studentId),ex=examById(r.examId),ph=waPhone(st?.phone);
@@ -1585,6 +1664,7 @@ async function importData(v){
 /* ---------- events ---------- */
 function setBind(path,val){const p=path.split('.');const roots={forms,rf,examDraft,ed,setDraft,Q};let o=roots[p[0]];if(!o)return;for(let i=1;i<p.length-1;i++){o=o[p[i]];if(o==null)return}o[p[p.length-1]]=val}
 document.addEventListener('click',e=>{
+  const sa=e.target.closest('a[data-sent]');if(sa){const id=sa.dataset.sent;setTimeout(()=>{SND.sent.add(id);sndSave();SND.cur='';render()},400)}
   const t=e.target.closest('[data-tab]');if(t){sel=null;if(t.dataset.tab==='sinaqlar'&&!(xn.mode==='detail'&&draftDirty())){xn.mode='home';examDraft=freshExam()}if(t.dataset.tab==='parametrler')setDraft=null;go(t.dataset.tab);return}
   const b=e.target.closest('[data-bub]');if(b){tapBubble(b);return}
   const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
