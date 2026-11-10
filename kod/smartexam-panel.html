@@ -444,15 +444,15 @@ Məsələn, 3 bal:
 <script>
 'use strict';
 const N=25, TF=[3,20,24];
-const LAYOUT={'US-11':{tf:[3,20,24],ms:[]},'US-9':{tf:[3],ms:[19,24]},'LR-11':{tf:[3,7,11],ms:[]},'LR-9':{tf:[3],ms:[11],ms4:[11]},'G20':{tf:[],ms:[]},'G40':{tf:[],ms:[]},'T25-11':{tf:[3,20,24],ms:[]},'T25-9':{tf:[3],ms:[19,24]}};
-const FMTS=[['US','ÜS','Ümumi sınaq: 25 test + 5 bal yazı'],['LR','12-LR','Listening + Reading, 12 sual'],['G20','20 G','20 qapalı qrammatika sualı'],['G40','40 G','40 qapalı qrammatika sualı'],['T25','25','25 test sualı, paraqraf və şəkil yoxdur']];
-const hasLvl=f=>f==='US'||f==='LR'||f==='T25';
+const LAYOUT={'US-11':{tf:[3,20,24],ms:[]},'US-9':{tf:[3],ms:[19,24]},'LR-11':{tf:[3,7,11],ms:[]},'LR-9':{tf:[3],ms:[11],ms4:[11]},'G20':{tf:[],ms:[]},'G40':{tf:[],ms:[]},'T25-11':{tf:[3,20,24],ms:[]},'T25-9':{tf:[3],ms:[19,24]},'LW-11':{tf:[3,7,11],ms:[]},'LW-9':{tf:[3],ms:[11],ms4:[11]}};
+const FMTS=[['US','ÜS','Ümumi sınaq: 25 test + 5 bal yazı'],['LR','12-LR','Listening + Reading, 12 sual'],['G20','20 G','20 qapalı qrammatika sualı'],['G40','40 G','40 qapalı qrammatika sualı'],['T25','25','25 test sualı, paraqraf və şəkil yoxdur'],['LW','12+5','Listening + Reading 12 sual + yazı']];
+const hasLvl=f=>f==='US'||f==='LR'||f==='T25'||f==='LW';
 const cardsPer=ex=>({G40:2,T25:3})[exFmt(ex)]||4;
 const fmtName=f=>(FMTS.find(x=>x[0]===f)||FMTS[0])[1];
-const exFmt=ex=>['LR','G20','G40','T25'].includes(ex?.fmt)?ex.fmt:'US';
+const exFmt=ex=>['LR','G20','G40','T25','LW'].includes(ex?.fmt)?ex.fmt:'US';
 const exType=ex=>ex?.type==='9'?'9':'11';
-const qN=ex=>({US:25,LR:12,G20:20,G40:40,T25:25})[exFmt(ex)];
-const hasW=ex=>exFmt(ex)==='US';
+const qN=ex=>({US:25,LR:12,G20:20,G40:40,T25:25,LW:12})[exFmt(ex)];
+const hasW=ex=>exFmt(ex)==='US'||exFmt(ex)==='LW';
 const maxTot=ex=>qN(ex)+(hasW(ex)?5:0);
 const layKey=ex=>{const f=exFmt(ex);return hasLvl(f)?f+'-'+exType(ex):f};
 const layOf=ex=>LAYOUT[layKey(ex)];
@@ -478,7 +478,7 @@ const azCmp=(a,b)=>String(a).localeCompare(String(b),'az');
 const fmt=n=>{n=Math.round(n*100)/100;return String(n).replace('.',',')};
 const norm=s=>String(s||'').toLocaleLowerCase('az').replace(/[əäçğıöşüİI]/g,c=>({'ə':'e','ä':'e','ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','i̇':'i','I':'i','İ':'i'}[c]||c)).replace(/\s+/g,' ').trim();
 const clean=o=>JSON.parse(JSON.stringify(o));
-const secFor=(ex,i)=>{const f=exFmt(ex);return f==='LR'?(i<4?'Dinləmə':'Oxu'):f==='G20'||f==='G40'?'Qrammatika':defSec(i,exType(ex))};
+const secFor=(ex,i)=>{const f=exFmt(ex);return f==='LR'||f==='LW'?(i<4?'Dinləmə':'Oxu'):f==='G20'||f==='G40'?'Qrammatika':defSec(i,exType(ex))};
 const defSec=(i,t)=>t==='9'?(i<4?'Dinləmə':i<7?'Oxu':i<20?'Qrammatika':'Oxu'):(i<4?'Dinləmə':i<17?'Qrammatika':'Oxu');
 
 let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
@@ -504,7 +504,7 @@ const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.
 const roster=()=>{const g=Q.groupId;return S.students.slice().sort((a,b)=>(a.groupId===g?0:1)-(b.groupId===g?0:1)||azCmp(gName(a.groupId),gName(b.groupId))||azCmp(a.name,b.name))};
 const exGroups=e=>{const ids=new Set(e.groupIds||[]);S.results.forEach(r=>{if(r.examId===e.id){const g=studentById(r.studentId)?.groupId;if(g)ids.add(g)}});return [...ids].filter(groupById)};
 const exGroupsTxt=e=>exGroups(e).map(gName).map(esc).join(', ');
-const TPL=[['US','11','ÜS · 11','25 test + paraqraf'],['US','9','ÜS · 9','25 test + hekayə (3 şəkil)'],['T25','11','25 · 11','Yalnız 25 test'],['T25','9','25 · 9','Yalnız 25 test'],['LR','11','12-LR · 11','Listening + Reading, 12 sual'],['LR','9','12-LR · 9','Listening + Reading, 12 sual'],['G20','11','20 G','20 qrammatika sualı'],['G40','11','40 G','40 qrammatika sualı']];
+const TPL=[['US','11','ÜS · 11','25 test + paraqraf'],['US','9','ÜS · 9','25 test + hekayə (3 şəkil)'],['T25','11','25 · 11','Yalnız 25 test'],['T25','9','25 · 9','Yalnız 25 test'],['LW','11','12+5 · 11','Listening + Reading + paraqraf'],['LW','9','12+5 · 9','Listening + Reading + hekayə (3 şəkil)'],['LR','11','12-LR · 11','Listening + Reading, 12 sual'],['LR','9','12-LR · 9','Listening + Reading, 12 sual'],['G20','11','20 G','20 qrammatika sualı'],['G40','11','40 G','40 qrammatika sualı']];
 const tplName=e=>{const f=exFmt(e),t=hasLvl(f)?exType(e):'11';return (TPL.find(x=>x[0]===f&&x[1]===t)||TPL[0])[2]};
 const examStudents=ex=>ex?S.students.filter(s=>(ex.groupIds||[]).includes(s.groupId)).sort((a,b)=>azCmp(a.name,b.name)):[];
 const qSec=(ex,i)=>ex?.qmeta?.[i]?.sec||secFor(ex,i);
@@ -695,7 +695,7 @@ async function readTwice(ex,blob,halves){
 async function aiFront(ex,blob,halves,onlyHalves){
   const tfs=tfOf(ex),mss=msOf(ex);
   const zoomTxt=halves?(onlyHalves?'Image 1 is the LEFT half and image 2 the RIGHT half of the answer grid area (they overlap a little in the middle — a question that appears in both is the same question). ':'Image 1 is the whole answer area; images 2 and 3 are zoomed LEFT and RIGHT halves of the same area (they overlap a little) — use the zoomed halves to read each bubble precisely and image 1 for the name boxes and overall layout. '):'';
-  const prompt=`${zoomTxt}This shows a student's answer card for a ${qN(ex)}-question English ${exFmt(ex)==='US'||exFmt(ex)==='T25'?'exam':exFmt(ex)==='LR'?'listening and reading test':'grammar test'}. The answer grid has questions numbered 1–${qN(ex)}${hasW(ex)?'; it is at the top of the page — ignore any handwritten text below it':''}.
+  const prompt=`${zoomTxt}This shows a student's answer card for a ${qN(ex)}-question English ${exFmt(ex)==='US'||exFmt(ex)==='T25'?'exam':exFmt(ex)==='LR'||exFmt(ex)==='LW'?'listening and reading test':'grammar test'}. The answer grid has questions numbered 1–${qN(ex)}${hasW(ex)?'; it is at the top of the page — ignore any handwritten text below it':''}.
 Tasks:
 1) Read the student's first name (AD box), surname (SOYAD box) and group (QRUP box, may be empty) and match them to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterText(ex)}
@@ -817,7 +817,7 @@ async function processItem(it){
   if(it.kind==='front'){let hv=null;try{hv=await gridHalves(it.blob)}catch(e){}const p=await readTwice(ex,it.blob,hv);it.payload={answers:p.answers,flags:p.flags,note:p.note};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
   else if(it.kind==='sheet'){
     it.msg='Test və '+wName(ex).toLocaleLowerCase('az')+' yoxlanılır…';render();
-    let topB=it.blob,botB=it.blob,halves=null;try{topB=await cropBlob(it.blob,0,.56);botB=await cropBlob(it.blob,.3,1);halves=await gridHalves(topB)}catch(e){}
+    let topB=it.blob,botB=it.blob,halves=null;try{const lw=exFmt(ex)==='LW';topB=await cropBlob(it.blob,0,lw?.4:.56);botB=await cropBlob(it.blob,lw?.2:.3,1);halves=await gridHalves(topB)}catch(e){}
     const [s1,s2]=await Promise.allSettled([readTwice(ex,topB,halves),aiBack(ex,botB)]);
     if(s1.status==='rejected')throw s1.reason;
     const p1=s1.value,p2=s2.status==='fulfilled'?s2.value:null,err2=s2.status==='rejected'?s2.reason:null;
@@ -950,7 +950,7 @@ async function drawCard(ex,opt){
   if(!hasW(ex))return exFmt(ex)==='T25'?drawTri(ex,opt||{}):drawMini(ex,opt||{});
   try{await Promise.all([document.fonts.load('800 40px Inter'),document.fonts.load('600 40px Inter'),document.fonts.load('700 40px Inter'),document.fonts.load('500 40px Inter')])}catch(e){}
   const W=1654,H=2339,k=W/210,F='Inter, Arial, sans-serif',INK='#1f3a68',SOFT='#8a9bb8',FILL='#eef2f9';
-  const tfs=tfOf(ex),mss=msOf(ex),is9=exType(ex)==='9';
+  const tfs=tfOf(ex),mss=msOf(ex),is9=exType(ex)==='9',n=qN(ex),isLW=exFmt(ex)==='LW';
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);
   const T=(t,px,py,size,weight=400,align='left',color='#111',font=F,ls=0)=>{x.font=`${weight} ${size*k}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';if('letterSpacing' in x)x.letterSpacing=(ls*k)+'px';x.fillText(t,px*k,py*k);if('letterSpacing' in x)x.letterSpacing='0px'};
   const RR=(x0,y0,w,h,r,stroke,lw,fill)=>{x.beginPath();x.roundRect?x.roundRect(x0*k,y0*k,w*k,h*k,r*k):x.rect(x0*k,y0*k,w*k,h*k);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw*k;x.stroke()}};
@@ -961,22 +961,23 @@ async function drawCard(ex,opt){
   /* başlıq */
   Logo(20,14.5,16,5.6);
   T('CAVAB KARTI',105,10.5,5.4,800,'center',INK,F,.5);
-  T((ex.name||'ENGLISH')+' · 25 SUAL',105,16.6,2.9,600,'center','#4a5568',F,.15);
-  T(is9?'Listening 1–4 · Short passages 5–7 · Grammar 8–20 · Reading 21–25':'Listening 1–4 · Grammar 5–17 · Reading 18–25',105,21.2,2.4,500,'center','#5b6577');
+  T((ex.name||'ENGLISH')+' · '+(isLW?'12 SUAL + YAZI':'25 SUAL'),105,16.6,2.9,600,'center','#4a5568',F,.15);
+  T(isLW?(is9?'Listening 1–4 · Short passages 5–7 · Reading 8–12 · Writing':'Listening 1–4 · Reading 5–12 · Writing'):is9?'Listening 1–4 · Short passages 5–7 · Grammar 8–20 · Reading 21–25':'Listening 1–4 · Grammar 5–17 · Reading 18–25',105,21.2,2.4,500,'center','#5b6577');
+  if(isLW&&S.settings.teacherName){T(S.settings.teacherName,198,11.5,2.9,800,'right',INK);T('tərəfindən hazırlanıb',198,16,2.4,600,'right','#4a5568')}
   Ln(12,25,198,25,.5);
   [['AD',12,58],['SOYAD',73,58],['QRUP',134,30],['BAL',167,31]].forEach(([l,x0,w])=>{T(l,x0,28.3,2.5,700,'left',INK,F,.2);RR(x0,29.9,w,7.6,1,INK,.35)});
   T('müəllim yazır',198,28.3,2.1,500,'right','#8a94a6');
   /* cavablar — 1-dən 25-ə ardıcıl, sütun-sütun */
   const top=41,colW=46.5,rowH=6.4,BD=5,BS=6.6;
   const units=i=>tfs.includes(i)?2:1;
-  let rows=Math.ceil(Array.from({length:N},(_,i)=>units(i)).reduce((a,b)=>a+b,0)/4),place;
-  for(;;rows++){place=[];let col=0,row=0,ok=true;for(let i=0;i<N;i++){const u=units(i);if(row+u>rows){col++;row=0}if(col>3){ok=false;break}place.push({i,col,row,u});row+=u}if(ok)break}
+  let rows=Math.ceil(Array.from({length:n},(_,i)=>units(i)).reduce((a,b)=>a+b,0)/4),place;
+  for(;;rows++){place=[];let col=0,row=0,ok=true;for(let i=0;i<n;i++){const u=units(i);if(row+u>rows){col++;row=0}if(col>3){ok=false;break}place.push({i,col,row,u});row+=u}if(ok)break}
   for(let col=1;col<4;col++)Ln(12+col*colW,top+.5,12+col*colW,top+2.4+rows*rowH,.25,'#c7d0de');
   place.forEach(({i,col,row,u})=>{const x0=12+col*colW,y0=top+1.6+row*rowH,cy=y0+rowH/2;
     if(row>0)Ln(x0+2,y0,x0+colW-2,y0,.2,'#d3dae6',[1,1]);
     if(tfs.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,u*rowH-1,1,null,0,FILL);T(String(i+1),x0+7,y0+u*rowH/2,3.1,800,'right',INK);
       for(let q=0;q<4;q++){const sx=x0+9.5+(q%2)*18.5,scy=y0+rowH/2+Math.floor(q/2)*rowH;T(`${i+1}.${q+1}`,sx,scy,2.2,700,'left',INK);Bub(sx+8.6,scy,4.8,'A',2.3);Bub(sx+14.2,scy,4.8,'B',2.3)}}
-    else if(mss.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,rowH-1,1,null,0,FILL);T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11.5+j*BS,cy,BD,String(j+1),2.5)}
+    else if(mss.includes(i)){RR(x0+1.2,y0+.5,colW-2.4,rowH-1,1,null,0,FILL);T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<msCnt(ex,i);j++)Bub(x0+11.5+j*BS,cy,BD,String(j+1),2.5)}
     else{T(String(i+1),x0+7,cy,3.1,800,'right',INK);for(let j=0;j<5;j++)Bub(x0+11.5+j*BS,cy,BD,'ABCDE'[j],2.5)}
   });
   let y=top+2.4+rows*rowH;
