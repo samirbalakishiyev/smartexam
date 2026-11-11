@@ -402,13 +402,13 @@ Sonda “Söz sayı: X” göstər.
 Söz sayını dəqiq hesabla; mövzu başlığını və “Söz sayı” qeydini saya daxil etmə.</script>
 <script type="text/plain" id="model9-src">Şagird esseni düzgün formada görmək istədiyini təsdiqlədikdə:
 •	hekayəni A2 səviyyəsində ingilis dilində yenidən yaz;
-•	təxminən 45 söz istifadə et;
+•	35–50 söz istifadə et (ən çoxu 55 söz — heç vaxt 55-dən çox olmasın);
 •	3 şəklin hadisə ardıcıllığını qoru;
 •	hekayə formasında yaz;
 •	obrazlara uyğun adlar ver;
 •	hadisələri məntiqli ardıcıllıqla əlaqələndir;
 •	uyğun bağlayıcı və keçid sözlərindən istifadə et;
-•	sadə və ən azı bəzi mürəkkəb cümlələrdən istifadə et;
+•	əsasən qısa, sadə cümlələrdən istifadə et; yalnız bir-iki asan bağlı cümlə (and, but, so, because, when) ola bilər; çətin cümlə quruluşları (passiv, şərt cümlələri, uzun tabeli cümlələr, Perfect zamanlar) işlətmə;
 •	qrammatika və orfoqrafiyanı düzgün saxla;
 •	ilkin hekayənin əsas ideyasını mümkün qədər qoru.
 Məqsəd çox yüksək səviyyəli esse yaratmaq deyil. Nümunə real 9-cu sinif A2 şagirdinin yaza biləcəyi səviyyədə olmalıdır.
@@ -656,12 +656,14 @@ Count the words exactly (do not count the topic). Reply with only JSON: {"text":
       if(!pb&&c.picsId&&c.picsId===S.settings.picsId&&S.settings.pics9)pb=picsBlob();
       const have=!!(pb&&canImages);
       const prompt=`${have?'The attached image shows the three task pictures in order (left to right or top to bottom).':'The three pictures are not attached. What happens in them: '+(c.pictures||'(unknown — use the events of this student story: '+String(c.transcript||'').slice(0,600)+')')}
-Write a model story in English for grade 9 students based on these three pictures, following EXACTLY the teacher's rules below: A2 level, about 45 words, keep the order of the 3 pictures, story form, give the characters names, link events logically with suitable connectors, simple and at least some complex sentences, correct grammar and spelling. It must be at the level a real grade 9 A2 student could write — not too advanced. Mark the connectors in bold with **double asterisks** (e.g. **First**, **Then**, **Finally**, **because**).
+Write a model story in English for grade 9 students based on these three pictures, following EXACTLY the teacher's rules below.
+STRICT LIMITS: A2 level only. Length 35–50 words (absolute maximum 55 words — never more). Use mostly short, simple sentences in Past Simple (and Past Continuous where natural). At most one or two easy linked sentences with and / but / so / because / when. Do NOT use difficult structures: no passive voice, no conditionals, no Perfect tenses, no relative clauses, no long complex sentences, no rare or advanced words. Keep the order of the 3 pictures, story form, give the characters names, link events with simple connectors, correct grammar and spelling. It must look like a good text a real grade 9 A2 student could write. Mark the connectors in bold with **double asterisks** (e.g. **First**, **Then**, **Finally**, **because**).
 """
 ${MODEL9}
 """
 Reply with only JSON: {"title":"a short title","text":"the story"}`;
       const o=have?{images:[pb]}:{};if(tier)o.modelTier=tier;r=await sample.json(prompt,o);
+      for(let k=0;k<2&&wcount(r?.text)>55;k++){const n=wcount(r?.text);r=await sample.json(prompt+`\n\nYour previous story had ${n} words — too long. Rewrite it shorter: 35–50 words, never more than 55, simple A2 sentences.\nPrevious story: """${String(r?.text||'')}"""`,o)}
     }
     const text=String(r?.text||'').trim();if(!text)throw {code:'invalid_json'};
     const m={id:old?.id||'m'+hash(key),key,grade:c.grade,topic:c.topic||'',title:String(r?.title||'').trim(),text,words:wcount(text),date:new Date().toISOString()};
