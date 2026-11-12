@@ -406,7 +406,7 @@ DİL VƏ ÜSLUB
 •	obrazlara uyğun adlar ver;
 •	hadisələri məntiqli ardıcıllıqla əlaqələndir;
 •	uyğun bağlayıcı və keçid sözlərindən istifadə et;
-•	əsasən qısa, sadə cümlələrdən istifadə et; yalnız bir-iki asan bağlı cümlə (and, but, so, because, when) ola bilər; çətin cümlə quruluşları (passiv, şərt cümlələri, uzun tabeli cümlələr, Perfect zamanlar) işlətmə;
+•	sadə və mürəkkəb cümlələri qarışıq işlət: cümlələrin ancaq təxminən yarısı sadə (bir mübtəda + bir xəbər) olsun, qalanları because, so, when, but, and, while bağlayıcıları ilə qurulmuş mürəkkəb cümlələr olsun (ən azı 3 cümlədə because, so və ya when işlənsin); çətin cümlə quruluşları (passiv, şərt cümlələri, çox uzun cümlələr, Perfect zamanlar) işlətmə;
 •	qrammatika və orfoqrafiyanı düzgün saxla;
 •	ilkin hekayənin əsas ideyasını mümkün qədər qoru.
 Məqsəd çox yüksək səviyyəli esse yaratmaq deyil. Nümunə real 9-cu sinif A2 şagirdinin yaza biləcəyi səviyyədə olmalıdır.
@@ -655,7 +655,7 @@ Count the words exactly (do not count the topic). Reply with only JSON: {"text":
       const have=!!(pb&&canImages);
       const prompt=`${have?'The attached image shows the three task pictures in order (left to right or top to bottom).':'The three pictures are not attached. What happens in them: '+(c.pictures||'(unknown — use the events of this student story: '+String(c.transcript||'').slice(0,600)+')')}
 Write a model story in English for grade 9 students based on these three pictures, following EXACTLY the teacher's rules below.
-STRICT LIMITS: A2 level only. Length 35–50 words (absolute maximum 55 words — never more). Use mostly short, simple sentences in Past Simple (and Past Continuous where natural). At most one or two easy linked sentences with and / but / so / because / when. Do NOT use difficult structures: no passive voice, no conditionals, no Perfect tenses, no relative clauses, no long complex sentences, no rare or advanced words. Keep the order of the 3 pictures, story form, give the characters names, link events with simple connectors, correct grammar and spelling. It must look like a good text a real grade 9 A2 student could write. Mark the connectors in bold with **double asterisks** (e.g. **First**, **Then**, **Finally**, **because**).
+STRICT LIMITS: A2 level only. Length 35–50 words (absolute maximum 55 words — never more). Use Past Simple (and Past Continuous where natural). Mix sentence types: only about half of the sentences may be short simple sentences (one subject + one verb); the other sentences must be complex/compound sentences joined with because, so, when, but, and or while — at least 3 sentences must use because, so or when (e.g. "Ali was very happy because he found his lost dog.", "When they arrived at the park, it started to rain, so they ran home."). Do NOT use difficult structures: no passive voice, no conditionals, no Perfect tenses, no relative clauses, no very long sentences, no rare or advanced words. Keep the order of the 3 pictures, story form, give the characters names, link events with simple connectors, correct grammar and spelling. It must look like a good text a real grade 9 A2 student could write. Mark the connectors in bold with **double asterisks** (e.g. **First**, **Then**, **Finally**, **because**).
 """
 ${MODEL9}
 """
@@ -990,7 +990,7 @@ VIEWS.yoxla=()=>{
     <div class="chips" style="margin-bottom:10px"><button type="button" class="chip ${twoSide?'on':''}" data-act="twoSide">📄📄 Vərəqin 2 üzü${twoSide?' — yanılı':''}</button></div>
     <p class="hint">${gr==='9'?(S.settings.pics9?'Yalnız şagirdin hekayəsini çəkin.':'3 şəkil və hekayə birlikdə görünsün — və ya yuxarıda şəkilləri bir dəfə yükləyin.'):'Paraqraf və şagirdin adı görünsün.'} ${twoSide?'<b>Bir şagirdin vərəqinin hər üzünü ardıcıl çəkin, sonra «Göndər» basın.</b>':'<b>Hər foto — bir şagird.</b> Ardıcıl çəkin: hamısı növbəyə düşür. Şagirdin adı vərəqdən oxunur; oxunmasa, növbədə sizdən qrupdan seçməyiniz istənəcək.'}</p>
     ${sts.length?'':`<div class="notice">Bu qrupda şagird yoxdur. <b>Şagirdlər</b> bölməsində əlavə edin.</div>`}
-    <label class="filebtn big">📷 ${twoSide?(tray.length?(tray.length>=TRAY_MAX?'Şəkil əlavə et':(tray.length+1)+(['','-ci','-ci','-cü','-cü'][tray.length+1])+' üzü çək / əlavə et'):'1-ci üzü çək / əlavə et'):'Şəkil çək / əlavə et'}<input type="file" accept="image/*" multiple data-files></label>
+    <label class="filebtn big" for="pcFile">📷 ${twoSide?(tray.length?(tray.length>=TRAY_MAX?'Şəkil əlavə et':(tray.length+1)+(['','-ci','-ci','-cü','-cü'][tray.length+1])+' üzü çək / əlavə et'):'1-ci üzü çək / əlavə et'):'Şəkil çək / əlavə et'}</label>
     ${twoSide&&(tray.length||trayBusy)?`<div class="tray">${tray.map((x,i)=>`<div class="tp"><img src="${x.thumb}" alt=""><span class="tn">${i+1}</span><button type="button" class="tx" data-act="trayDel" data-i="${i}" aria-label="Sil">✕</button></div>`).join('')}${trayBusy?'<div class="tp"><span class="spin"></span></div>':''}</div>
     <div class="acts"><button class="btn" data-act="traySend" ${tray.length&&!trayBusy?'':'disabled'}>📤 Göndər (${tray.length} şəkil)</button></div>`:''}
   </section>${queueHTML()}`;
@@ -1382,7 +1382,7 @@ VIEWS.sozler=()=>{
     <h2 style="margin-top:18px">2. Vərəqlərin şəklini çəkin</h2>
     <p class="hint">Sözlər, şagirdin tərcümələri və adı aydın görünsün. <b>Hər foto — bir şagird.</b> Ardıcıl çəkin: hamısı növbəyə düşür. Şagirdin adı vərəqdən oxunur; oxunmasa, növbədə sizdən qrupdan seçməyiniz istənəcək.</p>
     ${sts.length?'':`<div class="notice">Bu qrupda şagird yoxdur. <b>Şagirdlər</b> bölməsində əlavə edin.</div>`}
-    <label class="filebtn big">📷 Şəkil çək / əlavə et<input type="file" accept="image/*" multiple data-files></label>
+    <label class="filebtn big" for="pcFile">📷 Şəkil çək / əlavə et</label>
   </section>${queueHTML()}
   <section class="box"><h2>Nəticələr · ${esc(g.name)}</h2>
   ${tests.length?`<select data-vsel="1" aria-label="İmtahan">${tests.map(t=>`<option value="${esc(t.key)}"${t.key===V.tkey?' selected':''}>${esc(t.label)} (${today(t.last)})</option>`).join('')}</select>
@@ -1493,6 +1493,10 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{const el=e.target;
   if(el.id==='vtest'){const t=el.value.trim();if(t!==vTestName())saveSettings({...S.settings,vtest:t}).then(()=>scheduleRender());return}
   if(el.dataset&&el.dataset.vsel){V.tkey=el.value;render()}});
+/* Şəkil seçimi üçün dəyişməyən input: səhifə yenilənəndə (məlumat sinxronu və s.) kamera açıq olsa belə şəkil itmir */
+(function(){const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.multiple=true;fi.id='pcFile';
+  fi.setAttribute('aria-hidden','true');fi.tabIndex=-1;fi.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';
+  fi.addEventListener('change',()=>{const fs=[...fi.files];fi.value='';if(fs.length)addFiles(fs)});document.body.appendChild(fi)})();
 render();init();
 </script>
 </body>
