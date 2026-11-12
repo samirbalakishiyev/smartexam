@@ -580,8 +580,10 @@ Reply with only JSON:
  "comments":{"A":"","B":"","C":"","D":""},
  "transcript":"",
  "mistakes":[{"sentence":"","original":"","correction":"","explanation":"","type":""}],
+ "personal":["sentences copied from the transcript where the student gives personal examples about himself/herself or his/her own family or friends"],
  "feedback":""}
 ${MIST_RULES}
+- personal: list (copied exactly from the transcript) the sentences where the student uses personal examples about himself/herself or his/her own family, relatives or friends (e.g. "my mother cooks good dolma", "because my father doesn't like it", "in my family we…"). Empty list if there are none. Do NOT lower any score because of this and do not list it as a mistake — it is only a separate note for the student.
 - If status is not "ok", set A to 0 and B, C, D to null, but still fill the transcript if the text is readable.`;
   const o={images:blobs};if(tier)o.modelTier=tier;
   return sample.json(prompt,o);
@@ -606,8 +608,10 @@ Reply with only JSON:
  "comments":{"A":"","B":"","C":"","D":""},
  "transcript":"",
  "mistakes":[{"sentence":"","original":"","correction":"","explanation":"","type":""}],
+ "personal":["sentences copied from the transcript where the student gives personal examples about himself/herself or his/her own family or friends"],
  "feedback":""}
 ${MIST_RULES}
+- personal: list (copied exactly from the transcript) the sentences where the student uses personal examples about himself/herself or his/her own family, relatives or friends (e.g. "my mother cooks good dolma", "because my father doesn't like it", "in my family we…"). Empty list if there are none. Do NOT lower any score because of this and do not list it as a mistake — it is only a separate note for the student.
 - If status is not "ok", set A to 0 and B, C, D to null, but still fill the transcript if the text is readable.`;
   const o={images:blobs};if(tier)o.modelTier=tier;
   return sample.json(prompt,o);
@@ -620,6 +624,7 @@ function normalize(r,g){
     comments:{A:String(r?.comments?.A||''),B:String(r?.comments?.B||''),C:String(r?.comments?.C||''),D:String(r?.comments?.D||'')},
     transcript:String(r?.transcript||'').slice(0,6000),
     mistakes:(Array.isArray(r?.mistakes)?r.mistakes:[]).slice(0,40).map(m=>({sentence:String(m?.sentence||'').slice(0,600),original:String(m?.original||''),correction:String(m?.correction||''),explanation:String(m?.explanation||''),type:ERR_TYPES.includes(m?.type)?m.type:'Digər'})),
+    personal:(Array.isArray(r?.personal)?r.personal:[]).map(x=>String(x||'').trim().slice(0,300)).filter(Boolean).slice(0,5),
     feedback:String(r?.feedback||''),topic:String(r?.topic||'').slice(0,200),pictures:String(r?.pictures||'').slice(0,600),
     written:String(r?.name_as_written||'').slice(0,80),num:r?.student_number??null};
   if(g==='9'){const ec=Number.isFinite(Number(r?.error_count))&&r?.error_count!==null?Math.max(0,Math.round(Number(r.error_count))):null;c.errors=ec;c.pen=ec===null?0:ec>=6?1:ec>=3?.5:0}
@@ -727,7 +732,7 @@ async function processItem(it){
   if(it.grade==='11'&&!topic&&n.topic){topic=n.topic;if(!S.settings.topic11){D.topic=topic;saveSettings({...S.settings,topic11:topic})}}
   const st=it.studentId?studentById(it.studentId):pickStudent(it.groupId,n.num,n.written);
   const c={id:newId(),date:new Date().toISOString(),grade:it.grade,groupId:it.groupId,studentId:'',topic:topic||'',picsId:it.pb?it.picsId:'',
-    status:n.status,words:n.words,A:n.A,B:n.B,C:n.C,D:n.D,pen:n.pen??0,errors:n.errors??null,comments:n.comments,transcript:n.transcript,mistakes:n.mistakes,feedback:n.feedback,pictures:n.pictures,written:n.written};
+    status:n.status,words:n.words,A:n.A,B:n.B,C:n.C,D:n.D,pen:n.pen??0,errors:n.errors??null,comments:n.comments,transcript:n.transcript,mistakes:n.mistakes,personal:n.personal||[],feedback:n.feedback,pictures:n.pictures,written:n.written};
   c.total=total5(c);
   it.payload=c;it.written=n.written;
   if(!st){it.state='need';it.msg=needMsg(n.written);return}
@@ -945,6 +950,7 @@ function waMsg(c){
   if(c.status==='ok'){const ms=goodMs(c);
     if(ms.length){L.push('',`${wDaki(g)} səhvlər:`);waMistakeBlocks(ms,c.transcript).forEach(b=>L.push('',...b))}
     else L.push('','Səhv yoxdur 👏')}
+  if(c.status==='ok'&&c.personal&&c.personal.length){L.push('','⚠️ *Diqqət:* '+(c.grade==='9'?'hekayədə':'paraqrafda')+' özün, ailən və ya dostların haqqında misal gətirmisən:');c.personal.forEach(s=>L.push('«'+s.replace(/[*~_]/g,'')+'»'));L.push('Bu dəfə buna görə bal kəsilmədi, amma *imtahanda özün haqqında yazsan, bal kəsiləcək.* Ümumi misallar gətir (məs. "many people…", "students can…").')}
   const md=modelOf(c);
   if(md&&md.text){L.push('',`${mName(g)}:`);if(md.title)L.push('*'+md.title.replace(/[*~]/g,'')+'*');L.push(md.text.replace(/\*\*/g,'*'))}
   const sg=signTxt();if(sg)L.push('',sg);
@@ -1037,7 +1043,8 @@ VIEWS.res=()=>{
   <section class="box"><div class="score"><span class="pen" style="color:${scCol(total5(c))};border-color:${scCol(total5(c))}">${scTxt(c)}</span><div class="meta"><b>${esc(st?.name||'Şagird')}</b> · ${esc(gName(c.groupId))}<br>${esc(GNAME[c.grade])}<br>${c.grade==='9'?'İmtahan':'Mövzu'}: <b>${esc(topicLabel(c))}</b><br>${today(c.date)}${c.words?` · ${c.words} söz`:''}</div></div>
     ${c.status!=='ok'?`<div class="status err">${esc(STATUS_TXT[c.status]||'')}</div>`:''}
     ${critHTML(c)}
-    ${c.feedback?`<p class="hint" style="margin-top:12px">${esc(c.feedback)}</p>`:''}</section>
+    ${c.feedback?`<p class="hint" style="margin-top:12px">${esc(c.feedback)}</p>`:''}
+    ${c.status==='ok'&&c.personal&&c.personal.length?`<div class="notice" style="margin-top:12px">⚠️ <b>Şəxsi misal:</b> şagird özü, ailəsi və ya dostları haqqında yazıb — ${c.personal.map(s=>'«'+esc(s)+'»').join(' ')}. Bal kəsilməyib; WhatsApp mesajında şagirdə xəbərdarlıq gedəcək ki, imtahanda buna görə bal kəsilir.</div>`:''}</section>
   ${c.transcript?`<section class="box"><h2>${wName(c.grade)}: düzəlişlər</h2><div class="essay">${markedHTML(c)}</div><div class="legend"><s>qırmızı xətli</s> — səhv, <ins>yaşıl</ins> — düzgün forma</div>
     ${ms.length?`<h3>Səhvlərin izahı (${ms.length})</h3>${ms.map((m,i)=>`<div class="mist"><b>${i+1}.</b> <s>${esc(m.original)}</s> → <ins>${esc(m.correction)}</ins><span class="tag">${esc(m.type)}</span>${m.explanation?`<div class="muted">${esc(m.explanation)}</div>`:''}</div>`).join('')}`:'<p class="muted" style="margin-top:10px">Səhv tapılmadı — əla iş!</p>'}</section>`:''}
   ${modelBox(c,true)}
