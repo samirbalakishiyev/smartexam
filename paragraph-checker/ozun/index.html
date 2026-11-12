@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paragraph Checker</title>
+<meta name="theme-color" content="#0B7C8C">
+<meta name="apple-mobile-web-app-title" content="Paragraph Checker">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png?v=2">
+<link rel="icon" href="../favicon.png?v=2">
+<link rel="manifest" href="manifest.webmanifest">
+<script>
+/* Hər müəllim öz Paragraph Checker linkini bir dəfə yazır; ana ekrandakı nişan həmin linki açır. */
+var P=new URLSearchParams(location.search),ID=(P.get('a')||'').replace(/[^A-Za-z0-9_-]/g,'');
+var PANEL=ID?'https://claude.ai/artifact/'+ID:'';
+if(PANEL&&(P.get('app')==='1'||navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)))location.replace(PANEL);
+/* ana ekrana əlavə olunan ünvan birbaşa açılsın */
+else if(PANEL){try{history.replaceState(null,'','?a='+ID+'&app=1')}catch(e){}}
+</script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(160deg,#0B7C8C,#1CC8BA);color:#1B2240;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px))}
+.c{background:#fff;border-radius:24px;padding:30px 22px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(20,20,60,.25)}
+.logo{width:84px;height:84px;border-radius:22px;display:block;margin:0 auto 14px;box-shadow:0 8px 20px rgba(11,124,140,.35)}
+h1{font-size:28px;margin:0;letter-spacing:-.02em}
+.sub{color:#5E6785;margin:2px 0 22px}
+.b{display:block;width:100%;border:0;cursor:pointer;background:linear-gradient(135deg,#0B7C8C,#1CC8BA);color:#fff;text-decoration:none;font:700 18px system-ui,-apple-system,sans-serif;padding:15px 20px;border-radius:14px;box-shadow:0 6px 16px rgba(11,124,140,.35)}
+input{width:100%;font:16px system-ui,sans-serif;padding:13px 14px;border:1.5px solid #CBD2E6;border-radius:12px;margin:0 0 12px}
+.err{color:#C2362F;font-size:14px;margin:-4px 0 10px;display:none}
+.how{margin-top:22px;background:#EEF1FB;border-radius:14px;padding:14px 16px;text-align:left;font-size:14.5px}
+.how b{display:block;color:#0B7C8C;margin-bottom:6px}
+.how ol{margin:0;padding-left:20px}
+.how li{margin:3px 0}
+.lnk{font-size:13px;color:#5E6785;margin-top:12px;word-break:break-all}
+.lnk a{color:#5E6785}
+small{display:block;margin-top:20px;color:#5E6785;font-size:13px}
+small a{color:#5E6785}
+</style>
+</head>
+<body>
+<div class="c">
+<img class="logo" src="../icon-192.png?v=2" alt="">
+<h1>Paragraph Checker</h1>
+<p class="sub">9-cu sinif hekayə · 11-ci sinif paraqraf</p>
+<div id="setup" hidden>
+<p style="margin:0 0 12px;text-align:left">Öz Paragraph Checker səhifənizin linkini yapışdırın (Claude-da artifaktın linki):</p>
+<input id="u" type="url" inputmode="url" autocomplete="off" placeholder="https://claude.ai/artifact/...">
+<p class="err" id="e">Link tanınmadı. «https://claude.ai/artifact/...» formasında olmalıdır.</p>
+<button class="b" id="ok" type="button">Davam et</button>
+</div>
+<div id="ready" hidden>
+<a class="b" id="open" href="#">Paragraph Checker-i aç</a>
+<div class="how"><b>📲 İndi ana ekrana əlavə edin</b>
+<ol>
+<li><b style="display:inline;color:inherit">iPhone (Safari):</b> aşağıda «Paylaş» ⬆️ → «Ana ekrana əlavə et».</li>
+<li><b style="display:inline;color:inherit">Android (Chrome):</b> yuxarıda ⋮ → «Ana ekrana əlavə et».</li>
+</ol>
+Ana ekrandakı turkuaz nişana basanda öz Paragraph Checker səhifəniz birbaşa açılacaq.</div>
+<p class="lnk">Bağlı səhifə: <a id="cur" href="#"></a><br><a href="./">Başqa link yaz</a></p>
+</div>
+<small>Created by Samir Balakişiyev<br>WhatsApp: <a href="https://wa.me/994557958625">055-795-8625</a></small>
+</div>
+<script>
+if(PANEL){document.getElementById('ready').hidden=false;var o=document.getElementById('open'),c=document.getElementById('cur');o.href=PANEL;c.href=PANEL;c.textContent=PANEL}
+else{document.getElementById('setup').hidden=false;
+  var go=function(){var v=document.getElementById('u').value.trim(),m=v.match(/^https?:\/\/(?:www\.)?claude\.ai\/artifact\/([A-Za-z0-9_-]{6,})/);
+    if(!m){document.getElementById('e').style.display='block';return}location.href='./?a='+m[1]};
+  document.getElementById('ok').onclick=go;document.getElementById('u').onkeydown=function(e){if(e.key==='Enter')go()}}
+</script>
+</body>
+</html>
