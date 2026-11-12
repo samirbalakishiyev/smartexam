@@ -452,7 +452,7 @@ const D={topic:'',topicEdited:false,picsBusy:false,askTopic:''};
 let Q=[],qRunning=0,qPaused=false,qSeq=0;const QPAR=2;
 let twoSide=ls(TSKEY)==='1',tray=[],trayBusy=0;const TRAY_MAX=4;
 const rf={gid:'',topic:'',sid:''};
-let sel=null;const stuEdit=new Set(),shutGrp=new Set();
+let sel=null;const stuEdit=new Set(),openGrp=new Set();
 const forms={group:'',grade:'11',sGroup:'',bulk:'',rows:[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]};
 let setOk=ls(SKEY)==='1',codeErr=false,setDraft=null;
 const modelBusy=new Set();
@@ -744,6 +744,7 @@ async function saveCheck(it,sid){
   if(old)c.id=old.id;
   await put('checks',c);
   it.state='done';it.checkId=c.id;it.studentId=sid;it.student=sName(sid);it.score=scTxt(c);
+  rf.gid=c.groupId;rf.topic=tKey(c);rf.sid='';
   it.msg=(old?'🔁 Köhnə nəticə yenisi ilə əvəz olundu. ':'')+`${wName(c.grade)}: ${scTxt(c)}`+(c.words?` · ${c.words} söz`:'');
   if(c.status==='ok')ensureModel(c,it.pb);
 }
@@ -1063,16 +1064,19 @@ VIEWS.neticeler=()=>{
   if(!gs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Əvvəl Şagirdlər bölməsində qrup yaradın.</p></section>`;
   if(rf.gid&&!groupById(rf.gid))rf.gid='';
   if(!rf.gid&&groupById(selGid))rf.gid=selGid;
-  const tps=rf.gid?topicsOf(rf.gid):[];if(rf.topic&&!tps.find(t=>t.key===rf.topic))rf.topic='';
+  const tps=rf.gid?topicsOf(rf.gid):[],vts=rf.gid?vTestsOf(rf.gid):[];
+  if(rf.topic&&!(rf.topic.startsWith('v:')?vts.find(t=>'v:'+t.key===rf.topic):tps.find(t=>t.key===rf.topic)))rf.topic='';
+  if(!rf.topic&&rf.gid){const a=tps[0],b=vts[0];if(a||b)rf.topic=(!b||(a&&a.last>=b.last))?a.key:'v:'+b.key}
   const sts=rf.gid?studentsOf(rf.gid):[];if(rf.sid&&!sts.find(s=>s.id===rf.sid))rf.sid='';
   const O=(v,l,on)=>`<option value="${esc(v)}"${on?' selected':''}>${esc(l)}</option>`;
   const flt=`<section class="box"><h2>Nəticələr</h2>
     <label class="l" style="margin-top:0">1. Qrup</label><select data-rf="gid">${O('','Qrupu seçin',!rf.gid)}${gs.map(g=>O(g.id,g.name+' · '+(g.grade==='9'?'9-cu':'11-ci'),g.id===rf.gid)).join('')}</select>
-    <label class="l">2. Mövzu</label><select data-rf="topic"${!rf.gid||rf.sid?' disabled':''}>${O('',rf.sid?'Şagird seçilib — bütün mövzular görünür':tps.length?'Mövzunu seçin':'Bu qrupda nəticə yoxdur',!rf.topic||rf.sid)}${rf.sid?'':tps.map(t=>O(t.key,t.label+' ('+today(t.last)+')',t.key===rf.topic)).join('')}</select>
+    <label class="l">2. Mövzu</label><select data-rf="topic"${!rf.gid||rf.sid?' disabled':''}>${O('',rf.sid?'Şagird seçilib — bütün mövzular görünür':tps.length||vts.length?'Mövzunu seçin':'Bu qrupda nəticə yoxdur',!rf.topic||rf.sid)}${rf.sid?'':(tps.length&&vts.length?'<optgroup label="Yazılar">':'')+tps.map(t=>O(t.key,t.label+' ('+today(t.last)+')',t.key===rf.topic)).join('')+(tps.length&&vts.length?'</optgroup>':'')+(vts.length?'<optgroup label="Söz imtahanları">'+vts.map(t=>O('v:'+t.key,'📝 '+t.label+' ('+today(t.last)+')','v:'+t.key===rf.topic)).join('')+'</optgroup>':'')}</select>
     <label class="l">3. Şagird <span class="hint" style="font-weight:400">(istəyə görə)</span></label><select data-rf="sid"${!rf.gid?' disabled':''}>${O('','Hamısı',!rf.sid)}${sts.map(s=>O(s.id,s.name,s.id===rf.sid)).join('')}</select></section>`;
   if(!rf.gid)return flt;
-  if(rf.sid){const rs=S.checks.filter(c=>c.studentId===rf.sid).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-    return flt+`<section class="box"><h2>${esc(sName(rf.sid))}</h2>${rs.length?`<div class="list">${rs.map(c=>`<div class="li click" data-act="openCheck" data-id="${c.id}"><div class="grow"><b>${esc(topicLabel(c))}</b><small>${today(c.date)} · ${wName(c.grade)}</small></div><span class="sc" style="color:${scCol(total5(c))}">${scTxt(c)}</span></div>`).join('')}</div>`:'<p class="empty">Bu şagirdin hələ nəticəsi yoxdur.</p>'}</section>`}
+  if(rf.sid){const vb=vProfileBox(rf.sid);const rs=S.checks.filter(c=>c.studentId===rf.sid).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    return flt+`<section class="box"><h2>${esc(sName(rf.sid))}</h2>${rs.length?`<div class="list">${rs.map(c=>`<div class="li click" data-act="openCheck" data-id="${c.id}"><div class="grow"><b>${esc(topicLabel(c))}</b><small>${today(c.date)} · ${wName(c.grade)}</small></div><span class="sc" style="color:${scCol(total5(c))}">${scTxt(c)}</span></div>`).join('')}</div>`:(vb?'':'<p class="empty">Bu şagirdin hələ nəticəsi yoxdur.</p>')}</section>${vb}`}
+  if(rf.topic.startsWith('v:')){V.tkey=rf.topic.slice(2);const t0=vts.find(t=>'v:'+t.key===rf.topic);return flt+`<section class="box"><h2>${esc(t0?t0.label:'')} <span class="muted" style="font-weight:500">${esc(gName(rf.gid))}</span></h2>${vResBody(rf.gid)}</section>`}
   if(!rf.topic)return flt+(tps.length?`<section class="box"><h2>${esc(gName(rf.gid))}: mövzular</h2><div class="list">${tps.map(t=>{const avg=t.items.reduce((s,c)=>s+total5(c),0)/t.items.length;return `<div class="li click" data-act="pickTopic" data-id="${esc(t.key)}"><div class="grow"><b>${esc(t.label)}</b><small>${today(t.last)} · ${t.items.length} şagird · orta ${fmt(avg)}/5</small></div><span class="muted" style="font-size:22px">›</span></div>`}).join('')}</div></section>`:`<p class="hint" style="text-align:center">Bu qrupda hələ yoxlanmış yazı yoxdur.</p>`);
   const rs=topicChecks().sort((a,b)=>total5(b)-total5(a)||azCmp(sName(a.studentId),sName(b.studentId)));
   const c0=rs[0];const avg=rs.length?rs.reduce((s,c)=>s+total5(c),0)/rs.length:0;
@@ -1110,7 +1114,7 @@ VIEWS.sagirdler=()=>{
   return `<section class="box"><div class="search"><input type="search" data-search="1" placeholder="Şagird axtar (bütün qruplarda)" aria-label="Şagird axtar"></div>
   <div class="selbar">${sel?`<b>Seçildi: ${sel.size}</b><button class="btn sm danger${sel.size?'':' off'}" data-act="delSelected">🗑 Seçilənləri sil</button><button class="btn sm ghost" data-act="selOff">Ləğv et</button>`:(S.students.length?`<button class="btn sm ghost" data-act="selOn">☑ Seç və sil</button>`:'')}</div>
   ${sel?'<p class="hint" style="margin-bottom:0">Silmək istədiyiniz şagirdlərə basın və ya qrupda «Hamısını seç» düyməsini basın.</p>':''}</section>
-  ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));const ed=stuEdit.has(g.id)&&!sel;return `<details class="grp" data-g="${g.id}"${sel||ed||!shutGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${g.grade==='9'?'9-cu · hekayə':'11-ci · paraqraf'}</span><span class="pill">${st.length} şagird</span></summary><div class="inner">
+  ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));const ed=stuEdit.has(g.id)&&!sel;return `<details class="grp" data-g="${g.id}"${sel||ed||openGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${g.grade==='9'?'9-cu · hekayə':'11-ci · paraqraf'}</span><span class="pill">${st.length} şagird</span></summary><div class="inner">
   ${ed&&st.length?'<p class="hint" style="margin-top:0">Adı və ya nömrəni dəyişin — xanadan çıxanda avtomatik saxlanır.</p>':''}
   ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"></div>`;const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:`<span class="rank">${i+1}</span>`}<div class="grow"><b>${esc(s.name)}</b>${s.phone?`<small>${esc(s.phone)}</small>`:'<small style="color:var(--pen)">nömrə yoxdur</small>'}</div>${sel?'':'<span class="muted" style="font-size:20px">›</span>'}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
   <div class="acts">${!sel&&st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEditToggle" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="editGroup" data-id="${g.id}">Qrupu düzəlt</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
@@ -1221,7 +1225,7 @@ const ACT={
   sndSkip(){const rs=sndRows().filter(c=>waPhone(studentById(c.studentId)?.phone));const i=rs.findIndex(c=>c.id===SND.cur);const nx=rs.slice(i+1).find(c=>!SND.sent.has(c.id))||rs.find(c=>!SND.sent.has(c.id)&&c.id!==SND.cur);SND.cur=nx?nx.id:'';render()},
   async sndReset(){if(!await modal({title:'İşarələr sıfırlansın?',html:'<p class="muted">✅ işarələri silinəcək, göndərmə əvvəldən başlayacaq.</p>',ok:'Bəli'}))return;SND.sent=new Set();sndSave();SND.cur='';render()},
   profile(el){profileId=el.dataset.id;go('profile')},
-  stuEditToggle(el){const id=el.dataset.id;stuEdit.has(id)?stuEdit.delete(id):stuEdit.add(id);shutGrp.delete(id);render()},
+  stuEditToggle(el){const id=el.dataset.id;stuEdit.has(id)?stuEdit.delete(id):stuEdit.add(id);openGrp.add(id);render()},
   selOn(){sel=new Set();render()},
   selOff(){sel=null;render()},
   selStu(el){const id=el.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);render()},
@@ -1234,7 +1238,7 @@ const ACT={
     sel=null;render();toast(`${k} şagird silindi.`);
   },
   newGrade(el){forms.grade=el.dataset.id;render()},
-  async addGroup(){const n=forms.group.trim();if(!n)return toast('Qrupun adını yazın.','err');if(S.groups.some(g=>norm(g.name)===norm(n)))return toast('Bu adda qrup var.','err');const g={id:newId(),name:n,grade:forms.grade};forms.group='';forms.sGroup=g.id;shutGrp.delete(g.id);try{await put('groups',g)}catch(e){}render();toast('Qrup yaradıldı. İndi şagirdləri əlavə edin.')},
+  async addGroup(){const n=forms.group.trim();if(!n)return toast('Qrupun adını yazın.','err');if(S.groups.some(g=>norm(g.name)===norm(n)))return toast('Bu adda qrup var.','err');const g={id:newId(),name:n,grade:forms.grade};forms.group='';forms.sGroup=g.id;openGrp.add(g.id);try{await put('groups',g)}catch(e){}render();toast('Qrup yaradıldı. İndi şagirdləri əlavə edin.')},
   async editGroup(el){const g=groupById(el.dataset.id);if(!g)return;const has=S.checks.some(c=>c.groupId===g.id);const v=await modal({title:'Qrupu düzəlt',fields:[{label:'Ad',value:g.name},...(has?[]:[{label:'Növü',type:'select',value:g.grade,options:[{value:'11',label:'11-ci sinif · paraqraf'},{value:'9',label:'9-cu sinif · hekayə'}]}])],html:has?'<p class="hint">Qrupda nəticə olduğu üçün növünü dəyişmək olmaz.</p>':''});if(!v||!v[0])return;try{await put('groups',{...g,name:v[0],grade:has?g.grade:v[1]})}catch(e){}render()},
   async delGroup(el){const g=groupById(el.dataset.id);if(!g)return;const st=studentsOf(g.id);const rs=S.checks.filter(c=>c.groupId===g.id||st.some(s=>s.id===c.studentId));if(!await confirmBox('Qrup silinsin?',`${g.name} qrupu, ${st.length} şagird və ${rs.length} nəticə silinəcək.`))return;for(const c of rs)await del('checks',c.id);for(const v of S.vchecks.filter(v=>v.groupId===g.id||st.some(s=>s.id===v.studentId)))await del('vchecks',v.id);for(const s of st)await del('students',s.id);await del('groups',g.id);if(selGid===g.id){selGid='';ls(GKEY,'')}render()},
   addRow(){forms.rows.push({name:'',phone:''});render()},
@@ -1246,7 +1250,7 @@ const ACT={
     for(const r of rowsIn){try{await put('students',{id:newId(),groupId:gid,name:r.name,phone:r.phone});added++}catch(e){}}
     forms.rows=[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}];
     for(const ln of lines){let s=ln.replace(/^\d+[.)]\s*/,'');let phone='';const m=s.match(/(\+?\d[\d\s\-()]{6,}\d)\s*$/);if(m){phone=m[1].trim();s=s.slice(0,m.index)}const name=s.replace(/[,;\t\-–]+\s*$/,'').trim();if(!name)continue;try{await put('students',{id:newId(),groupId:gid,name,phone});added++}catch(e){}}
-    forms.bulk='';shutGrp.delete(gid);render();toast(added+' şagird əlavə olundu.');
+    forms.bulk='';openGrp.add(gid);render();toast(added+' şagird əlavə olundu.');
   },
   async editStudent(el){const s=studentById(el.dataset.id);if(!s)return;const v=await modal({title:'Şagirdi düzəlt',fields:[{label:'Ad və soyad',value:s.name},{label:'Telefon',value:s.phone||'',type:'tel'},{label:'Qrup',type:'select',value:s.groupId,options:groupsSorted().map(g=>({value:g.id,label:g.name}))}]});if(!v)return;if(!v[0])return toast('Ad boş ola bilməz.','err');try{await put('students',{...s,name:v[0],phone:v[1],groupId:v[2]})}catch(e){}render()},
   async delStudent(el){const s=studentById(el.dataset.id);if(!s)return;const rs=S.checks.filter(c=>c.studentId===s.id);if(!await confirmBox('Şagird silinsin?',`${s.name} və onun ${rs.length} nəticəsi silinəcək.`))return;for(const c of rs)await del('checks',c.id);for(const v of S.vchecks.filter(v=>v.studentId===s.id))await del('vchecks',v.id);await del('students',s.id);if(tab==='profile')go(prevTab);else render()},
@@ -1274,7 +1278,7 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]){e.preventDefault();ACT[a.dataset.act](a,e)}
 });
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset.search){applySearch(el);return}if(el.dataset.bind&&el.tagName!=='SELECT')setBind(el.dataset.bind,el.value);const f=el.dataset.f;if(f){D[f]=el.value;if(f==='topic')D.topicEdited=true}});
-document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.grp')&&d.dataset.g){d.open?shutGrp.delete(d.dataset.g):shutGrp.add(d.dataset.g)}},true);
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.matches&&d.matches('details.grp')&&d.dataset.g){d.open?openGrp.add(d.dataset.g):openGrp.delete(d.dataset.g)}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='askTopic'){e.preventDefault();sendTopic()}if(e.key==='Enter'&&e.target.id==='setCode'){e.preventDefault();unlockSet()}if(e.key==='Enter'&&e.target.closest&&e.target.closest('.brand'))e.target.click()});
 document.addEventListener('change',async e=>{
   const el=e.target;
@@ -1359,7 +1363,7 @@ async function saveV(it,sid){
   await put('vchecks',v);
   it.state='done';it.checkId=v.id;it.studentId=sid;it.student=sName(sid);it.score=vFull(v);
   it.msg=(old?'🔁 Köhnə nəticə yenisi ilə əvəz olundu. ':'')+'Sözlər: '+vFull(v);
-  V.tkey=vKey(v);
+  V.tkey=vKey(v);rf.gid=v.groupId;rf.topic='v:'+vKey(v);rf.sid='';
 }
 function vTestsOf(gid){
   const m=new Map();for(const v of S.vchecks.filter(v=>v.groupId===gid)){const k=vKey(v);if(!m.has(k))m.set(k,{key:k,label:v.test,items:[],last:''});const t=m.get(k);t.items.push(v);if(String(v.date)>t.last)t.last=String(v.date)}
@@ -1368,6 +1372,16 @@ function vTestsOf(gid){
 const vRows=key=>S.vchecks.filter(v=>vKey(v)===key).sort((a,b)=>vPct(b)-vPct(a)||azCmp(sName(a.studentId),sName(b.studentId)));
 const vWrong=v=>(v.items||[]).filter(x=>!x.ok);
 
+function vResBody(gid){
+  const sts=studentsOf(gid),rs=V.tkey?vRows(V.tkey):[];
+  const avg=rs.length?Math.round(rs.reduce((s,v)=>s+vPct(v),0)/rs.length):0;
+  const dn=new Set(rs.map(v=>v.studentId)),miss=sts.filter(s=>!dn.has(s.id));
+  return `<p class="hint">${rs.length} şagird yazıb · orta nəticə ${avg}%</p>
+    <div class="list">${rs.map((v,i)=>`<div class="li click" data-act="openV" data-id="${v.id}"><span class="rank">${i+1}</span><div class="grow"><b>${esc(sName(v.studentId))}</b>${vWrong(v).length?`<small>${vWrong(v).length} səhv</small>`:''}</div><span class="sc" style="color:${vCol(v)}">${vFull(v)}</span><button type="button" class="lx" data-act="vDel" data-id="${v.id}" aria-label="Sil">✕</button></div>`).join('')}</div>
+    ${miss.length?`<h3>Yazmayanlar (${miss.length})</h3><div class="list">${miss.map(s=>`<div class="li"><span class="rank">–</span><div class="grow"><b class="muted">${esc(s.name)}</b></div><span class="badge" style="background:var(--pen-bg);color:var(--pen)">Yazmayıb</span></div>`).join('')}</div>`:''}
+    <div class="acts"><button class="btn wa" data-act="vOpenSend">📤 WhatsApp: hamısına göndər</button><button class="btn" data-act="vClassImg">📸 Valideynlər üçün şəkil</button></div>
+    <div class="acts"><button class="btn danger sm" data-act="vDelTest">🗑 Bu imtahanın nəticələrini sil (${rs.length})</button></div>`;
+}
 VIEWS.sozler=()=>{
   const gs=groupsSorted();
   if(!gs.length)return notes()+`<section class="box"><h2>Söz imtahanı</h2><p class="muted">Əvvəl <b>Şagirdlər</b> bölməsində qrup yaradın və şagirdləri əlavə edin.</p><button class="btn" data-act="go" data-to="sagirdler">Qrup yarat</button></section>`;
@@ -1393,13 +1407,7 @@ VIEWS.sozler=()=>{
     <label class="filebtn big" for="pcFile">📷 Şəkil çək / əlavə et</label>
   </section>${queueHTML()}
   <section class="box"><h2>Nəticələr · ${esc(g.name)}</h2>
-  ${tests.length?`<select data-vsel="1" aria-label="İmtahan">${tests.map(t=>`<option value="${esc(t.key)}"${t.key===V.tkey?' selected':''}>${esc(t.label)} (${today(t.last)})</option>`).join('')}</select>
-    <p class="hint">${rs.length} şagird yazıb · orta nəticə ${avg}%</p>
-    <div class="list">${rs.map((v,i)=>`<div class="li click" data-act="openV" data-id="${v.id}"><span class="rank">${i+1}</span><div class="grow"><b>${esc(sName(v.studentId))}</b>${vWrong(v).length?`<small>${vWrong(v).length} səhv</small>`:''}</div><span class="sc" style="color:${vCol(v)}">${vFull(v)}</span><button type="button" class="lx" data-act="vDel" data-id="${v.id}" aria-label="Sil">✕</button></div>`).join('')}</div>
-    ${miss.length?`<h3>Yazmayanlar (${miss.length})</h3><div class="list">${miss.map(s=>`<div class="li"><span class="rank">–</span><div class="grow"><b class="muted">${esc(s.name)}</b></div><span class="badge" style="background:var(--pen-bg);color:var(--pen)">Yazmayıb</span></div>`).join('')}</div>`:''}
-    <div class="acts"><button class="btn wa" data-act="vOpenSend">📤 WhatsApp: hamısına göndər</button><button class="btn" data-act="vClassImg">📸 Valideynlər üçün şəkil</button></div>
-    <div class="acts"><button class="btn danger sm" data-act="vDelTest">🗑 Bu imtahanın nəticələrini sil (${rs.length})</button></div>`
-  :'<p class="empty">Bu qrupda hələ söz imtahanı yoxlanmayıb.</p>'}</section>`;
+  ${tests.length?`<select data-vsel="1" aria-label="İmtahan">${tests.map(t=>`<option value="${esc(t.key)}"${t.key===V.tkey?' selected':''}>${esc(t.label)} (${today(t.last)})</option>`).join('')}</select>${vResBody(g.id)}`:'<p class="empty">Bu qrupda hələ söz imtahanı yoxlanmayıb.</p>'}</section>`;
 };
 function vItemsHTML(v){
   return `<div class="list">${(v.items||[]).map((x,i)=>{const pn=posName(x.pos);return `<div class="li click" data-act="vToggle" data-id="${v.id}" data-i="${i}" style="align-items:flex-start">
