@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#EA6A12">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Azərbaycan dili sınaq yoxlama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#F3F5F9;--card:#FFFFFF;--ink:#17233B;--muted:#5D6880;--line:#DBE1EB;--soft:#EBEFF6;--accent:#2346A6;--accent-ink:#FFFFFF;--pen:#C2362F;--ok:#1F7246;--amber:#A86A00;--hl:#E8C33A;--hl-bg:#FFF6CF;--ok-bg:#E4F2E9;--pen-bg:#FBE8E6;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0F131B;--card:#171E2C;--ink:#E4E9F2;--muted:#9AA5BA;--line:#2B3548;--soft:#202A3C;--accent:#86A2FF;--accent-ink:#0F131B;--pen:#FF7A6E;--ok:#64CB92;--amber:#E9B44C;--hl:#C9A62B;--hl-bg:#3A3214;--ok-bg:#15301F;--pen-bg:#3B1D1B;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#0F131B;--card:#171E2C;--ink:#E4E9F2;--muted:#9AA5BA;--line:#2B3548;--soft:#202A3C;--accent:#86A2FF;--accent-ink:#0F131B;--pen:#FF7A6E;--ok:#64CB92;--amber:#E9B44C;--hl:#C9A62B;--hl-bg:#3A3214;--ok-bg:#15301F;--pen-bg:#3B1D1B;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--card)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px 10px;background:var(--card)}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.02em}
+.brand small{display:block;font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.cloud{background:var(--ok-bg);color:var(--ok)}
+.pill.local{background:var(--hl-bg);color:var(--amber)}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:4px;overflow-x:auto;padding:6px 10px 10px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{flex:none;border:0;background:none;padding:8px 13px;border-radius:999px;color:var(--muted);font-weight:600;cursor:pointer}
+.nav button.on{background:var(--ink);color:var(--card)}
+main{max-width:980px;margin:0 auto;padding:16px 14px 30px}
+h1{font-size:24px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:17px;margin:0 0 12px;letter-spacing:-.01em}
+h3{font-size:15px;margin:14px 0 8px}
+p{margin:0 0 10px}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 10px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.hero{padding:22px 18px;border-left:5px solid var(--pen)}
+label.l{display:block;font-size:13px;font-weight:600;margin:12px 0 5px;color:var(--muted)}
+input[type=text],input[type=tel],input[type=date],input[type=number],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:var(--card);max-width:100%}
+textarea{resize:vertical}
+.inline{display:flex;gap:8px;align-items:center}
+.inline>input,.inline>select{flex:1;min-width:0}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;padding:10px 15px;font-weight:650;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;white-space:nowrap}
+.btn.ghost{background:var(--soft);color:var(--ink)}
+.btn.danger{background:var(--pen-bg);color:var(--pen)}
+.btn.wa{background:#1F9D55;color:#fff}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn[disabled],.btn.off{opacity:.45;pointer-events:none}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font-size:24px;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.pen{font-family:Caveat,"Comic Sans MS",cursive;color:var(--pen);font-weight:700;font-size:26px;line-height:1;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--pen);border-radius:52% 46% 50% 47%;padding:3px 10px 1px;transform:rotate(-4deg);white-space:nowrap}
+.pen.big{font-size:40px;padding:4px 16px 2px;border-width:2.5px}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li .grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .grow small{color:var(--muted);font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:14px}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--card)}
+details.grp{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;background:var(--card)}
+details.grp>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+details.grp[open]>summary::after{content:"▴"}
+details.grp .inner{padding:0 14px 12px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;white-space:nowrap}
+.grid25{display:grid;grid-template-columns:1fr}
+@media (min-width:780px){.grid25{grid-template-columns:1fr 1fr;column-gap:22px}}
+.row{display:flex;align-items:center;gap:8px;padding:6px 6px;border-bottom:1px dashed var(--line);border-radius:6px}
+.row.flag{background:var(--hl-bg);box-shadow:inset 4px 0 0 var(--hl)}
+.qn{width:24px;flex:none;text-align:right;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.opts{display:flex;gap:6px;flex-wrap:wrap;flex:1;align-items:center}
+.bub{width:36px;height:36px;flex:none;border-radius:50%;border:1.6px solid var(--muted);background:var(--card);color:var(--ink);font-weight:700;font-size:13px;padding:0;cursor:pointer}
+.bub.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.tfwrap{display:grid;grid-template-columns:auto auto;gap:6px 16px}
+.tfi{display:flex;align-items:center;gap:5px}
+.tfi i{font-style:normal;color:var(--muted);min-width:30px;font-weight:600;font-size:13px}
+.tf .bub{width:32px;height:32px}
+.mk{flex:none;min-width:30px;text-align:center;font-weight:800;font-size:15px}
+.mk.ok{color:var(--ok)}.mk.bad{color:var(--pen)}.mk.half{color:var(--amber)}
+.kh{display:block;font-size:11px;font-weight:700;color:var(--ok);line-height:1}
+.scorebar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 0 14px}
+.secs{display:flex;flex-wrap:wrap;gap:6px}
+.sec{background:var(--soft);border-radius:8px;padding:5px 9px;font-size:13px}
+.sec b{font-variant-numeric:tabular-nums}
+.filebtn{display:inline-flex;align-items:center;gap:8px;border:1.5px dashed var(--muted);border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:650;background:var(--soft)}
+.filebtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:70vh;background:var(--soft)}
+.preview img{display:block;width:100%;height:auto}
+.preview.zoom img{width:200%;max-width:none}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumbs div{position:relative}
+.thumbs img{width:96px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.thumbs button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:var(--pen);color:#fff;cursor:pointer;font-weight:700;line-height:1}
+.status{margin-top:10px;font-size:14px;padding:9px 12px;border-radius:10px;background:var(--soft)}
+.status.err{background:var(--pen-bg);color:var(--pen)}
+.status.ok{background:var(--ok-bg);color:var(--ok)}
+.notice{background:var(--hl-bg);border-left:4px solid var(--hl);padding:10px 12px;border-radius:8px;margin:0 0 12px;font-size:14px}
+.savebar{position:sticky;bottom:0;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:14px 14px 0 0;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -6px 18px rgba(15,25,45,.08)}
+.savebar .grow{flex:1;font-size:14px}
+.crit{border-left:3px solid var(--accent);padding:4px 0 4px 10px;margin:8px 0}
+.mist{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mist s{color:var(--pen)}
+.mist ins{color:var(--ok);text-decoration:none;font-weight:600}
+.bar{height:8px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar.red i{background:var(--pen)}
+.arow{margin:10px 0}
+.arow .t{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.empty{color:var(--muted);text-align:center;padding:18px 8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 16px;border-radius:10px;font-weight:600;z-index:100;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.err{background:var(--pen);color:#fff}
+.ov{position:fixed;inset:0;background:rgba(10,15,25,.5);z-index:90;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.dlg{background:var(--card);width:100%;max-width:620px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.ov{align-items:center}.dlg{border-radius:18px}}
+.dlg h2{margin-bottom:8px}
+footer{text-align:center;padding:20px 14px 30px;color:var(--muted);font-size:13px}
+footer a{color:var(--muted)}
+#printArea{display:none}
+@media print{body::before{display:none}body>*:not(#printArea){display:none!important}#printArea{display:block}:root{padding:0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.top .who{font-size:12px;color:var(--muted);text-align:right}
+.search{position:relative;margin:0 0 12px}
+.search input{padding-left:38px}
+.search::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.6}
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.big2{grid-template-columns:1fr}}
+.shoot{position:relative;display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:16px;border-radius:14px;border:1.5px dashed var(--muted);background:var(--soft);cursor:pointer;font-weight:700;font-size:16px}
+.shoot small{font-weight:500;font-size:13px;color:var(--muted)}
+.shoot input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.qitem{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;margin:0 0 8px;border:1px solid var(--line);border-left-width:5px}
+.qitem.st-wait{background:var(--soft);border-left-color:var(--muted)}
+.qitem.st-busy{background:var(--t1);border-left-color:var(--c1)}
+.qitem.st-done{background:var(--ok-bg);border-left-color:var(--ok)}
+.qitem.st-need{background:var(--hl-bg);border-left-color:var(--hl)}
+.qitem.st-err{background:var(--pen-bg);border-left-color:var(--pen)}
+.qcount{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.ds{font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ds .g{color:var(--ok)}.ds .r{color:var(--pen)}
+.qitem:last-child{border-bottom:0}
+.qitem img{width:52px;height:66px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
+.qitem .grow{flex:1;min-width:0;font-size:14px}
+.qitem .grow b{display:block}
+.qitem select{margin-top:6px;padding:7px 9px}
+.badge{display:inline-block;font-size:12px;font-weight:650;border-radius:999px;padding:2px 9px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--hl-bg);color:var(--amber)}
+.badge.err{background:var(--pen-bg);color:var(--pen)}
+.badge.busy{background:var(--soft);color:var(--accent)}
+.pct{font-weight:800;font-variant-numeric:tabular-nums;font-size:17px;min-width:62px;text-align:right}
+.rank{width:24px;flex:none;color:var(--muted);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.li.click{cursor:pointer}
+.li.click:hover .grow b{text-decoration:underline}
+.excard{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px}
+.excard .hd{display:flex;align-items:center;gap:10px}
+.excard .hd .grow{flex:1;min-width:0}
+.wq{font-size:14px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.wq:last-child{border-bottom:0}
+.wq b{display:inline-block;min-width:34px}
+.wq .y{color:var(--pen);font-weight:700}
+.wq .c{color:var(--ok);font-weight:700}
+.crit4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.crit4 div{background:var(--soft);border-radius:10px;padding:8px;text-align:center}
+.crit4 b{display:block;font-size:18px}
+.crit4 span{font-size:12px;color:var(--muted)}
+.crit4 select{padding:7px 2px 7px 6px;font-size:15px;min-width:0;text-align:center}
+.qmeta{display:grid;grid-template-columns:30px 120px 1fr;gap:6px;align-items:center;margin:4px 0}
+.qmeta span{font-weight:700;color:var(--muted);text-align:right}
+.qmeta select,.qmeta input{padding:7px 8px;font-size:14px}
+.cardprev{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cardprev img{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff}
+.cardprev p{margin:4px 0 0;font-size:12px;color:var(--muted);text-align:center}
+.back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--accent);font-weight:650;padding:0;margin:0 0 12px;cursor:pointer}
+.tagrow{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+
+/* ---------- rəngli dizayn ---------- */
+:root{--paper:#F3F5FC;--ink:#1B2240;--muted:#5E6785;--line:#E2E6F3;--soft:#EEF1FB;--accent:#EA6A12;--g1:#EA6A12;--g2:#F59E0B;
+--t1:#FFF1E6;--c1:#C2510A;--t2:#E5F6EC;--c2:#1C8A52;--t3:#FFF1DF;--c3:#C26A00;--t4:#F2EBFF;--c4:#7048E8;--shadow:0 1px 2px rgba(25,35,80,.06),0 6px 18px rgba(25,35,80,.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0E1220;--ink:#E6E9F5;--muted:#9AA3C0;--line:#2A3150;--soft:#1D2440;--accent:#FDBA74;--card:#161C30;
+--t1:#3A2210;--c1:#FDBA74;--t2:#15301F;--c2:#6BD39A;--t3:#3A2A12;--c3:#F2B45C;--t4:#2A1F4D;--c4:#B9A2FF;--shadow:0 1px 2px rgba(0,0,0,.3)}}
+body::before{background:var(--g1)}
+.top{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;padding:16px 16px 14px}
+.brand{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;line-height:1.15}
+.brand::before{content:"✓";display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.2);font-size:22px;font-weight:800;grid-row:span 2}
+.brand small{color:rgba(255,255,255,.82)}
+.top .pill{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
+.top .pill.cloud{background:#1FAE68;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.top .pill.cloud::before{content:"☁ ";}
+.top .pill.local{background:#F2A93B;color:#2B1C00}
+.ck{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--muted);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff}
+.ck.on{background:var(--pen);border-color:var(--pen)}
+.li.selon{background:var(--pen-bg);border-radius:10px}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.nav{border-bottom:0;box-shadow:0 2px 10px rgba(25,35,80,.06);padding:8px 10px}
+.nav button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 10px rgba(234,106,18,.3)}
+.box{border:0;border-radius:18px;box-shadow:var(--shadow)}
+.hero{border-left:0;background:linear-gradient(135deg,var(--t1),var(--t4))}
+.hero h1{color:var(--c1)}
+.stat{border:0;border-radius:16px;box-shadow:var(--shadow)}
+.stats .stat:nth-child(1){background:var(--t1)}.stats .stat:nth-child(1) b{color:var(--c1)}
+.stats .stat:nth-child(2){background:var(--t2)}.stats .stat:nth-child(2) b{color:var(--c2)}
+.stats .stat:nth-child(3){background:var(--t3)}.stats .stat:nth-child(3) b{color:var(--c3)}
+.stats .stat:nth-child(4){background:var(--t4)}.stats .stat:nth-child(4) b{color:var(--c4)}
+.btn{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;box-shadow:0 3px 10px rgba(234,106,18,.25)}
+.btn.ghost{background:var(--soft);color:var(--c1);box-shadow:none}
+.btn.danger{background:var(--pen-bg);color:var(--pen);box-shadow:none}
+.btn.wa{background:#1FAA59;box-shadow:0 3px 10px rgba(31,170,89,.25)}
+.big2 .shoot:nth-child(1){background:var(--t1);border-color:var(--c1);color:var(--c1)}
+.big2 .shoot:nth-child(2){background:var(--t2);border-color:var(--c2);color:var(--c2)}
+.shoot{border-width:2px;font-size:17px}
+.pct{color:var(--c1)}
+.rank{color:var(--c4)}
+.bar i{background:linear-gradient(90deg,var(--g1),var(--g2))}
+.bar.red i{background:linear-gradient(90deg,#E8590C,var(--pen))}
+details.grp{border:0;border-radius:16px;box-shadow:var(--shadow);border-left:5px solid var(--c4)}
+.chip.on{background:var(--c1);border-color:var(--c1);color:#fff}
+.excard{border:0;background:var(--soft)}
+.crit4 div{background:var(--t1)}.crit4 b{color:var(--c1)}
+.sec{background:var(--t1)}
+.bub.on{background:var(--c1);border-color:var(--c1);color:#fff}
+.nav button:not(.on):hover{background:var(--soft)}
+footer{color:var(--muted)}
+.cardprev{grid-template-columns:1fr 1fr}
+.qitem img+img{margin-left:-4px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+</head>
+<body>
+<div class="top"><div class="brand" data-tab="yoxla" role="button" tabindex="0" style="cursor:pointer">Azərbaycan dili<small>Sınaq yoxlama · XI sinif</small></div><span id="status" class="pill">Yüklənir…</span></div>
+<nav class="nav" id="nav" aria-label="Bölmələr"></nav>
+<main id="view"></main>
+<div id="pickers" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0"><input type="file" accept="image/*" multiple id="pk-sheet" data-file="sheet" tabindex="-1"><input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf,image/*" multiple id="pk-qpdf" data-file="qpdf" tabindex="-1"><input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,.pdf,image/*" multiple id="pk-akey" data-file="akey" tabindex="-1"></div>
+<footer>Created by Samir Balakişiyev<br>WhatsApp: <a href="https://wa.me/994557958625" target="_blank" rel="noopener">055-795-8625</a></footer>
+<script type="text/plain" id="rubric-src">AÇIQ TAPŞIRIQLARIN QİYMƏTLƏNDİRİLMƏ MEYARLARI (bal şkalası)
+Hər açıq tapşırıq 1 / ½ / 0 bal şkalası ilə qiymətləndirilir (proqramda: 1 bal = 2 xal, ½ bal = 1 xal, 0 = 0).
+
+1. Sözlərin qarşılığını (kontekstdəki mənasını) yazmaq (adətən 3 söz):
+1 bal — a. Hər üç sözün qarşılığı düzgün yazılır, yanlış nümunə yazılmır.
+½ bal — b. İki sözün qarşılığı düzgün yazılır, bir sözün qarşılığı yazılmır.
+½ bal — c. İki sözün qarşılığı düzgün yazılır, bir sözün qarşılığı yanlış yazılır.
+0 bal — d. Digər hallarda.
+
+2. Cümlələri zənginləşdirmək / üslubi xüsusiyyətlərə uyğun yenidən yazmaq (məcazi ifadələrlə):
+1 bal — a. Cümlələrdə uyğun düzəliş edilir, yanlış qeyd yazılmır.
+½ bal — b. Cümlələrdə uyğun düzəliş edilsə də, bir yanlış qeyd də yazılır.
+½ bal — c. Cümlələrdən birində uyğun düzəliş edilir, yanlış qeyd yazılmır.
+0 bal — d. Digər hallarda.
+
+3. Nöqtələrin (boşluqların) yerinə uyğun ifadələr yazmaq (adətən 2 boşluq):
+1 bal — a. Hər iki boşluğa uyğun fikirlər yazılır, yanlış fikirlər yazılmır.
+½ bal — b. Hər iki boşluğa uyğun fikirlər yazılsa da, bir yanlış fikir də yazılır.
+½ bal — c. Bir boşluğa uyğun fikir yazılır, bir boşluqsa yazılmır.
+0 bal — d. Digər hallarda.
+
+4. Cədvəli tamamlamaq (sözün mətndənkənar mənası, ifadənin funksiyası, müddəa və faktlar və s.):
+1 bal — a. Cədvəlin hər boş hissəsinə uyğun nümunə yazılır, yanlış nümunə yazılmır.
+½ bal — b. Hər hissəyə uyğun nümunə yazılsa da, yanlış nümunə də yazılır.
+½ bal — c. Yalnız iki hissəyə uyğun nümunə yazılır, yanlış nümunə yazılmır.
+0 bal — d. Digər hallarda.
+
+5. Cümlədə uyğun düzəlişlər etməklə (yalnız qüsurlu məqamlarda) cümləni yenidən yazmaq:
+1 bal — a. Cümlədə uyğun düzəliş edilir, yanlış qeyd yazılmır.
+½ bal — b. Cümlədə uyğun düzəliş edilsə də, bir yanlış qeyd də yazılır.
+0 bal — d. Digər hallarda.
+
+6. Fikri təsdiq edən iki fakt / üsluba aid iki xüsusiyyət və s. yazmaq:
+1 bal — a. İki uyğun fikir yazılır, yanlış fikir yazılmır.
+½ bal — b. İki uyğun fikir yazılsa da, yanlış fikir də yazılır.
+½ bal — c. Bir uyğun fikir yazılır, yanlış fikir yazılmır.
+0 bal — d. Digər hallarda.
+
+7. Müddəa və faktlar cədvəli — QEYDLƏR:
+- Müddəada ən azından səsin yazılması və ya eşitdirilməsi (yəni mətnin əsas mövzusu) vurğulanmalıdır.
+- Müddəa ancaq nəqli cümlə ilə yazılmalıdır.
+- Müddəa cümlə ilə yazılmadıqda "0" balla qiymətləndirilir.
+- Faktlar düz, müddəa yanlış olsa, "0" balla qiymətləndirilir.
+- Müddəa düz, faktlardan biri düz və ya biri düz, digəri səhv olarsa, "yarımballa" qiymətləndirilir.
+
+ÜMUMİ QAYDALAR:
+- Müəllimin verdiyi doğru cavablar nümunədir. Şagirdin cavabı nümunədə olmasa da, Azərbaycan ədəbi dilinin normalarına, sözün izahlı lüğətdəki mənalarına və mətnin kontekstinə uyğundursa, düzgün sayılır və bu, izahla qeyd olunur.
+- Orfoqrafiya/durğu işarəsi tapşırığın mövzusu deyilsə, kiçik yazı səhvlərinə görə cavab yanlış sayılmır.
+</script>
+<script>
+'use strict';
+function toast(msg,kind){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.className='toast'+(kind==='err'?' err':'');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},3500)}
+function modal({title,html='',fields=[],ok='Yadda saxla',cancel='Ləğv et',danger=false,okOnly=false}){
+  return new Promise(res=>{
+    const ov=document.createElement('div');ov.className='ov';
+    ov.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><h2>${esc(title)}</h2>${html}${fields.map((f,i)=>`<label class="l" for="mf${i}">${esc(f.label)}</label>${f.type==='select'?`<select id="mf${i}">${f.options.map(o=>`<option value="${esc(o.value)}"${o.value===f.value?' selected':''}>${esc(o.label)}</option>`).join('')}</select>`:`<input id="mf${i}" type="${f.type||'text'}" value="${esc(f.value||'')}">`}`).join('')}<div class="acts" style="justify-content:flex-end">${okOnly?'':`<button class="btn ghost" data-x="0">${esc(cancel)}</button>`}<button class="btn${danger?' danger':''}" data-x="1">${esc(ok)}</button></div></div>`;
+    const close=v=>{ov.remove();res(v)};
+    ov.addEventListener('click',e=>{if(e.target===ov)return close(null);const b=e.target.closest('[data-x]');if(!b)return;if(b.dataset.x==='0')return close(null);if(b.dataset.x!=='1')return;if(fields.length)close(fields.map((f,i)=>ov.querySelector('#mf'+i).value.trim()));else close(true)});
+    document.body.appendChild(ov);
+    const fi=ov.querySelector('.dlg input,.dlg select');if(fi)fi.focus();else{const d=ov.querySelector('.dlg');d.tabIndex=-1;d.focus({preventScroll:true})}
+  });
+}
+const confirmBox=(title,text,ok='Sil')=>modal({title,html:`<p class="muted">${esc(text)}</p>`,ok,danger:true});
+function loadImg(blob){return new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>ok(im);im.onerror=()=>no(new Error('img'));im.src=fr.result};fr.onerror=()=>no(fr.error);fr.readAsDataURL(blob)})}
+async function shrink(blob,max=1900){
+  const im=await loadImg(blob);let w=im.naturalWidth,h=im.naturalHeight,s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+  const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
+  const out=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.88));
+  const t=document.createElement('canvas');const ts=Math.min(1,160/Math.max(w,h));t.width=Math.round(w*ts);t.height=Math.round(h*ts);t.getContext('2d').drawImage(c,0,0,t.width,t.height);
+  return {blob:out,thumb:t.toDataURL('image/jpeg',.7)};
+}
+const SERR={not_granted:'Claude-a müraciət üçün icazə verilmədi.',rate_limited:'Çox sorğu göndərildi. Bir az gözləyib «Davam et» basın.',images_unavailable:'Bu görünüşdə şəkil göndərmək mümkün deyil.',image_rejected:'Şəkil qəbul edilmədi. Başqa foto çəkin.',invalid_json:'Cavab düzgün formatda gəlmədi. Yenidən cəhd edin.',nopics:'Bu sınağa 3 şəkil yüklənməyib.',prompt_too_large:'Mətn çox uzundur.',session_expired:'Sessiyanın vaxtı bitib. Səhifəni yeniləyin.',refused:'Sorğu rədd edildi.',sampling_disabled:'Claude bu görünüşdə əlçatan deyil.'};
+const sErr=e=>SERR[e?.code]||'Claude-dan cavab alınmadı. Yenidən cəhd edin.';
+async function cropBox(blob,x0,x1,y0,y1){
+  const im=await loadImg(blob);const w=im.naturalWidth,h=im.naturalHeight,sx=Math.round(w*x0),sw=Math.round(w*(x1-x0)),sy=Math.round(h*y0),sh=Math.round(h*(y1-y0));
+  const c=document.createElement('canvas');c.width=sw;c.height=sh;c.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,sw,sh);
+  return await new Promise(ok=>c.toBlob(ok,'image/jpeg',.92));
+}
+async function cropBlob(blob,y0,y1){
+  const im=await loadImg(blob);const w=im.naturalWidth,h=im.naturalHeight,sy=Math.round(h*y0),sh=Math.round(h*(y1-y0));
+  const c=document.createElement('canvas');c.width=w;c.height=sh;c.getContext('2d').drawImage(im,0,sy,w,sh,0,0,w,sh);
+  return await new Promise(ok=>c.toBlob(ok,'image/jpeg',.92));
+}
+function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/data:([^;]+)/)||[])[1]||'image/jpeg'})}
+function initials(n){const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?w.slice(0,3).map(x=>x[0].toLocaleUpperCase('az')+'.').join(''):'S.E.'}
+function buildPdf(imgs){
+  const enc=new TextEncoder(),parts=[],offs=[];let off=0;
+  const add=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);off+=b.length};
+  const obj=(num,body)=>{offs[num]=off;add(`${num} 0 obj\n`);body();add('\nendobj\n')};
+  add('%PDF-1.4\n');add(new Uint8Array([37,226,227,207,211,10]));
+  obj(1,()=>add('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>add(`<< /Type /Pages /Kids [${imgs.map((_,i)=>`${3+3*i} 0 R`).join(' ')}] /Count ${imgs.length} >>`));
+  imgs.forEach((im,i)=>{const p=3+3*i;
+    obj(p,()=>add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im${i} ${p+2} 0 R >> >> /Contents ${p+1} 0 R >>`));
+    const cs=`q 595.28 0 0 841.89 0 0 cm /Im${i} Do Q`;
+    obj(p+1,()=>add(`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`));
+    obj(p+2,()=>{add(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`);add(im.bytes);add('\nendstream')});
+  });
+  const total=3+3*imgs.length,xref=off;
+  let x=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  add(x);add(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const out=new Uint8Array(off);let p=0;for(const b of parts){out.set(b,p);p+=b.length}return out;
+}
+async function cardPdfBlob(pages){
+  const imgs=await Promise.all(pages.map(c=>new Promise((ok,no)=>c.toBlob(b=>b?b.arrayBuffer().then(ab=>ok({bytes:new Uint8Array(ab),w:c.width,h:c.height}),no):no(new Error('blob')),'image/jpeg',.92))));
+  return new Blob([buildPdf(imgs)],{type:'application/pdf'});
+}
+async function saveFile(name,data){
+  if(!downloads)return toast('Fayl yükləmə bu görünüşdə mümkün deyil.','err');
+  try{await downloads.save({filename:name,data})}catch(e){if(e?.code!=='declined')toast(e?.code==='rate_limited'?'Bir az gözləyib yenidən cəhd edin.':'Fayl yüklənmədi.','err')}
+}
+function shareCanvas(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#ffffff';x.fillRect(0,0,W,H);return [c,x]}
+function shTxt(x,t,px,py,size,weight,color,align='left',font='Inter, Arial, sans-serif'){x.font=`${weight} ${size}px ${font}`;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';x.fillText(t,px,py)}
+function shLogo(x,cx,cy,r){const ini=(S.settings.logo||'').trim().slice(0,6)||'S.B.';x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.fillStyle='rgba(255,255,255,.18)';x.fill();x.strokeStyle='#fff';x.lineWidth=3;x.stroke();x.beginPath();x.arc(cx,cy,r-7,0,Math.PI*2);x.lineWidth=1.2;x.stroke();
+  const LF='Georgia, "Noto Serif", "Times New Roman", serif';let f=r*.62;for(let t=0;t<30;t++){x.font=`700 ${f}px ${LF}`;if(x.measureText(ini).width<=(r*2-22))break;f*=.94}shTxt(x,ini,cx,cy+2,f,700,'#fff','center',LF)}
+function shHeader(x,W,h,title,sub){const g=x.createLinearGradient(0,0,W,h);g.addColorStop(0,'#EA6A12');g.addColorStop(1,'#F59E0B');x.fillStyle=g;x.fillRect(0,0,W,h);shLogo(x,86,h/2,52);
+  let f=50;x.font=`800 ${f}px Inter, Arial, sans-serif`;while(x.measureText(title).width>W-200&&f>30){f-=2;x.font=`800 ${f}px Inter, Arial, sans-serif`}shTxt(x,title,166,h/2-22,f,800,'#fff');shTxt(x,sub,166,h/2+30,28,500,'rgba(255,255,255,.88)')}
+const pctCol=p=>p>=80?'#1C8A52':p>=50?'#B7791F':'#C2362F';
+async function shareImage(canvas,fname,waUrl,hint){
+  const url=canvas.toDataURL('image/png');
+  modal({title:'Şəkil hazırdır',html:`<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:60vh;overflow-y:auto"><img src="${url}" alt="Göndəriləcək şəkil" style="display:block;width:100%"></div>
+  <p class="hint">1) Şəkli yükləyin və ya şəklin üstünə barmağınızı basılı saxlayıb «Şəkli saxla» seçin. 2) Şəkli istədiyiniz yerə göndərin.</p>
+  <div class="acts"><button class="btn" data-x="dl">⬇️ Şəkli yüklə</button></div>`,ok:'Bağla',okOnly:true});
+  setTimeout(()=>{const b=document.querySelector('.ov [data-x="dl"]');if(b)b.onclick=e=>{e.stopPropagation();canvas.toBlob(bl=>{if(bl)saveFile(fname,bl);else toast('Şəkil hazırlanmadı.','err')},'image/png')}},0);
+}
+/* ---------- basics ---------- */
+let toastT;
+const $=s=>document.querySelector(s);
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const azCmp=(a,b)=>String(a).localeCompare(String(b),'az');
+const fmt=n=>{n=Math.round(n*100)/100;return String(n).replace('.',',')};
+const norm=s=>String(s||'').toLocaleLowerCase('az').replace(/[əäçğıöşüİI]/g,c=>({'ə':'e','ä':'e','ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','I':'i','İ':'i'}[c]||c)).replace(/\s+/g,' ').trim();
+const clean=o=>JSON.parse(JSON.stringify(o));
+const DEFAULT_RUBRIC=document.getElementById('rubric-src').textContent.trim();
+const DEF_SET={teacherName:'',logo:'',sign:'',rubric:''};
+const TABS=[['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['sinaqlar','Sınaqlar'],['parametrler','Parametrlər']];
+const LETTERS=['A','B','C','D','E'];
+const SIZEW={S:3,M:5,L:7};
+
+let S={groups:[],students:[],exams:[],results:[],settings:{...DEF_SET}};
+let mode='loading',store=null,sample=null,canImages=false,maxImages=1,tier,downloads=null;
+let tab='yoxla',prevTab='yoxla',pendingRender=false;
+const forms={group:'',sGroup:'',bulk:'',rows:[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}]};
+const rf={groupId:'',examId:'',resId:''};
+const Q={examId:'',groupId:'',items:[],running:false,paused:false};
+let XD=null,xmode='list',setDraft=null,stuEdit=new Set(),openGrp=new Set(),SND={key:'',sent:new Set()};
+const photoOf={};
+
+const groupById=i=>S.groups.find(g=>g.id===i);
+const studentById=i=>S.students.find(s=>s.id===i);
+const examById=i=>S.exams.find(e=>e.id===i);
+const gName=i=>groupById(i)?.name||'—';
+const sName=i=>studentById(i)?.name||'Silinmiş şagird';
+const groupsSorted=()=>S.groups.slice().sort((a,b)=>azCmp(a.name,b.name));
+const studentsOf=gid=>S.students.filter(s=>s.groupId===gid).sort((a,b)=>azCmp(a.name,b.name));
+const examsSorted=()=>S.exams.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||azCmp(a.name,b.name));
+const rubric=()=>(S.settings.rubric||'').trim()||DEFAULT_RUBRIC;
+function waPhone(p){let d=String(p||'').replace(/\D/g,'');if(!d)return '';if(d.startsWith('00'))d=d.slice(2);if(d.startsWith('994'))return d;if(d.startsWith('0'))d=d.slice(1);return d.length===9?'994'+d:d}
+
+/* ---------- exam structure & scoring ---------- */
+const closedQs=ex=>(ex?.qs||[]).filter(q=>q.kind==='c');
+const openQs=ex=>(ex?.qs||[]).filter(q=>q.kind==='o');
+const maxRaw=ex=>closedQs(ex).length+2*openQs(ex).length;
+function closedScore(r,ex){const cq=closedQs(ex);let n=0;cq.forEach((q,i)=>{const v=(r.answers||[])[i],k=String(q.key||'');if(v&&v!=='-'&&k&&k.includes(v)&&v.length===1)n++});return n}
+const openScore=r=>(r.open||[]).reduce((a,o)=>a+(Number(o.score)||0),0);
+const rawOf=r=>{const ex=examById(r.examId);return ex?closedScore(r,ex)+openScore(r):0};
+const pctOf=r=>{const ex=examById(r.examId);const m=ex?maxRaw(ex):0;return m?Math.round(rawOf(r)*10000/m)/100:0};
+const findResult=(eid,sid)=>S.results.find(r=>r.examId===eid&&r.studentId===sid);
+const exGroups=e=>{const ids=new Set(e.groupIds||[]);S.results.forEach(r=>{if(r.examId===e.id){const g=studentById(r.studentId)?.groupId;if(g)ids.add(g)}});return [...ids].filter(groupById)};
+const absentOf=(ex,gid)=>gid?studentsOf(gid).filter(st=>!S.results.some(r=>r.examId===ex.id&&r.studentId===st.id)):[];
+const ptsTxt=p=>p===2?'2/2':p===1?'1/2':'0/2';
+
+/* ---------- storage ---------- */
+const LKEY='azdili_sinaq_local';
+function readLocal(){try{return JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){return null}}
+function writeLocal(){try{localStorage.setItem(LKEY,JSON.stringify(S));return true}catch(e){return false}}
+async function initStore(){
+  let db=null,user=null,id=null;
+  try{if(window.claude&&typeof window.claude.use==='function'){const r=await Promise.all([claude.use('db'),claude.use('user'),claude.use('sample'),claude.use('downloads')]);db=r[0];user=r[1];sample=r[2];downloads=r[3]}}catch(e){}
+  if(sample){try{const lim=await sample.limits();canImages=!!lim?.images;maxImages=Math.max(1,Math.min(4,lim?.images?.maxCount||1));if(lim?.modelTiers?.includes('complex'))tier='complex'}catch(e){canImages=false}}
+  if(user){try{id=await user.id()}catch(e){}}
+  if(!db||!id){mode='local';const l=readLocal();if(l)S={groups:l.groups||[],students:l.students||[],exams:l.exams||[],results:l.results||[],settings:{...DEF_SET,...(l.settings||{})}};render();return}
+  const base=db.doc('data/users/'+id+'/azdili');store={base,col:c=>base.collection(c)};
+  const need=new Set(['groups','students','exams','results','settings']);
+  const timer=setTimeout(()=>{if(need.size){mode='slow';render()}},10000);
+  const done=k=>{if(need.delete(k)&&!need.size){clearTimeout(timer);mode='cloud'}scheduleRender()};
+  for(const c of ['groups','students','exams','results'])store.col(c).onSnapshot(s=>{S[c]=s.docs.map(d=>d.data());done(c)},()=>{toast('Məlumat oxunmadı.','err');done(c)});
+  base.onSnapshot(s=>{S.settings={...DEF_SET,...(s.exists?s.data():{})};done('settings')},()=>done('settings'));
+}
+async function put(c,obj){obj=clean(obj);const i=S[c].findIndex(x=>x.id===obj.id);if(i>=0)S[c][i]=obj;else S[c].push(obj);
+  if(store){try{await store.col(c).doc(obj.id).set(obj)}catch(e){toast(e?.code==='quota_exceeded'?'Yaddaş limiti dolub.':'Yadda saxlanmadı. Yenidən cəhd edin.','err');throw e}}else if(!writeLocal())toast('Brauzer yaddaşına yazılmadı.','err')}
+async function del(c,id){S[c]=S[c].filter(x=>x.id!==id);if(store){try{await store.col(c).doc(id).delete()}catch(e){toast('Silinmədi.','err')}}else writeLocal()}
+async function saveSettings(s){S.settings={...DEF_SET,...clean(s)};if(store){try{await store.base.set(S.settings)}catch(e){toast('Parametrlər saxlanmadı.','err');return false}}else writeLocal();return true}
+
+/* ---------- render ---------- */
+const VIEWS={};
+function isEditing(){const a=document.activeElement;return a&&$('#view').contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='file'}
+function scheduleRender(){if(isEditing()){pendingRender=true;return}render()}
+document.addEventListener('focusout',()=>setTimeout(()=>{if(pendingRender&&!isEditing()){pendingRender=false;render()}},60));
+function render(){
+  const el=$('#status');
+  if(mode==='cloud'){el.className='pill cloud';el.textContent='Hesabda saxlanılır'}else if(mode==='local'){el.className='pill local';el.textContent='Yalnız bu brauzerdə'}else if(mode==='slow'){el.className='pill local';el.textContent='Bağlantı gecikir'}else{el.className='pill';el.textContent='Yüklənir…'}
+  const nt=(tab==='res'||tab==='send')?prevTab:tab;
+  $('#nav').innerHTML=TABS.map(([k,n])=>`<button type="button" data-tab="${k}" class="${k===nt?'on':''}">${n}</button>`).join('');
+  $('#view').innerHTML=mode==='loading'?`<div class="box empty">Məlumatlar yüklənir…</div>`:(VIEWS[tab]||VIEWS.yoxla)();
+}
+function toTop(){try{window.scrollTo(0,0)}catch(e){}}
+function go(t){if(t!=='res'&&t!=='send')prevTab=t;tab=t;render();toTop()}
+window.addEventListener('popstate',()=>{if(tab==='res'||tab==='send'){tab=prevTab;render()}else if(XD&&tab==='sinaqlar'){XD=null;xmode='list';render()}});
+function pushNav(){try{history.pushState({a:1},'')}catch(e){}}
+
+/* ---------- PDF → images ---------- */
+async function pdfPages(file){
+  if(!window.pdfjsLib)throw new Error('PDF oxuyucu yüklənmədi. Səhifələrin şəklini (skrinşot) yükləyin.');
+  const data=new Uint8Array(await file.arrayBuffer());
+  const pdf=await pdfjsLib.getDocument({data,isEvalSupported:false,disableFontFace:false}).promise;
+  const out=[];
+  for(let p=1;p<=Math.min(pdf.numPages,12);p++){const page=await pdf.getPage(p);const v0=page.getViewport({scale:1});const sc=1600/Math.max(v0.width,v0.height);const vp=page.getViewport({scale:sc});
+    const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:x,viewport:vp}).promise;out.push(await new Promise(ok=>c.toBlob(ok,'image/jpeg',.9)))}
+  return out;
+}
+
+/* ---------- AI: analyse the question pages ---------- */
+async function analyseExam(files){
+  if(!sample||!canImages)return toast('Bu görünüşdə Claude ilə şəkil oxuma mümkün deyil.','err');
+  const d=XD;d.busy=true;d.msg='Fayl açılır…';render();
+  const isDocx=f=>/\.docx$/i.test(f.name)||/wordprocessingml/.test(f.type);const docs=files.filter(isDocx);files=files.filter(f=>!isDocx(f));let ok=false;
+  try{
+    let pages=[];
+    for(const f of files){if(/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name))pages=pages.concat(await pdfPages(f));else pages.push((await shrink(f,1800)).blob)}
+    if(!pages.length)throw new Error('Səhifə tapılmadı.');
+    let trans='';const chunk=Math.max(1,maxImages);
+    for(let i=0;i<pages.length;i+=chunk){const part=pages.slice(i,i+chunk);d.msg=`Suallar oxunur… (${Math.min(i+chunk,pages.length)}/${pages.length} səhifə)`;render();
+      const o={images:part};if(tier)o.modelTier=tier;
+      const r=await sample.json(`The attached image${part.length>1?'s are':' is'} page${part.length>1?'s':''} ${i+1}${part.length>1?'–'+(i+part.length):''} of a grade 11 Azerbaijani-language exam booklet (Azərbaycan dili). Transcribe EVERYTHING on ${part.length>1?'these pages':'this page'} exactly, in Azerbaijani, in reading order (if the page has two columns, read the left column top to bottom, then the right column). Write each question's number and its instruction sentence on ONE line exactly as printed (e.g. "44. Nöqtələrin yerinə uyğun ifadələr yazın."), word for word, without shortening. Keep every question number as printed, every answer option (A)–E)), every reading text in full, every table (as rows with " | " between cells) and every symbol (▲ █ ● ♦ ■ etc.).
+Mark formatting carefully, because the questions refer to it: underlined text as <u>…</u>, bold text as <b>…</b>, text inside a frame/box as [ÇƏRÇİVƏ: …], small superscript numbers after words as word^1, word^2, roman numerals placed before/over words as [I] word.
+Reply with only JSON: {"text":"the full transcription"}`,o);
+      trans+=(trans?'\n\n':'')+`=== Səhifə ${i+1}${part.length>1?'–'+(i+part.length):''} ===\n`+String(r?.text||'')}
+    d.msg='Sualların quruluşu müəyyən edilir…';render();
+    const o2={};if(tier)o2.modelTier=tier;
+    const r2=await sample.json(`Below is the transcription of a grade 11 Azerbaijani-language exam. List ALL its questions in order of appearance.
+For each question give: "pdf_n" (its number as printed), "kind": "closed" if it has answer options A)–E), otherwise "open".
+For each OPEN question also design the space on a printed answer card where the student will write the answer:
+- "hint": the question's instruction sentence EXACTLY as printed in the booklet (complete, word for word, without the question number, without the reading passage, the sentences to work on, the table or answer options), e.g. "Əvvəlində işarə qoyulmuş sözlərin qarşılığını (ifadə etdiyi mənanı) yazın."
+- "task": one or two Azerbaijani sentences describing exactly what the task asks and which words/sentences/table it refers to (so it can be graded later).
+- "layout": one of
+  {"type":"items","items":["▲","█","●"]} — when the answer is several separate short answers labelled by the symbols or numbers used in the question (use exactly those labels, or "1.","2." when the question has numbered blanks);
+  {"type":"table","cols":["column header 1","column header 2"],"rows":N,"w":[relative widths]} — when the question asks to complete a table: copy the column headers of the EMPTY columns the student must fill exactly as printed (include a first column like "İfadə" or "Söz" if the student must write it), rows = number of empty rows in the printed table (1–4);
+  {"type":"lines"} — when the student must write sentences (rewrite or correct sentences, etc.).
+- "size": "S" (a few words), "M" (one or two sentences) or "L" (several sentences or a big table).
+Reply with only JSON: {"questions":[{"pdf_n":27,"kind":"closed"},{"pdf_n":42,"kind":"open","hint":"","task":"","layout":{"type":"items","items":["▲","█","●"]},"size":"S"}]}
+Transcription:
+"""
+${trans}
+"""`,o2);
+    const raw=Array.isArray(r2?.questions)?r2.questions:[];
+    if(!raw.length)throw new Error('Suallar tapılmadı.');
+    const old=d.qs||[];
+    const plain=t=>String(t||'').replace(/<\/?[ub]>/g,'').replace(/\[ÇƏRÇİVƏ:\s*/g,'').replace(/\s+/g,' ').trim();
+    const nq=t=>norm(plain(t)).replace(/[«»“”"'.,:;!?()…–—-]/g,'').replace(/\s+/g,' ').trim();
+    const tN=nq(trans);
+    const lineAfter=pn=>{const num=String(pn).replace(/\D/g,'');if(!num)return '';const ls=String(trans).split('\n');
+      for(let k=0;k<ls.length;k++){const m=ls[k].match(new RegExp('^\\s*(?:Tapşırıq\\s*)?'+num+'\\s*[.)]\\s*(.*)$'));if(!m)continue;
+        let out=plain(m[1]);for(let t=k+1;t<ls.length&&t<k+6;t++){if(/[.?!:]\s*$/.test(out))break;const nx=plain(ls[t]);if(!nx||/^\d+\s*[.)]/.test(nx)||/^[A-E]\)/.test(nx)||/\|/.test(ls[t]))break;out+=' '+nx}
+        return out.trim()}return ''};
+    const exactHint=q=>{const h=plain(q?.hint),l=lineAfter(q?.pdf_n);if(h&&tN.includes(nq(h))&&nq(h).length>=nq(l).length)return h;return l||h};
+    d.qs=raw.map((q,i)=>{const kind=q?.kind==='open'?'o':'c';const lay=q?.layout||{};const t=['items','table','lines'].includes(lay.type)?lay.type:'lines';
+      const prev=old.find(x=>String(x.pdf)===String(q?.pdf_n)&&x.kind===kind);
+      return {n:i+1,pdf:q?.pdf_n??'',kind,key:prev?.key||'',crit:prev?.crit||'',hint:kind==='o'?exactHint(q).slice(0,300):'',task:kind==='o'?String(q?.task||'').slice(0,600):'',
+        lay:kind==='o'?{type:t,size:['S','M','L'].includes(q?.size)?q.size:'M',items:Array.isArray(lay.items)?lay.items.map(String).slice(0,6):[],cols:Array.isArray(lay.cols)?lay.cols.map(String).slice(0,5):[],w:Array.isArray(lay.w)?lay.w.map(Number).slice(0,5):[],rows:Math.max(1,Math.min(5,Number(lay.rows)||2))}:null}});
+    d.trans=trans;d.pages=pages.length;d.msg='';ok=true;toast(`${closedQs(d).length} qapalı, ${openQs(d).length} açıq sual tapıldı.`);
+  }catch(e){d.msg='';toast(e?.message&&!e.code?e.message:sErr(e),'err')}
+  d.busy=false;render();
+  if(ok){const hasKey=/bal şkalası|cavablar|doğru cavab|cavab açarı|düzgün cavab/i.test(d.trans||'');if(docs.length||hasKey)await importAnswers(docs,hasKey?d.trans:'')}
+}
+
+/* ---------- answers file → keys ---------- */
+async function docxText(file){
+  const buf=new Uint8Array(await file.arrayBuffer()),dv=new DataView(buf.buffer);
+  let e=buf.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('Word faylı oxunmadı.');
+  const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true),xml=null;const td=new TextDecoder();
+  for(let i=0;i<n&&p+46<=buf.length;i++){if(dv.getUint32(p,true)!==0x02014b50)break;
+    const method=dv.getUint16(p+10,true),csize=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=td.decode(buf.slice(p+46,p+46+nl));
+    if(name==='word/document.xml'){const ln=dv.getUint16(lo+26,true),lx=dv.getUint16(lo+28,true),data=buf.slice(lo+30+ln+lx,lo+30+ln+lx+csize);
+      if(method===0)xml=td.decode(data);else{const ds=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));xml=td.decode(await new Response(ds).arrayBuffer())}break}
+    p+=46+nl+xl+cl}
+  if(!xml)throw new Error('Word faylında mətn tapılmadı.');
+  return xml.replace(/<w:tab\/>/g,'\t').replace(/<\/w:tc>/g,' | ').replace(/<\/w:tr>/g,'\n').replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&').replace(/\n{3,}/g,'\n\n').trim();
+}
+async function importAnswers(files,extraText=''){
+  const d=XD;if(!d||!(d.qs||[]).length)return toast('Əvvəl sualların PDF-ini yükləyin.','err');if(!sample)return toast('Bu görünüşdə Claude ilə oxuma mümkün deyil.','err');
+  d.akBusy=true;d.akMsg='Fayl açılır…';render();
+  try{
+    let text=extraText||'',imgs=[];
+    for(const f of files){if(/\.docx$/i.test(f.name)||/wordprocessingml/.test(f.type))text+=(text?'\n\n':'')+await docxText(f);
+      else if(/pdf$/i.test(f.type)||/\.pdf$/i.test(f.name))imgs=imgs.concat(await pdfPages(f));else imgs.push((await shrink(f,1800)).blob)}
+    if(imgs.length&&!canImages)throw new Error('Bu görünüşdə şəkil oxuma mümkün deyil — Word (.docx) faylı yükləyin.');
+    const cq=closedQs(d),oq=openQs(d);
+    const ask=`The teacher gives the answer key of a grade 11 Azerbaijani-language exam${imgs.length?' (attached image(s))':' (text below)'}. Extract the CORRECT ANSWERS and assign them to the exam questions by their booklet number.
+Closed questions (booklet numbers): ${cq.map(q=>q.pdf).join(', ')||'none'}.
+Open questions:
+${oq.map(q=>`- booklet ${q.pdf}: ${q.task||q.hint}`).join('\n')}
+Rules:
+- For each open question copy the correct answer(s) completely: all variants, symbols (▲ █ ● ♦), numbering (1., 2.), table contents (write each table row as "cell — cell — cell", rows separated by " / "), and keep "və s." where it is written.
+- Do NOT copy the scoring scale (bal şkalası: "1 bal", "½ bal", "a.", "b.", "Digər hallarda" lines), question texts or notes — only the answers.
+- Fix spelling mistakes and typos in Azerbaijani (ə, ı, ş, ç, ğ, ö, ü, capital letters, punctuation) without changing the meaning.
+- If the key gives SCORING CRITERIA for a question (bal şkalası: the 1 / ½ / 0 levels with their a., b., c., d. descriptions, and any QEYD notes), copy them exactly into "criteria" for that question (one line per level, e.g. "1 bal — a. …"); otherwise leave "criteria" empty. Do not put criteria into "answer".
+- If closed-question answer letters are given, return them too; otherwise return an empty list.
+- The text may also contain the questions themselves. Take answers ONLY from the answer key part (correct answers given by the teacher). Never work out or invent answers yourself; if there is no answer for a question, leave it out.
+Reply with only JSON: {"open":[{"pdf_n":42,"answer":"","criteria":""}],"closed":[{"pdf_n":27,"key":"B"}]}`;
+    const out={open:[],closed:[]};const o={};if(tier)o.modelTier=tier;
+    const add=r=>{if(Array.isArray(r?.open))out.open.push(...r.open);if(Array.isArray(r?.closed))out.closed.push(...r.closed)};
+    if(text){d.akMsg='Cavablar oxunur…';render();add(await sample.json(ask+'\nAnswer key:\n"""\n'+text.slice(0,60000)+'\n"""',o))}
+    const ch=Math.max(1,maxImages);
+    for(let i=0;i<imgs.length;i+=ch){d.akMsg=`Cavablar oxunur… (${Math.min(i+ch,imgs.length)}/${imgs.length})`;render();add(await sample.json(ask,{...o,images:imgs.slice(i,i+ch)}))}
+    let no=0,nc=0;
+    let ncr=0;oq.forEach(q=>{const mine=out.open.filter(x=>String(x?.pdf_n)===String(q.pdf));const parts=mine.filter(x=>String(x?.answer||'').trim()).map(x=>String(x.answer).trim());if(parts.length){q.key=[...new Set(parts)].join('\n').slice(0,2000);no++}
+      const cr=mine.map(x=>String(x?.criteria||'').trim()).filter(Boolean);if(cr.length){q.crit=[...new Set(cr)].join('\n').slice(0,2500);ncr++}});
+    cq.forEach(q=>{const x=out.closed.find(z=>String(z?.pdf_n)===String(q.pdf));const v=String(x?.key||'').trim().toUpperCase();if(/^[A-E]$/.test(v)){q.key=v;nc++}});
+    if(no||nc)toast(`${no} açıq${nc?' və '+nc+' qapalı':''} sualın cavabı yazıldı${ncr?', '+ncr+' sualın meyarları da götürüldü':''}. Yoxlayıb «Yadda saxla» basın.`);else toast('Faylda uyğun cavab tapılmadı.','err');
+  }catch(e){toast(e?.message&&!e.code?e.message:sErr(e),'err')}
+  d.akBusy=false;d.akMsg='';render();
+}
+
+/* ---------- answer card ---------- */
+const CARD={F:"'Times New Roman', Times, 'Liberation Serif', 'Noto Serif', serif",LS:8.5,HL:4.6,ROW:9,P:n=>n*.3528};
+let _mc=null;function mctx(){if(!_mc)_mc=document.createElement('canvas').getContext('2d');return _mc}
+const MMPX=200/25.4;
+function wrapN(text,widthMm,bold){const x=mctx();x.font=`${bold?700:400} ${CARD.P(12)*MMPX}px ${CARD.F}`;const ws=String(text||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean),out=[];let cur='';ws.forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>widthMm*MMPX&&cur){out.push(cur);cur=wd}else cur=t});if(cur)out.push(cur);return out}
+function boxInfo(q){const hl=wrapN(q.hint,170).slice(0,4),head=8+Math.max(0,hl.length-1)*CARD.HL,b=q.lay||{type:'lines'},labs=b.type==='items'?(b.items||[]):[];
+  let hh=0;if(b.type==='table'&&(b.cols||[]).length){const cw=b.cols.map((_,k)=>Number(b.w?.[k])>0?Number(b.w[k]):1),ws=cw.reduce((a,v)=>a+v,0);hh=4+Math.max(...b.cols.map((h,k)=>Math.min(3,wrapN(h,184*cw[k]/ws-3,true).length)))*4.4}
+  const min=labs.length?head+labs.length*CARD.LS+3:hh?head+.5+hh+(b.rows||2)*CARD.ROW+3:head+2*CARD.LS+3;
+  return {hl,head,b,labs,hh,min,fixed:!!labs.length}}
+function openTop(ex,page){if(page!==1)return 34;const n=closedQs(ex).length;return n?46+4.5+Math.ceil(n/4)*7.2+3+6+4:50}
+function splitOpen(ex){const o=openQs(ex);let h=Math.ceil(o.length/2);const avail=288-openTop(ex,1);
+  const need=k=>o.slice(0,k).reduce((a,q)=>a+boxInfo(q).min,0)+2.4*Math.max(0,k-1);
+  while(h>1&&need(h)>avail)h--;
+  return [o.slice(0,h),o.slice(h)]}
+const rng=a=>{if(!a.length)return '—';const out=[];let s=a[0],p=a[0];for(const v of a.slice(1)){if(v===p+1){p=v;continue}out.push(s===p?String(s):s+'–'+p);s=p=v}out.push(s===p?String(s):s+'–'+p);return out.join(', ')};
+function drawCardPage(ex,page){
+  const DPI=200,mm=DPI/25.4,W=Math.round(210*mm),H=Math.round(297*mm);
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const F="'Times New Roman', Times, 'Liberation Serif', 'Noto Serif', serif",INK='#000',MU='#222',LS=8.5,P=n=>n*.3528,P12=P(12);
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  const T=(t,px,py,sz,wt,al,col)=>{x.font=`${wt} ${sz*mm}px ${F}`;x.fillStyle=col||INK;x.textAlign=al||'left';x.textBaseline='middle';x.fillText(t,px*mm,py*mm)};
+  const RR=(px,py,w,h,r)=>{x.beginPath();if(x.roundRect)x.roundRect(px*mm,py*mm,w*mm,h*mm,r*mm);else x.rect(px*mm,py*mm,w*mm,h*mm)};
+  const R=(px,py,w,h,lw,col,r)=>{x.lineWidth=(lw||.5)*mm;x.strokeStyle=col||INK;if(r)RR(px,py,w,h,r);else{x.beginPath();x.rect(px*mm,py*mm,w*mm,h*mm)}x.stroke()};
+  const L=(a,b,c2,d,lw,col)=>{x.lineWidth=(lw||.35)*mm;x.strokeStyle=col||INK;x.beginPath();x.moveTo(a*mm,b*mm);x.lineTo(c2*mm,d*mm);x.stroke()};
+  const Ci=(px,py,r,fill)=>{x.beginPath();x.arc(px*mm,py*mm,r*mm,0,Math.PI*2);if(fill){x.fillStyle=INK;x.fill()}else{x.lineWidth=.4*mm;x.strokeStyle=INK;x.stroke()}};
+  const logo=(S.settings.logo||'').trim().slice(0,6)||'S.B.';
+  const cq=closedQs(ex),[o1,o2]=splitOpen(ex),mine=page===1?o1:o2;
+  let y;
+  if(page===1){
+    Ci(20,15,8.5);Ci(20,15,7.3);{let f=4.6;x.font=`700 ${f*mm}px Georgia, serif`;while(x.measureText(logo).width>12.5*mm&&f>2){f-=.2;x.font=`700 ${f*mm}px Georgia, serif`}x.fillStyle=INK;x.textAlign='center';x.textBaseline='middle';x.fillText(logo,20*mm,15.3*mm)}
+    T('CAVAB KARTI',105,10.5,P(20),700,'center');
+    T(((ex.name||'').trim()||'AZƏRBAYCAN DİLİ')+' · XI SİNİF',105,16.8,P12,700,'center',MU);
+    T(`Qapalı: ${rng(cq.map(q=>q.n))} · Açıq: ${rng(o1.map(q=>q.n))}${o2.length?' (arxa üzdə: '+rng(o2.map(q=>q.n))+')':''}`,105,22,P12,400,'center',MU);
+    R(176,7,24,16,.6,INK,2);T('BAL',188,10.8,P12,700,'center',MU);
+    const y0=27.5;[['AD',10,60],['SOYAD',73,70],['QRUP',146,54]].forEach(([l,px,w])=>{T(l,px,y0+1.6,P12,700,'left',MU);R(px,y0+4.2,w,8.5,.5,INK,1.5)});
+    y=y0+18.5;
+    if(cq.length){
+      T('QAPALI TAPŞIRIQLAR',10,y,P(13),700);
+      {const ly=y;T('Dairəni tam doldurun:',113,ly,P12,400,'right',MU);Ci(117,ly,1.9,true);T('düzgün',120,ly,P12,700,'left','#1C8A52');[['✗',148],['✓',158]].forEach(([s2,px])=>{Ci(px,ly,1.9);T(s2,px,ly+.1,2.6,700,'center','#C2362F')});T('yanlış',162,ly,P12,700,'left','#C2362F')}
+      y+=4.5;const gx=10,gw=190,cols=4,rows=Math.ceil(cq.length/cols),rh=7.2,cw=gw/cols;R(gx,y,gw,rows*rh+3,.6,INK,2);
+      cq.forEach((q,i)=>{const col=Math.floor(i/rows),row=i%rows,cx=gx+col*cw,cy=y+2.2+row*rh+rh/2;
+        if(row%2===0){x.fillStyle='#F1F2F5';x.fillRect((cx+1)*mm,(cy-rh/2+.4)*mm,(cw-2)*mm,(rh-.8)*mm)}
+        T(String(q.n),cx+8,cy+.2,P12,700,'right');LETTERS.forEach((l,k)=>{const bx=cx+13+k*7.4;Ci(bx,cy,2.6);T(l,bx,cy+.2,P(8.5),400,'center',MU)})});
+      for(let k=1;k<cols;k++)L(gx+k*cw,y+1.5,gx+k*cw,y+rows*rh+1.5,.35,'#666');
+      y+=rows*rh+3+6;
+    }
+  }else{
+    x.fillStyle=INK;RR(176,7,24,16,2);x.fill();T('2',188,15.3,9,800,'center','#fff');
+    T('CAVAB KARTI · ARXA ÜZ',10,12,P(16),700,'left');T(`Açıq tapşırıqlar: ${rng(o2.map(q=>q.n))}`,10,19,P12,400,'left',MU);
+    y=30;
+  }
+  if(mine.length){
+    T(page===1?'AÇIQ TAPŞIRIQLAR':'AÇIQ TAPŞIRIQLAR (davamı)',10,y,P(13),700);T('Cavabı öz xanasında, aydın xətlə yazın',200,y,P12,400,'right',MU);
+    y+=4;const gap=2.4,bottom=288;
+    const hs=P12,maxW=170*mm,HL=4.6;
+    const hintLines=q=>{if(!q.hint)return [];x.font=`500 ${hs*mm}px ${F}`;const ws=String(q.hint).replace(/\s+/g,' ').trim().split(' '),hl=[];let cur='';ws.forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>maxW&&cur){hl.push(cur);cur=wd}else cur=t});if(cur)hl.push(cur);
+      if(hl.length>4){hl.length=4;let l3=hl[3];while(x.measureText(l3+'…').width>maxW&&l3.length>3)l3=l3.slice(0,-1);hl[3]=l3.trimEnd()+'…'}return hl};
+    const info=mine.map(q=>{const bi=boxInfo(q);const hl=bi.hl.slice();if(wrapN(q.hint,170).length>4){x.font=`400 ${hs*mm}px ${F}`;let l3=hl[3];while(x.measureText(l3+'…').width>maxW&&l3.length>3)l3=l3.slice(0,-1);hl[3]=l3.trimEnd()+'…'}return {q,...bi,hl}});
+    const minSum=info.reduce((a,i)=>a+i.min,0),flex=info.filter(i=>!i.fixed);
+    const wOf=i=>SIZEW[i.b.size]||5;
+    const extra=Math.max(0,bottom-y-gap*(mine.length-1)-minSum),wsum=flex.reduce((a,i)=>a+wOf(i),0)||1;
+    info.forEach(i=>{const {q,hl,head,b,labs}=i;const bh=i.min+(i.fixed?0:extra*wOf(i)/wsum);
+      R(10,y,190,bh,.6,INK,1.8);
+      x.fillStyle=INK;if(x.roundRect){x.beginPath();x.roundRect(10*mm,y*mm,12*mm,7*mm,[1.8*mm,0,1.8*mm,0])}else{x.beginPath();x.rect(10*mm,y*mm,12*mm,7*mm)}x.fill();T(String(q.n),16,y+3.6,P(13),700,'center','#fff');
+      hl.forEach((t,k)=>T(t,24.5,y+3.7+k*HL,hs,400,'left',INK));
+      if(b.type==='table'&&(b.cols||[]).length){const tx=13,tw=184,ty=y+head+.5,th=bh-head-3,cols=b.cols,cw=cols.map((_,k)=>Number(b.w?.[k])>0?Number(b.w[k]):1),ws=cw.reduce((a,v)=>a+v,0);const hh=i.hh||8.4;
+        x.fillStyle='#EEF0F4';x.fillRect(tx*mm,ty*mm,tw*mm,hh*mm);R(tx,ty,tw,th,.5,INK);L(tx,ty+hh,tx+tw,ty+hh,.5,INK);
+        let cx=tx;cols.forEach((h,k)=>{const w=tw*cw[k]/ws;if(k)L(cx,ty,cx,ty+th,.5,INK);x.font=`700 ${P12*mm}px ${F}`;const ls=[];let cur='';String(h).split(' ').forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>(w-3)*mm&&cur){ls.push(cur);cur=wd}else cur=t});ls.push(cur);
+          const sh=ls.slice(0,3);sh.forEach((t,j)=>T(t,cx+w/2,ty+hh/2+(j-(sh.length-1)/2)*4.4,P12,700,'center',INK));cx+=w});
+        const rows=b.rows||2,rh2=(th-hh)/rows;for(let r=1;r<rows;r++)L(tx,ty+hh+r*rh2,tx+tw,ty+hh+r*rh2,.4,INK);
+      }else if(labs.length){labs.forEach((lab,k)=>{const ly=y+head+(k+1)*LS;L(14,ly,196,ly,.35);T(lab,14.5,ly-3,P12,700,'left',INK)})}
+      else{for(let ly=y+head+LS;ly<y+bh-1.5;ly+=LS)L(14,ly,196,ly,.35)}
+      y+=bh+gap});
+  }
+  T('Created by Samir Balakişiyev',105,292.5,P(9),400,'center','#666');
+  return c;
+}
+async function downloadCard(ex){
+  if(!ex||!(ex.qs||[]).length)return toast('Əvvəl sualların PDF-ini yükləyin.','err');
+  try{const pages=[drawCardPage(ex,1)];if(splitOpen(ex)[1].length)pages.push(drawCardPage(ex,2));const blob=await cardPdfBlob(pages);await saveFile('cavab-karti-'+((ex.name||'sinaq').trim()||'sinaq').replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(e){toast('PDF hazırlanmadı.','err')}
+}
+async function showCard(ex){
+  if(!ex||!(ex.qs||[]).length)return toast('Əvvəl sualların PDF-ini yükləyin.','err');
+  let pages;try{pages=[drawCardPage(ex,1)];if(splitOpen(ex)[1].length)pages.push(drawCardPage(ex,2))}catch(e){return toast('Kart hazırlanmadı.','err')}
+  const prev=pages.map(c=>{const t=document.createElement('canvas');t.width=420;t.height=594;t.getContext('2d').drawImage(c,0,0,420,594);return t.toDataURL('image/jpeg',.8)});
+  modal({title:'Cavab kartı (PDF)',html:`<div class="cardprev">${prev.map((u,i)=>`<div><img src="${u}" alt="Səhifə ${i+1}"><p>${i+1}-ci səhifə</p></div>`).join('')}</div><p class="hint">A4, ${pages.length} səhifə — ikitərəfli (ön və arxa üz) çap edin.</p><div class="acts"><button class="btn" data-x="pdf">PDF yüklə</button></div>`,ok:'Bağla',okOnly:true});
+  setTimeout(()=>{const b=document.querySelector('.ov [data-x="pdf"]');if(b)b.onclick=async e=>{e.stopPropagation();try{const blob=await cardPdfBlob(pages);saveFile('cavab-karti-'+(ex.name||'sinaq').replace(/[^\p{L}\p{N}]+/gu,'-')+'.pdf',blob)}catch(err){toast('PDF hazırlanmadı.','err')}}},0);
+}
+
+/* ---------- AI: checking ---------- */
+function rosterText(){return S.students.slice().sort((a,b)=>(a.groupId===Q.groupId?0:1)-(b.groupId===Q.groupId?0:1)||azCmp(a.name,b.name)).map((s,i)=>`${i+1}. ${s.name} (${gName(s.groupId)})`)}
+function rosterArr(){return S.students.slice().sort((a,b)=>(a.groupId===Q.groupId?0:1)-(b.groupId===Q.groupId?0:1)||azCmp(a.name,b.name))}
+function pickStudent(idx,written){
+  const all=rosterArr(),n=Number(idx);if(Number.isInteger(n)&&n>=1&&n<=all.length)return all[n-1];
+  const w=norm(written);if(!w)return null;const wt=w.split(' ');
+  const tiers=[s=>norm(s.name)===w,s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.includes(x))},s=>{const t=norm(s.name).split(' ');return wt.every(x=>t.some(y=>y.startsWith(x)||x.startsWith(y)))}];
+  for(const pool of [all.filter(s=>s.groupId===Q.groupId),all]){for(const f of tiers){const h=pool.filter(f);if(h.length===1)return h[0];if(h.length>1)break}}
+  return null;
+}
+async function aiIdentify(blobs){
+  const o={images:blobs};
+  const r=await sample.json(`The attached ${blobs.length} photo(s) show the two sides of ONE student's answer card. Side 1 has the name boxes (AD, SOYAD, QRUP) and the bubble grid (A–E) at the top; side 2 has a large "2" in the top-right corner, no name boxes and only open-answer boxes. Read the name ONLY from side 1.
+Tell which image is side 1 (0-based index) and read the student's name (AD and SOYAD boxes) and group (QRUP), then match the name to ONE student from this list (names may be in Latin or Cyrillic, with spelling differences); use null if you are not sure:
+${rosterText().join('\n')||'(no students)'}
+Reply with only JSON: {"side1_index":0,"name_as_written":"","group_as_written":"","student_number":null}`,o);
+  return r||{};
+}
+async function aiClosed(ex,blob){
+  const cq=closedQs(ex);let top=blob,halves=null;try{top=await cropBlob(blob,0,.42);halves=[top,await cropBox(top,0,.52,0,1),await cropBox(top,.48,1,0,1)]}catch(e){}
+  const nums=cq.map(q=>q.n);
+  const ask=(imgs,only,variant)=>sample.json(`${imgs.length>1?'Image 1 is the top part of a student\'s answer card (the closed-question grid); images 2 and 3 are zoomed LEFT and RIGHT halves of the same grid. ':'This is the top part of a student\'s answer card (the closed-question grid). '}The grid has ${cq.length} questions numbered ${nums.join(', ')} (4 columns, read each column top to bottom), each with bubbles A B C D E.
+${only?`Look VERY closely only at questions ${only.join(', ')}: go along each row bubble by bubble and decide which one is really filled in.`:variant?'Read the grid row by row, slowly, checking each bubble of each question.':''}
+For each question give the ONE letter whose bubble is filled in (dark). Ignore light pencil marks, smudges and crossed-out bubbles; if a bubble is crossed out (X) and another is filled, take the filled one. If nothing is filled, or two bubbles are equally filled, use "-".
+Reply with only JSON: {"answers":{"${only?only[0]:nums[0]||1}":"A", ...}}`,{images:imgs});
+  const pick=(r,n)=>{const a=r?.answers||{};const v=String(a[n]??a[String(n)]??'-').trim().toUpperCase();return /^[A-E]$/.test(v)?v:'-'};
+  const imgsA=halves&&maxImages>=3?halves:[top];
+  const [ra,rb]=await Promise.allSettled([ask(imgsA,null,false),ask([top],null,true)]);
+  if(ra.status==='rejected'&&rb.status==='rejected')throw ra.reason;
+  const A=ra.status==='fulfilled'?ra.value:null,B=rb.status==='fulfilled'?rb.value:null;
+  const out=nums.map(n=>A?pick(A,n):pick(B,n));
+  if(A&&B){const diff=nums.filter((n,i)=>pick(B,n)!==out[i]);
+    if(diff.length){try{const C=await ask(imgsA,diff,false);diff.forEach(n=>{const i=nums.indexOf(n);out[i]=pick(C,n)})}catch(e){}}}
+  return out;
+}
+async function verifyOpen(ex,imgs,res){
+  const oq=openQs(ex),chk=res.filter(o=>o.score<2||o.unsure||o.extra);if(!chk.length)return res;
+  const o={images:imgs};if(tier)o.modelTier=tier;
+  let r;try{r=await sample.json(`You are checking a colleague's grading of OPEN answers on a student's Azerbaijani-language answer card (the attached image(s); each answer box has its number in a black label in the top-left corner).
+For EACH item below:
+1. Find that box and READ THE HANDWRITING AGAIN slowly, letter by letter, as if zoomed in. Azerbaijani letters that look alike: ə/e, ı/i, ş/s, ç/c, ğ/g, ö/o, ü/u — use the meaning to read them. If a word could reasonably be read as the correct form, read it as the correct form. Correct the transcription if the colleague misread something.
+2. Grade again strictly by the criteria. The teacher's sample answers are examples: an answer that is correct by the norms of the Azerbaijani literary language, the meanings in the explanatory dictionary and the context of the text is CORRECT (then not_in_key=true). Do not lower a level because of small spelling slips.
+3. Give "level": 1, 0.5 or 0, "unsure": true only if it is really doubtful, and a short Azerbaijani "explanation" (1–2 sentences).
+THE EXAM TEXT:
+"""
+${ex.trans||''}
+"""
+GENERAL CRITERIA:
+"""
+${rubric()}
+"""
+ITEMS:
+${chk.map(a=>{const q=oq.find(z=>z.n===a.n);return `- Box ${a.n} (booklet ${q?.pdf}): ${q?.task||q?.hint}${String(q?.key||'').trim()?`\n  Sample answers: ${q.key.trim()}`:''}${String(q?.crit||'').trim()?`\n  Criteria for this box: ${q.crit.trim()}`:''}\n  Colleague read: "${a.answer}" → level ${a.score/2}. Reason: ${a.note}`}).join('\n')}
+Reply with only JSON: {"items":[{"n":${chk[0].n},"answer":"","level":1,"not_in_key":false,"unsure":false,"explanation":""}]}`,o)}catch(e){return res}
+  const arr=Array.isArray(r?.items)?r.items:[];
+  return res.map(a=>{const v=arr.find(z=>Number(z?.n)===a.n);if(!v)return a;const lv=Number(v.level);if(!Number.isFinite(lv))return a;const level=lv>=1?1:lv>=.5?.5:0;
+    return {...a,answer:String(v.answer??a.answer).slice(0,800)||a.answer,score:level*2,extra:!!v.not_in_key,unsure:!!v.unsure,note:String(v.explanation||a.note).slice(0,500),checked2:true}});
+}
+async function aiOpen(ex,p1,p2){
+  const oq=openQs(ex),[o1,o2]=splitOpen(ex);
+  let b1=p1;try{b1=await cropBlob(p1,.28,1)}catch(e){}
+  const imgs=p2?[b1,p2]:[b1];
+  const desc=q=>{const l=q.lay||{};return l.type==='items'?`separate answers labelled ${(l.items||[]).join(' ')}`:l.type==='table'?`a table with columns: ${(l.cols||[]).join(' | ')}`:'free lines'};
+  const o={images:imgs};if(tier)o.modelTier=tier;
+  const r=await sample.json(`You are an experienced teacher of the Azerbaijani language grading the OPEN questions of a grade 11 exam.
+Image 1 shows side 1 of the student's answer card (open answer boxes ${o1.map(q=>q.n).join(', ')})${p2?`; image 2 shows side 2 (boxes ${o2.map(q=>q.n).join(', ')})`:''}. Each box has its number in a black label in the top-left corner.
+
+READING THE HANDWRITING (very important):
+- Read each box slowly, word by word and letter by letter. Azerbaijani letters that look alike: ə/e, ı/i, ş/s, ç/c, ğ/g, ö/o, ü/u — use the meaning of the word to read them.
+- If a word could reasonably be read as the correct form, read it as the correct form. Do not invent words you cannot read. Ignore crossed-out text.
+- Small spelling slips are not a reason to mark an answer wrong (unless the task itself is about spelling).
+
+THE EXAM (full transcription of the question booklet; formatting marks: <u>underlined</u>, <b>bold</b>, [ÇƏRÇİVƏ: framed text], word^1 superscripts):
+"""
+${ex.trans||''}
+"""
+
+OPEN QUESTIONS (card number → booklet number):
+${oq.map(q=>`- Box ${q.n} (booklet question ${q.pdf}): ${q.task||q.hint}. Answer space: ${desc(q)}.${String(q.key||'').trim()?`\n  Teacher's sample correct answer(s): ${q.key.trim()}`:''}${String(q.crit||'').trim()?`\n  Scoring criteria for this box (from the teacher's answer key — use these first, they override the general rubric): ${q.crit.trim()}`:''}`).join('\n')}
+
+GRADING CRITERIA (the teacher's rubric — follow it exactly):
+"""
+${rubric()}
+"""
+${String(ex.rules||'').trim()?`Additional rules for this exam:\n${ex.rules.trim()}\n`:''}
+How to grade each box:
+- Decide which criterion of the rubric fits the task, then give "level": 1 (full), 0.5 (half) or 0.
+- The teacher's sample answers are EXAMPLES. If the student's answer is not among them but is correct according to the norms of the Azerbaijani literary language, the meanings of the word in the Azerbaijani explanatory dictionary (Azərbaycan dilinin izahlı lüğəti) and the context of the text, it is CORRECT — then set "not_in_key": true and explain briefly why it is correct.
+- If you are not sure (unclear handwriting, borderline meaning), still give your best level but set "unsure": true.
+- An empty box gets level 0 with verdict "empty".
+- "explanation": 1–2 short sentences in Azerbaijani: why this level (which part is right/wrong, what was expected).
+Reply with only JSON:
+{"open":[{"n":${oq[0]?.n||1},"answer":"the student's answer exactly as written (\\"\\" if empty)","level":1,"not_in_key":false,"unsure":false,"explanation":""}]}`,o);
+  const arr=Array.isArray(r?.open)?r.open:[];
+  const res=oq.map(q=>{const a=arr.find(z=>Number(z?.n)===q.n)||{};const lv=Number(a.level);const level=lv>=1?1:lv>=.5?.5:0;
+    return {n:q.n,answer:String(a.answer??'').slice(0,800),score:level*2,extra:!!a.not_in_key,unsure:!!a.unsure,note:String(a.explanation||'').slice(0,500),edited:false}});
+  return await verifyOpen(ex,imgs,res);
+}
+
+/* ---------- queue ---------- */
+async function addToQueue(files){
+  const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
+  if(!(ex.qs||[]).length)return toast('Bu sınağın sualları yüklənməyib.','err');
+  if(closedQs(ex).some(q=>!q.key))toast('Diqqət: bəzi qapalı sualların açarı yazılmayıb.');
+  const two=splitOpen(ex)[1].length>0;const blobs=[];
+  for(const f of files){try{blobs.push(await shrink(f,2400))}catch(e){toast('Şəkil açılmadı.','err')}}
+  const step=two?2:1;
+  for(let i=0;i<blobs.length;i+=step){const grp=blobs.slice(i,i+step);
+    Q.items.push({id:newId(),examId:ex.id,blobs:grp.map(b=>b.blob),thumb:grp[0].thumb,thumb2:grp[1]?.thumb||'',state:'wait',msg:two&&grp.length<2?'Yalnız bir səhifə — 2-ci səhifə olmadan yoxlanacaq':'Növbədədir',studentId:'',written:'',payload:null})}
+  render();runQueue();
+}
+async function runQueue(){
+  if(Q.running)return;Q.running=true;Q.paused=false;let it;
+  while(!Q.paused&&(it=Q.items.find(x=>x.state==='wait'))){it.state='busy';it.msg='Yoxlanılır…';render();
+    try{await processItem(it)}catch(e){try{console.error(e)}catch(_){}it.state='err';it.msg=sErr(e);if(e?.code==='rate_limited'||e?.code==='not_granted')Q.paused=true}
+    render()}
+  Q.running=false;render();
+}
+async function processItem(it){
+  const ex=examById(it.examId);if(!ex)throw new Error('exam');
+  if(!sample||!canImages){it.state='err';it.msg='Foto oxuma bu görünüşdə işləmir.';return}
+  let p1=it.blobs[0],p2=it.blobs[1]||null,id={};
+  try{const small=[];for(const b of it.blobs)small.push((await shrink(b,1300)).blob);id=await aiIdentify(small);if(p2&&Number(id.side1_index)===1){[p1,p2]=[p2,p1]}}catch(e){if(e?.code==='rate_limited'||e?.code==='not_granted')throw e}
+  it.msg='Qapalı və açıq suallar yoxlanılır…';render();
+  const [a,b]=await Promise.allSettled([aiClosed(ex,p1),aiOpen(ex,p1,p2)]);
+  if(a.status==='rejected'&&b.status==='rejected')throw a.reason;
+  it.payload={answers:a.status==='fulfilled'?a.value:closedQs(ex).map(()=>'-'),open:b.status==='fulfilled'?b.value:null,err:a.status==='rejected'?'Qapalı suallar oxunmadı':b.status==='rejected'?'Açıq suallar yoxlanmadı':''};
+  it.written=String(id.name_as_written||'')+(id.group_as_written?` (${id.group_as_written})`:'');it.p1=p1;
+  const st=pickStudent(id.student_number,id.name_as_written);
+  if(st)await saveItem(it,st.id);else{it.state='need';it.msg='Şagird tanınmadı'+(it.written?`: «${it.written}»`:'')+'. Siyahıdan seçin.'}
+}
+async function saveItem(it,sid){
+  const ex=examById(it.examId),old=findResult(ex.id,sid),now=new Date().toISOString();
+  const r=old?clean(old):{id:newId(),examId:ex.id,studentId:sid,created:now};
+  r.answers=it.payload.answers;if(it.payload.open)r.open=it.payload.open;else if(!r.open)r.open=openQs(ex).map(q=>({n:q.n,answer:'',score:0,extra:false,unsure:true,note:'Yoxlanmadı — yenidən yoxlayın.',edited:false}));
+  r.updated=now;await put('results',r);photoOf[r.id]=it.p1||it.blobs[0];
+  it.studentId=sid;it.resultId=r.id;it.state=it.payload.err?'err':'done';
+  const unsure=(r.open||[]).filter(o=>o.unsure).length;
+  it.msg=(old?'🔁 Köhnə nəticə əvəz olundu. ':'')+`Qapalı ${closedScore(r,ex)}/${closedQs(ex).length} · Açıq ${openScore(r)}/${openQs(ex).length*2} · Bal: ${fmt(pctOf(r))}/100`+(unsure?` · ⚠ ${unsure} cavaba baxın`:'')+(it.payload.err?' · '+it.payload.err:'');
+}
+
+/* ---------- messages & images ---------- */
+function resMsg(r){
+  const ex=examById(r.examId),st=studentById(r.studentId),cq=closedQs(ex),L=[`Salam, ${st?.name||''}!`,`«${ex?.name||''}» sınağının nəticəsi:`,`Qapalı: ${closedScore(r,ex)}/${cq.length}`,`Açıq: ${openScore(r)}/${openQs(ex).length*2}`,`*Bal: ${fmt(pctOf(r))}/100*`];
+  const wq=cq.map((q,i)=>({q,v:(r.answers||[])[i]})).filter(({q,v})=>!(v&&v!=='-'&&String(q.key||'').includes(v)));
+  L.push('',wq.length?'*Səhv qapalı suallar:*':'Qapalı suallarda səhv yoxdur 👏',...wq.map(({q,v})=>`${q.n}) sənin: ${v&&v!=='-'?v:'boş'} → düzgün: ${q.key||'?'}`));
+  const oq=openQs(ex);if(oq.length){L.push('','📝 *Açıq suallar:*');(r.open||[]).forEach(o=>{const q=oq.find(z=>z.n===o.n);L.push('',`*${o.n}) ${q?.hint||''}: ${ptsTxt(o.score)}*`);if(o.answer)L.push(`Sənin cavabın: ${o.answer}`);if(o.note)L.push(`💡 ${o.note}`)})}
+  const sg=S.settings.sign||S.settings.teacherName||'';if(sg)L.push('',sg);
+  return L.join('\n').replace(/[~]/g,'');
+}
+function classImage(ex,gid,rs,absent){
+  const W=1080,head=170,colHead=64,foot=120,n=rs.length,N=n+absent.length,rowH=Math.max(36,Math.min(78,Math.floor((1880-head-colHead-foot)/Math.max(1,N))));
+  const H=head+colHead+N*rowH+foot+20;const [c,x]=shareCanvas(W,H);
+  shHeader(x,W,head,ex.name,`${gName(gid)} · ${ex.date||''} · ${N} şagird${absent.length?' · '+absent.length+' yazmayıb':''}`);
+  const fs=Math.max(20,Math.min(34,rowH*.46)),y0=head+colHead;
+  x.fillStyle='#EEF1FB';x.fillRect(0,head,W,colHead);[[40,'№','left'],[100,'Şagird','left'],[640,'Qapalı','center'],[800,'Açıq','center'],[1040,'Bal','right']].forEach(([px,t,a])=>shTxt(x,t,px,head+colHead/2,23,700,'#3B4A7A',a));
+  rs.forEach((r,i)=>{const y=y0+i*rowH,cy=y+rowH/2;if(i%2){x.fillStyle='#F7F8FD';x.fillRect(0,y,W,rowH)}shTxt(x,String(i+1),40,cy,fs*.9,700,'#8A94A6');let nm=sName(r.studentId);x.font=`700 ${fs}px Inter, Arial, sans-serif`;while(x.measureText(nm).width>470&&nm.length>3)nm=nm.slice(0,-2)+'…';shTxt(x,nm,100,cy,fs,700,'#17233B');
+    shTxt(x,closedScore(r,ex)+'/'+closedQs(ex).length,640,cy,fs,600,'#17233B','center');shTxt(x,openScore(r)+'/'+openQs(ex).length*2,800,cy,fs,600,'#17233B','center');const p=pctOf(r);shTxt(x,fmt(p),1040,cy,fs,800,pctCol(p),'right')});
+  absent.forEach((st,k)=>{const i=n+k,y=y0+i*rowH,cy=y+rowH/2;if(i%2){x.fillStyle='#F7F8FD';x.fillRect(0,y,W,rowH)}shTxt(x,String(i+1),40,cy,fs*.9,700,'#8A94A6');shTxt(x,st.name||'',100,cy,fs,700,'#8A94A6');shTxt(x,'Yazmayıb',1040,cy,fs,700,'#C2362F','right')});
+  const avg=n?rs.reduce((a,r)=>a+pctOf(r),0)/n:0,fy=y0+N*rowH+20;x.fillStyle='#F3F5FC';x.fillRect(0,fy,W,foot);shTxt(x,'Sinfin orta balı',40,fy+foot/2,30,700,'#17233B');shTxt(x,fmt(Math.round(avg*100)/100)+' / 100',1040,fy+foot/2,40,800,pctCol(avg),'right');
+  shTxt(x,S.settings.sign||S.settings.teacherName||'',W/2,H-14,20,500,'#8A94A6','center');return c;
+}
+
+/* ---------- views ---------- */
+function topNotes(){return mode==='local'?`<div class="notice">Məlumatlar yalnız bu brauzerdə saxlanır.</div>`:''}
+VIEWS.yoxla=()=>{
+  const exs=examsSorted().filter(e=>(e.qs||[]).length);
+  if(!exs.length)return topNotes()+`<section class="box hero"><h1>Azərbaycan dili — sınaq yoxlama</h1><p class="muted">Əvvəl «Sınaqlar» bölməsində sınaq yaradın: sualların PDF-ini yükləyin, qapalı sualların açarını yazın, cavab kartını çap edin.</p><div class="acts"><button class="btn" data-act="go" data-to="sinaqlar">Sınaq yarat</button><button class="btn ghost" data-act="go" data-to="sagirdler">Şagirdləri əlavə et</button></div></section>`;
+  if(!exs.some(e=>e.id===Q.examId))Q.examId=exs[0].id;
+  const ex=examById(Q.examId),gs=groupsSorted();if(!groupById(Q.groupId))Q.groupId=exGroups(ex)[0]||gs[0]?.id||'';
+  const sts=studentsOf(Q.groupId),done=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===Q.groupId).length;
+  const items=Q.items.filter(x=>x.examId===ex.id).slice().reverse(),two=splitOpen(ex)[1].length>0;
+  const b={wait:'<span class="badge">⏳ növbədə</span>',busy:'<span class="badge busy">🔄 yoxlanır</span>',done:'<span class="badge ok">✅ hazır</span>',need:'<span class="badge warn">şagirdi seçin</span>',err:'<span class="badge err">xəta</span>'};
+  return topNotes()+`<section class="box"><h2>Hansı sınağı yoxlayırıq?</h2><div class="two"><div><label class="l" style="margin-top:0">Sınaq</label><select data-bind="Q.examId" data-rr="1">${exs.map(x=>`<option value="${x.id}"${x.id===Q.examId?' selected':''}>${esc(x.name)}${x.date?' ('+esc(x.date)+')':''}</option>`).join('')}</select></div>
+  <div><label class="l" style="margin-top:0">Qrup</label><select data-bind="Q.groupId" data-rr="1">${gs.length?gs.map(g=>`<option value="${g.id}"${g.id===Q.groupId?' selected':''}>${esc(g.name)}</option>`).join(''):'<option value="">Qrup yoxdur</option>'}</select></div></div>
+  <p class="hint">${closedQs(ex).length} qapalı + ${openQs(ex).length} açıq sual · ${esc(gName(Q.groupId))}: yoxlanıb ${done}/${sts.length}.</p>
+  ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir.</div>`:''}
+  <label class="shoot" for="pk-sheet" style="width:100%">📷 Cavab kartlarının şəkli<small>${two?'Hər şagird üçün 2 şəkil — əvvəl 1-ci, sonra 2-ci səhifə (ardıcıl seçin). Bir neçə şagirdi birdən seçə bilərsiniz.':'Hər şəkildə bir şagirdin kartı.'}</small></label>
+  <p class="hint">Vərəq bütövlükdə kadrda olsun, işıq yaxşı düşsün. Şagirdin adı kartdan oxunur.</p>
+  <div class="acts"><button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button><button class="btn sm ghost" data-act="toRes" data-id="${ex.id}">📊 Nəticələr</button>${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
+  ${items.length?`<section class="box"><h2>Yoxlanan kartlar</h2>${items.map(it=>`<div class="qitem st-${it.state}"><img src="${it.thumb}" alt="">${it.thumb2?`<img src="${it.thumb2}" alt="">`:''}<div class="grow"><b>${it.studentId?esc(sName(it.studentId)):'Kart'} ${b[it.state]||''}</b><span class="muted">${esc(it.msg)}</span>
+  ${it.state==='need'?`<select data-qitem="${it.id}"><option value="">Şagird seçin</option>${rosterArr().map(s=>`<option value="${s.id}">${esc(s.name)} (${esc(gName(s.groupId))})</option>`).join('')}</select>`:''}
+  ${it.resultId&&S.results.some(r=>r.id===it.resultId)?`<div class="acts" style="margin-top:6px"><button class="btn sm ghost" data-act="viewRes" data-id="${it.resultId}">Bax / düzəlt</button></div>`:''}</div></div>`).join('')}</section>`:''}`;
+};
+function resRow(r,i){const p=pctOf(r),un=(r.open||[]).filter(o=>o.unsure&&!o.edited).length;return `<div class="li click srow" data-act="viewRes" data-id="${r.id}"><span class="rank">${i+1}</span><div class="grow"><b>${esc(sName(r.studentId))}</b><small>Qapalı ${closedScore(r,examById(r.examId))} · Açıq ${openScore(r)}${un?` · <span style="color:var(--amber)">⚠ ${un} cavaba baxın</span>`:''}</small></div><span class="pct" style="color:${pctCol(p)}">${fmt(p)}</span></div>`}
+VIEWS.neticeler=()=>{
+  const gs=groupsSorted();if(!gs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Əvvəl Şagirdlər bölməsində qrup yaradın.</p></section>`;
+  if(!groupById(rf.groupId))rf.groupId=gs[0].id;const g=rf.groupId;
+  const exs=examsSorted().filter(e=>(e.groupIds||[]).includes(g)||S.results.some(r=>r.examId===e.id&&studentById(r.studentId)?.groupId===g));
+  if(!exs.some(e=>e.id===rf.examId))rf.examId=exs[0]?.id||'';
+  const flt=`<section class="box"><h2>Nəticələr</h2><div class="two"><div><label class="l" style="margin-top:0">Qrup</label><select data-bind="rf.groupId" data-rr="1">${gs.map(x=>`<option value="${x.id}"${x.id===g?' selected':''}>${esc(x.name)}</option>`).join('')}</select></div><div><label class="l" style="margin-top:0">Sınaq</label><select data-bind="rf.examId" data-rr="1">${exs.length?exs.map(e=>`<option value="${e.id}"${e.id===rf.examId?' selected':''}>${esc(e.name)}${e.date?' ('+esc(e.date)+')':''}</option>`).join(''):'<option value="">Sınaq yoxdur</option>'}</select></div></div></section>`;
+  const ex=examById(rf.examId);if(!ex)return flt;
+  const rs=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===g).sort((a,b)=>pctOf(b)-pctOf(a)),ab=absentOf(ex,g);
+  const avg=rs.length?rs.reduce((a,r)=>a+pctOf(r),0)/rs.length:0;
+  return flt+`<section class="box"><h2>${esc(ex.name)} <span class="muted" style="font-weight:500">${esc(gName(g))}</span></h2>${rs.length?`<p class="hint" style="margin-top:0">Orta bal: <b>${fmt(Math.round(avg*100)/100)}</b> / 100 · Bal = (qapalı düz + açıq xal) ÷ ${maxRaw(ex)} × 100</p>`:''}
+  ${rs.length||ab.length?`<div class="list">${rs.map(resRow).join('')}${ab.map((st,k)=>`<div class="li"><span class="rank">${rs.length+k+1}</span><div class="grow"><b class="muted">${esc(st.name)}</b></div><span class="badge err">Yazmayıb</span></div>`).join('')}</div>`:'<p class="empty">Hələ nəticə yoxdur.</p>'}
+  ${rs.length?`<div class="acts"><button class="btn wa" data-act="sendAll">📤 WhatsApp: hamısına göndər</button><button class="btn ghost" data-act="classImg">📸 Valideynlər üçün şəkil</button></div>`:''}</section>`;
+};
+VIEWS.res=()=>{
+  const r=S.results.find(x=>x.id===rf.resId);if(!r)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Nəticə tapılmadı.</div>`;
+  const ex=examById(r.examId),st=studentById(r.studentId),cq=closedQs(ex),oq=openQs(ex),ph=waPhone(st?.phone),p=pctOf(r);
+  return `<button class="back" data-act="back">← Geri</button>
+  <section class="box"><div class="score" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="pen big" style="color:${pctCol(p)};border-color:${pctCol(p)}">${fmt(p)}</span><div><h2 style="margin:0">${esc(st?.name||'')}</h2><p class="muted" style="margin:0">${esc(ex?.name||'')} · ${esc(gName(st?.groupId))}<br>Qapalı ${closedScore(r,ex)}/${cq.length} · Açıq ${openScore(r)}/${oq.length*2} · ${rawOf(r)}/${maxRaw(ex)} xal</p></div></div>
+  <div class="acts">${ph?`<a class="btn wa" href="https://wa.me/${ph}?text=${encodeURIComponent(resMsg(r))}" target="_blank" rel="noopener">💬 WhatsApp-a göndər</a>`:`<span class="muted">WhatsApp üçün şagirdin nömrəsini əlavə edin.</span>`}<button class="btn danger sm" data-act="delRes" data-id="${r.id}">Nəticəni sil</button></div></section>
+  <section class="box"><h2>Qapalı suallar</h2><p class="hint" style="margin-top:0">Hərfə basaraq şagirdin cavabını düzəldə bilərsiniz.</p>${cq.map((q,i)=>{const v=(r.answers||[])[i]||'-',ok=v!=='-'&&String(q.key||'').includes(v);return `<div class="row"><span class="qn">${q.n}</span><div class="opts">${LETTERS.map(l=>`<button type="button" class="bub${v===l?' on':''}" data-act="resAns" data-id="${r.id}" data-i="${i}" data-v="${l}">${l}</button>`).join('')}</div><span class="mk ${ok?'ok':'bad'}">${ok?'✓':'✗'}${ok?'':`<span class="kh">${esc(q.key||'?')}</span>`}</span></div>`}).join('')}</section>
+  <section class="box"><h2>Açıq suallar</h2>${(r.open||[]).map((o,k)=>{const q=oq.find(z=>z.n===o.n);return `<div class="crit" style="border-color:${o.score===2?'var(--ok)':o.score===1?'var(--amber)':'var(--pen)'}"><div class="tagrow"><b>${o.n}) ${esc(q?.hint||'')}</b><select data-rscore="${r.id}" data-k="${k}" style="width:auto;padding:5px 8px">${[2,1,0].map(v=>`<option value="${v}"${o.score===v?' selected':''}>${ptsTxt(v)}</option>`).join('')}</select></div>
+    <div style="font-size:14.5px;margin:4px 0"><span class="muted">Cavab:</span> ${o.answer?esc(o.answer):'<i class="muted">boş</i>'}</div>${o.note?`<div class="muted" style="font-size:13.5px">💡 ${esc(o.note)}</div>`:''}
+    ${o.extra?'<span class="badge ok">✅ açarda yoxdur, amma düzdür</span> ':''}${o.unsure&&!o.edited?'<span class="badge warn">⚠ Müəllim baxsın</span> ':''}${o.edited?'<span class="badge">✏️ müəllim düzəltdi</span>':''}</div>`}).join('')||'<p class="muted">Açıq sual yoxdur.</p>'}</section>
+  ${photoOf[r.id]?`<section class="box"><details><summary class="muted" style="cursor:pointer">📷 Kartın şəkli</summary><div class="preview"><img src="${URL.createObjectURL(photoOf[r.id])}" alt="Kart"></div></details></section>`:''}`;
+};
+VIEWS.send=()=>{
+  const ex=examById(rf.examId),g=rf.groupId;if(!ex)return `<button class="back" data-act="back">← Geri</button>`;
+  const rs=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===g).sort((a,b)=>azCmp(sName(a.studentId),sName(b.studentId)));
+  const key=ex.id+'|'+g;if(SND.key!==key){SND.key=key;SND.sent=new Set()}
+  return `<button class="back" data-act="back">← Geri</button><section class="box"><h2>📤 Hamısına göndər — ${esc(ex.name)}</h2><p class="hint" style="margin-top:0">Hər şagirdin yanındakı düyməni basın — WhatsApp açılır, göndərin və geri qayıdın. Göndərilənlər ✅ ilə işarələnir.</p>
+  <div class="list">${rs.map((r,i)=>{const st=studentById(r.studentId),ph=waPhone(st?.phone);return `<div class="li"><span class="rank">${SND.sent.has(r.id)?'✅':i+1}</span><div class="grow"><b>${esc(st?.name||'')}</b><small>${fmt(pctOf(r))} / 100</small></div>${ph?`<a class="btn wa sm" data-sent="${r.id}" href="https://wa.me/${ph}?text=${encodeURIComponent(resMsg(r))}" target="_blank" rel="noopener">Göndər</a>`:'<span class="badge err">nömrə yoxdur</span>'}</div>`}).join('')}</div></section>`;
+};
+VIEWS.sagirdler=()=>{
+  const gs=groupsSorted();if(!forms.sGroup&&gs[0])forms.sGroup=gs[0].id;
+  return `${gs.map(g=>{const st=studentsOf(g.id),ed=stuEdit.has(g.id);return `<details class="grp" data-g="${g.id}"${ed||openGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${st.length} şagird</span></summary><div class="inner">
+  ${st.length?`<div class="list">${st.map((s,i)=>ed?`<div class="li" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px"><input type="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px"><button type="button" class="btn sm danger" data-act="delStudent" data-id="${s.id}" style="padding:6px 10px;flex:none">🗑</button></div>`:`<div class="li"><span class="rank">${i+1}</span><div class="grow"><b>${esc(s.name)}</b>${s.phone?`<small>${esc(s.phone)}</small>`:'<small style="color:var(--pen)">nömrə yoxdur</small>'}</div><button type="button" class="btn sm danger" data-act="delStudent" data-id="${s.id}" title="Şagirdi sil" style="padding:6px 10px;flex:none">🗑</button></div>`).join('')}</div>`:'<p class="empty">Bu qrupda şagird yoxdur.</p>'}
+  <div class="acts">${st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEdit" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}<button class="btn sm ghost" data-act="renameGroup" data-id="${g.id}">Adını dəyiş</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
+  <section class="box"><h2>Yeni qrup</h2><div class="inline"><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, 11A"><button class="btn" data-act="addGroup">Əlavə et</button></div></section>
+  <section class="box"><h2>Şagird əlavə et</h2>${gs.length?`<label class="l">Qrup</label><select data-bind="forms.sGroup">${gs.map(g=>`<option value="${g.id}"${g.id===forms.sGroup?' selected':''}>${esc(g.name)}</option>`).join('')}</select>
+  ${forms.rows.map((r,i)=>`<div style="display:flex;gap:6px;align-items:center;margin:8px 0 0"><span class="rank">${i+1}</span><input type="text" data-bind="forms.rows.${i}.name" value="${esc(r.name)}" placeholder="Ad Soyad" style="flex:1.5;min-width:0;padding:9px 10px"><input type="tel" data-bind="forms.rows.${i}.phone" value="${esc(r.phone)}" placeholder="Telefon" style="flex:1;min-width:0;padding:9px 10px"></div>`).join('')}
+  <div class="acts"><button class="btn ghost sm" data-act="addRow">➕ Yeni sətir</button></div>
+  <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Siyahını mətn kimi yapışdır</summary><textarea rows="5" data-bind="forms.bulk" placeholder="Əli Məmmədov, 050 123 45 67" style="margin-top:8px">${esc(forms.bulk)}</textarea><p class="hint">Hər sətirdə bir şagird; nömrəni vergüllə yazın.</p></details>
+  <button class="btn" data-act="addStudents" style="margin-top:10px">Əlavə et</button>`:'<p class="muted">Əvvəl qrup yaradın.</p>'}</section>`;
+};
+VIEWS.sinaqlar=()=>{
+  if(XD){const d=XD,gs=groupsSorted(),cq=closedQs(d),oq=openQs(d);
+    return `<button class="back" data-act="xClose">← Sınaqlar</button>
+    <section class="box"><h2>${d.id?'✏️ Sınaq':'➕ Yeni sınaq'}</h2><label class="l" style="margin-top:0">Sınağın adı</label><input type="text" data-bind="XD.name" value="${esc(d.name)}" placeholder="Məsələn, Sınaq 5 — A variantı">
+    <label class="l">Tarix</label><input type="date" data-bind="XD.date" value="${esc(d.date)}">
+    <label class="l">Qruplar</label><div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="xGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')||'<span class="muted">Qrup yoxdur</span>'}</div></section>
+    <section class="box"><h2>1. Sualların PDF-i</h2><p class="hint" style="margin-top:0">Yalnız Azərbaycan dili sualları olan PDF-i (və ya səhifələrin şəkillərini) yükləyin. Suallar oxunur, qapalı/açıq suallar müəyyən edilir və cavab kartı avtomatik qurulur. Kartda nömrələmə 1-dən başlayır.</p>
+    ${d.busy?`<div class="status"><span class="spin"></span>${esc(d.msg)}</div>`:d.qs?.length?`<div class="status ok" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="flex:1">✅ Suallar yüklənib: ${d.pages||'?'} səhifə · ${cq.length} qapalı, ${oq.length} açıq sual</span><label class="btn sm ghost" for="pk-qpdf">Yenidən yüklə</label></div>
+    <div class="acts"><button class="btn" data-act="xPdf">📄 Cavab kartını PDF kimi yüklə</button><button class="btn ghost" data-act="xCard">👁 Kartı göstər</button></div>`:`<label class="shoot" for="pk-qpdf" style="width:100%">📄 Sualların PDF-ini yüklə<small>PDF və ya səhifələrin şəkilləri (istəsəniz cavablar faylı ilə birlikdə)</small></label>`}</section>
+    ${d.qs?.length?`<section class="box"><h2>2. Qapalı sualların açarı</h2><p class="hint" style="margin-top:0">Hər sualın düzgün variantını seçin. Mötərizədə sualın PDF-dəki nömrəsi göstərilir.</p>
+    ${cq.map(q=>`<div class="row"><span class="qn" style="width:auto;min-width:64px;text-align:left">${q.n} <small class="muted">(${esc(q.pdf)})</small></span><div class="opts">${LETTERS.map(l=>`<button type="button" class="bub${q.key===l?' on':''}" data-act="xKey" data-n="${q.n}" data-v="${l}">${l}</button>`).join('')}</div></div>`).join('')}
+    <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Açarı mətn kimi yapışdır</summary><textarea rows="2" id="xPaste" placeholder="B D A C E ..." style="margin-top:8px"></textarea><div class="acts"><button class="btn sm ghost" data-act="xPaste">Tətbiq et</button></div></details></section>
+    <section class="box"><h2>3. Açıq suallar</h2>
+    ${d.akBusy?`<div class="status"><span class="spin"></span>${esc(d.akMsg||'Cavablar oxunur…')}</div>`:(()=>{const nk=oq.filter(q=>String(q.key||'').trim()).length;return nk?`<div class="status ok" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><span style="flex:1">✅ Doğru cavablar yüklənib (${nk}/${oq.length}). Aşağıda baxıb dəyişə bilərsiniz.</span><label class="btn sm ghost" for="pk-akey">Yenidən yüklə</label></div>`:`<label class="shoot" for="pk-akey" style="width:100%;margin-bottom:10px">📥 Doğru cavabların faylını yüklə<small>Word (.docx), PDF və ya şəkil — cavablar aşağıdakı xanalara avtomatik yazılır, hərf səhvləri düzəldilir. Sonra istədiyinizi dəyişə bilərsiniz.</small></label>`})()}
+    <p class="hint" style="margin-top:0">Doğru cavabları (nümunələri) yazın — istəyə görə. Şagird fərqli, amma düzgün cavab yazsa, o da qəbul olunur və izah verilir. Kartdakı yer ölçüsünü və formasını burada dəyişə bilərsiniz.</p>
+    ${oq.map(q=>{const l=q.lay||{};return `<div class="excard"><div class="tagrow"><b>${q.n} <small class="muted">(PDF-də ${esc(q.pdf)})</small></b><span class="badge">${l.type==='table'?'Cədvəl':l.type==='items'?'İşarəli sətirlər':'Sətirlər'} · ${({S:'kiçik',M:'orta',L:'böyük'})[l.size]||'orta'}</span></div><p style="font-size:14px;margin:6px 0 2px"><b>${esc(q.hint)}</b></p>
+      <label class="l" style="margin-top:4px">Doğru cavab(lar)</label><textarea rows="${Math.min(8,Math.max(2,String(q.key||'').split('\n').length+1))}" data-oq="${q.n}" data-f="key">${esc(q.key||'')}</textarea>
+      <div class="two" style="margin-top:6px"><div><label class="l" style="margin-top:0">Kartda forma</label><select data-oq="${q.n}" data-f="type">${[['lines','Sətirlər'],['items','İşarəli sətirlər'],['table','Cədvəl']].map(([v,t])=>`<option value="${v}"${l.type===v?' selected':''}>${t}</option>`).join('')}</select></div><div><label class="l" style="margin-top:0">Yer ölçüsü</label><select data-oq="${q.n}" data-f="size">${[['S','Kiçik'],['M','Orta'],['L','Böyük']].map(([v,t])=>`<option value="${v}"${l.size===v?' selected':''}>${t}</option>`).join('')}</select></div></div>
+      ${l.type==='items'?`<label class="l">İşarələr (vergüllə)</label><input type="text" data-oq="${q.n}" data-f="items" value="${esc((l.items||[]).join(', '))}">`:''}
+      ${l.type==='table'?`<label class="l">Sütun başlıqları ( | ilə ayırın)</label><input type="text" data-oq="${q.n}" data-f="cols" value="${esc((l.cols||[]).join(' | '))}"><label class="l">Sətir sayı</label><input type="number" min="1" max="5" data-oq="${q.n}" data-f="rows" value="${l.rows||2}">`:''}
+      <label class="l">Bu sualın meyarları (fayldan götürülür; boşdursa Parametrlərdəki ümumi meyarlar işləyir)</label><textarea rows="${Math.min(8,Math.max(2,String(q.crit||'').split('\n').length+1))}" data-oq="${q.n}" data-f="crit">${esc(q.crit||'')}</textarea>
+      <label class="l">Kartdakı başlıq (PDF-dəki tapşırıq mətni)</label><textarea rows="2" data-oq="${q.n}" data-f="hint">${esc(q.hint)}</textarea></div>`}).join('')}
+    <label class="l">Bu sınaq üçün əlavə qaydalar (istəyə görə)</label><textarea rows="2" data-bind="XD.rules">${esc(d.rules||'')}</textarea></section>`:''}
+    <div class="savebar"><div class="grow">${d.qs?.length?`<button class="btn ghost sm" data-act="xCard">👁 Kartı göstər</button>`:'<span class="muted">Əvvəl PDF-i yükləyin.</span>'}</div>${d.id?`<button class="btn danger" data-act="xDel">Sil</button>`:''}<button class="btn" data-act="xSave">Yadda saxla</button></div>`}
+  const list=examsSorted();
+  return `<section class="box"><h2>Sınaqlar</h2><div class="acts" style="margin-top:0"><button class="btn" data-act="xNew">➕ Yeni sınaq yarat</button></div></section>
+  <section class="box"><h2>Hazır sınaqlar</h2>${list.length?`<div class="list">${list.map(e=>`<div class="li click" data-act="xOpen" data-id="${e.id}"><div class="grow"><b>${esc(e.name)}</b><small>${esc(e.date||'')} · ${closedQs(e).length} qapalı, ${openQs(e).length} açıq · ${exGroups(e).map(gName).map(esc).join(', ')||'—'} · ${S.results.filter(r=>r.examId===e.id).length} nəticə</small></div><button class="btn sm ghost" data-act="card" data-id="${e.id}" style="padding:6px 10px">📄</button><span class="muted" style="font-size:20px">›</span></div>`).join('')}</div>`:'<p class="empty">Hələ sınaq yoxdur.</p>'}</section>`;
+};
+VIEWS.parametrler=()=>{
+  if(!setDraft)setDraft={...S.settings,rubric:S.settings.rubric||DEFAULT_RUBRIC};const d=setDraft;
+  return `<section class="box"><h2>Müəllim</h2><label class="l">Adınız</label><input type="text" data-bind="setDraft.teacherName" value="${esc(d.teacherName)}">
+  <label class="l">Kartdakı loqo</label><input type="text" data-bind="setDraft.logo" value="${esc(d.logo||'')}" maxlength="6" placeholder="S.B.">
+  <label class="l">WhatsApp mesajının sonunda imza</label><input type="text" data-bind="setDraft.sign" value="${esc(d.sign||'')}" placeholder="${esc(d.teacherName||'Adınız')}"></section>
+  <section class="box"><h2>Açıq sualların qiymətləndirmə meyarları</h2><p class="hint">Açıq suallar bu meyarlara (bal şkalasına) görə yoxlanılır. Dəyişsəniz, yeni yoxlamalar yeni mətnlə aparılacaq.</p>
+  <textarea rows="18" data-bind="setDraft.rubric">${esc(d.rubric)}</textarea><div class="acts"><button class="btn ghost sm" data-act="rubricReset">Standart meyarları qaytar</button></div>
+  <p class="hint">Bal: qapalı sual 1 xal, açıq sual 2 xal (yarım bal = 1 xal). Nəticə = xal ÷ (qapalı sayı + 2 × açıq sayı) × 100.</p></section>
+  <section class="box"><h2>Ehtiyat nüsxə</h2><div class="acts"><button class="btn ghost" data-act="exportJson">JSON yüklə</button><label class="btn ghost" style="position:relative">JSON-dan bərpa et<input type="file" accept=".json,application/json" data-file="import" style="position:absolute;inset:0;opacity:0"></label></div></section>
+  <div class="savebar"><div class="grow muted">Dəyişiklikləri saxlamağı unutmayın.</div><button class="btn" data-act="saveSet">Yadda saxla</button></div>`;
+};
+
+/* ---------- actions ---------- */
+const ACT={
+  go:el=>go(el.dataset.to),
+  back:()=>{tab=prevTab;render();toTop()},
+  card:el=>showCard(examById(el.dataset.id)),
+  resume:()=>runQueue(),
+  toRes:el=>{const e=examById(el.dataset.id);rf.examId=e.id;rf.groupId=Q.groupId||exGroups(e)[0]||'';go('neticeler')},
+  viewRes:el=>{rf.resId=el.dataset.id;prevTab=tab==='res'?prevTab:tab;tab='res';pushNav();render();toTop()},
+  async delRes(el){if(!await confirmBox('Nəticə silinsin?',sName(S.results.find(r=>r.id===el.dataset.id)?.studentId)))return;await del('results',el.dataset.id);tab=prevTab;render()},
+  async resAns(el){const r=S.results.find(x=>x.id===el.dataset.id);if(!r)return;const a=(r.answers||[]).slice(),i=Number(el.dataset.i),v=el.dataset.v;a[i]=a[i]===v?'-':v;await put('results',{...r,answers:a,updated:new Date().toISOString()});render()},
+  sendAll:()=>{tab='send';pushNav();render();toTop()},
+  classImg(){const ex=examById(rf.examId),g=rf.groupId;if(!ex)return;const rs=S.results.filter(r=>r.examId===ex.id&&studentById(r.studentId)?.groupId===g).sort((a,b)=>pctOf(b)-pctOf(a));try{shareImage(classImage(ex,g,rs,absentOf(ex,g)),(ex.name+'-'+gName(g)).replace(/[^\p{L}\p{N}]+/gu,'-')+'.png','','')}catch(e){toast('Şəkil hazırlanmadı.','err')}},
+  async addGroup(){const n=forms.group.trim();if(!n)return toast('Qrupun adını yazın.','err');const g={id:newId(),name:n};await put('groups',g);forms.group='';forms.sGroup=g.id;render()},
+  async renameGroup(el){const g=groupById(el.dataset.id);if(!g)return;const v=await modal({title:'Qrupun adı',fields:[{label:'Ad',value:g.name}]});if(v&&v[0])await put('groups',{...g,name:v[0]});render()},
+  async delGroup(el){const g=groupById(el.dataset.id);if(!g)return;const st=studentsOf(g.id);if(!await confirmBox('Qrup silinsin?',`${g.name} və onun ${st.length} şagirdi (nəticələri ilə) silinəcək.`))return;for(const s of st){for(const r of S.results.filter(r=>r.studentId===s.id))await del('results',r.id);await del('students',s.id)}await del('groups',g.id);render()},
+  async delStudent(el){const s=studentById(el.dataset.id);if(!s)return;const rs=S.results.filter(r=>r.studentId===s.id);if(!await confirmBox('Şagird silinsin?',`${s.name} və onun ${rs.length} nəticəsi silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('students',s.id);render()},
+  stuEdit:el=>{const id=el.dataset.id;if(stuEdit.has(id))stuEdit.delete(id);else stuEdit.add(id);openGrp.add(id);render()},
+  addRow:()=>{forms.rows.push({name:'',phone:''});render()},
+  async addStudents(){const g=forms.sGroup;if(!groupById(g))return toast('Qrupu seçin.','err');const list=forms.rows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),phone:r.phone.trim()}));
+    forms.bulk.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{const m=l.split(/[,;\t]/);list.push({name:m[0].trim(),phone:(m[1]||'').trim()})});
+    if(!list.length)return toast('Ən azı bir şagirdin adını yazın.','err');for(const s of list)await put('students',{id:newId(),groupId:g,name:s.name,phone:s.phone});
+    forms.rows=[{name:'',phone:''},{name:'',phone:''},{name:'',phone:''}];forms.bulk='';openGrp.add(g);toast(list.length+' şagird əlavə olundu.');render()},
+  xNew:()=>{XD={id:'',name:'',date:today(),groupIds:Q.groupId&&groupById(Q.groupId)?[Q.groupId]:[],qs:[],trans:'',pages:0,rules:'',busy:false,msg:''};pushNav();render();toTop()},
+  xOpen:el=>{const e=examById(el.dataset.id);if(!e)return;XD={...clean(e),busy:false,msg:''};pushNav();render();toTop()},
+  xClose:()=>{XD=null;render();toTop()},
+  xGroup:el=>{const id=el.dataset.id,a=XD.groupIds;XD.groupIds=a.includes(id)?a.filter(x=>x!==id):a.concat(id);render()},
+  xKey:el=>{const q=XD.qs.find(z=>z.n===Number(el.dataset.n));if(q){q.key=q.key===el.dataset.v?'':el.dataset.v;render()}},
+  xPaste(){const t=($('#xPaste')?.value||'').toUpperCase().match(/[A-E]/g)||[];const cq=closedQs(XD);cq.forEach((q,i)=>{if(t[i])q.key=t[i]});toast(Math.min(t.length,cq.length)+' cavab yazıldı.');render()},
+  xCard(){showCard(XD)},
+  xPdf(){downloadCard(XD)},
+  async xSave(){const d=XD;if(!d.name.trim())return toast('Sınağın adını yazın.','err');if(!(d.qs||[]).length)return toast('Əvvəl sualların PDF-ini yükləyin.','err');
+    const e={id:d.id||newId(),name:d.name.trim(),date:d.date||today(),groupIds:d.groupIds,qs:d.qs,trans:d.trans,pages:d.pages||0,rules:d.rules||'',created:d.created||new Date().toISOString()};
+    try{await put('exams',e)}catch(err){return}XD={...clean(e),busy:false,msg:''};Q.examId=e.id;toast('Sınaq saxlandı.'+(closedQs(e).some(q=>!q.key)?' Bəzi açarlar boşdur.':''));render()},
+  async xDel(){const e=examById(XD.id);if(!e)return;const rs=S.results.filter(r=>r.examId===e.id);if(!await confirmBox('Sınaq silinsin?',`«${e.name}»${rs.length?' və '+rs.length+' nəticə':''} silinəcək.`))return;for(const r of rs)await del('results',r.id);await del('exams',e.id);XD=null;render()},
+  async saveSet(){if(await saveSettings(setDraft)){setDraft=null;toast('Saxlandı.');render()}},
+  rubricReset(){setDraft.rubric=DEFAULT_RUBRIC;render()},
+  exportJson(){saveFile('azdili-ehtiyat-'+today()+'.json',new Blob([JSON.stringify({app:'AzDiliSinaq',version:1,groups:S.groups,students:S.students,exams:S.exams,results:S.results,settings:S.settings})],{type:'application/json'}))},
+};
+function setBind(path,val){const p=path.split('.');const roots={forms,rf,Q,XD,setDraft};let o=roots[p[0]];if(!o)return;for(let i=1;i<p.length-1;i++){o=o[p[i]];if(o==null)return}o[p[p.length-1]]=val}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]');if(t){go(t.dataset.tab);return}
+  const s=e.target.closest('[data-sent]');if(s){SND.sent.add(s.dataset.sent);setTimeout(render,300);return}
+  const a=e.target.closest('[data-act]');if(a&&ACT[a.dataset.act]&&!e.target.closest('a[href]')){e.preventDefault();ACT[a.dataset.act](a,e)}
+});
+document.addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.grp')){if(d.open)openGrp.add(d.dataset.g);else openGrp.delete(d.dataset.g)}},true);
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.bind&&el.tagName!=='SELECT')setBind(el.dataset.bind,el.value);
+  if(el.dataset.oq&&XD&&el.tagName!=='SELECT'){const q=XD.qs.find(z=>z.n===Number(el.dataset.oq));if(!q)return;const f=el.dataset.f;if(f==='key')q.key=el.value;else if(f==='crit')q.crit=el.value;else if(f==='hint')q.hint=el.value.slice(0,300);else if(f==='items')q.lay.items=el.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,6);else if(f==='cols')q.lay.cols=el.value.split('|').map(x=>x.trim()).filter(Boolean).slice(0,5);else if(f==='rows')q.lay.rows=Math.max(1,Math.min(5,Number(el.value)||2))}});
+document.addEventListener('change',async e=>{const el=e.target;
+  if(el.dataset.sname||el.dataset.sphone){const s=studentById(el.dataset.sname||el.dataset.sphone);if(s){const f=el.dataset.sname?'name':'phone';const v=el.value.trim();if(f==='name'&&!v)return;await put('students',{...s,[f]:v})}return}
+  if(el.dataset.qitem){const it=Q.items.find(x=>x.id===el.dataset.qitem);if(it&&el.value){try{await saveItem(it,el.value)}catch(err){}render()}return}
+  if(el.dataset.rscore){const r=S.results.find(x=>x.id===el.dataset.rscore);if(!r)return;const open=clean(r.open||[]),k=Number(el.dataset.k);open[k].score=Number(el.value);open[k].edited=true;await put('results',{...r,open,updated:new Date().toISOString()});render();return}
+  if(el.dataset.oq&&XD&&el.tagName==='SELECT'){const q=XD.qs.find(z=>z.n===Number(el.dataset.oq));if(q){q.lay[el.dataset.f]=el.value;render()}return}
+  if(el.dataset.bind&&el.tagName==='SELECT'){setBind(el.dataset.bind,el.value);if(el.dataset.rr)render();return}
+  if(!el.dataset.file)return;const files=[...(el.files||[])];el.value='';if(!files.length)return;const k=el.dataset.file;
+  if(k==='sheet'){toast(files.length+' şəkil növbəyə əlavə olunur…');addToQueue(files)}
+  else if(k==='qpdf'){if(XD)analyseExam(files)}
+  else if(k==='akey'){if(XD)importAnswers(files)}
+  else if(k==='import'){try{const v=JSON.parse(await files[0].text());if(v.app!=='AzDiliSinaq')return toast('Bu fayl bu tətbiqə aid deyil.','err');if(!await confirmBox('Bərpa edilsin?','Fayldakı məlumatlar əlavə olunacaq (eyni olanlar yenilənəcək).','Bərpa et'))return;for(const c of ['groups','students','exams','results'])for(const o of (v[c]||[]))await put(c,o);if(v.settings)await saveSettings({...S.settings,...v.settings});toast('Bərpa olundu.');render()}catch(err){toast('Fayl oxunmadı.','err')}}
+});
+initStore();render();
+
+</script>
+</body>
+</html>

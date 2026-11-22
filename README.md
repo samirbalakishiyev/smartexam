@@ -14,3 +14,10 @@ Link: https://samirbalakishiyev.github.io/smartexam/paragraph-checker/ → Claud
 https://claude.ai/artifact/1ufuijauCU5wk1r41Wqkvk
 
 `kod/paragraph-checker.html` — Paragraph Checker kodunun ehtiyat nüsxəsi.
+
+## Azərbaycan dili sınaq yoxlama
+
+Link: https://samirbalakishiyev.github.io/smartexam/azdili/ → Claude-dakı tətbiqə keçir:
+https://claude.ai/artifact/FnTWgpwLndBQdd8NzCZQbr
+
+`kod/azerbaycan-dili-sinaq.html` — tətbiqin kodunun ehtiyat nüsxəsi.
