@@ -527,6 +527,20 @@ ${trans}
   if(ok){const hasKey=/bal şkalası|cavablar|doğru cavab|cavab açarı|düzgün cavab/i.test(d.trans||'');if(docs.length||hasKey)await importAnswers(docs,hasKey?d.trans:'')}
 }
 
+/* ---------- card refresh: table shape from saved transcript ---------- */
+function tableShape(trans,pdf){const num=String(pdf).replace(/\D/g,'');if(!num||!trans)return null;const ls=String(trans).split('\n');
+  const st=ls.findIndex(l=>new RegExp('^\\s*'+num+'\\s*[.)]').test(l));if(st<0)return null;const nx=new RegExp('^\\s*'+(Number(num)+1)+'\\s*[.)]');
+  const rows=[];let started=false;
+  for(let k=st+1;k<ls.length&&k<st+40;k++){const l=ls[k];if(nx.test(l)||/^\s*(TDV|===|---)/.test(l))break;
+    if(l.includes('|')){rows.push(l.split('|').map(c=>c.replace(/<[^>]*>/g,'').trim()));started=true}else if(started)break}
+  if(rows.length<2)return null;const body=rows.slice(1),nc=Math.max(...rows.map(r=>r.length));
+  const cell=(r,c)=>(r[c]||'').trim();const merge=[],numd=[];
+  for(let c=0;c<nc;c++){
+    merge.push(body.length>=2&&body.slice(1).every(r=>!cell(r,c))&&body.slice(1).some(r=>r.some((v,j)=>j!==c&&v.trim())));
+    const ne=body.map(r=>cell(r,c)).filter(Boolean);numd.push(ne.length>=2&&ne.every(v=>/^\d+\s*[.)]?$/.test(v)))}
+  return {rows:Math.max(1,Math.min(5,body.length)),merge,num:numd}}
+function refreshLayout(d){let n=0;(d.qs||[]).forEach(q=>{if(q.kind!=='o'||q.lay?.type!=='table')return;const s=tableShape(d.trans,q.pdf);if(!s)return;
+  const cl=(q.lay.cols||[]).length||s.merge.length;q.lay={...q.lay,rows:s.rows,merge:s.merge.slice(0,cl),num:s.num.slice(0,cl)};n++});return n}
 /* ---------- answers file → keys ---------- */
 async function docxText(file){
   const buf=new Uint8Array(await file.arrayBuffer()),dv=new DataView(buf.buffer);
@@ -903,7 +917,7 @@ VIEWS.sinaqlar=()=>{
     <label class="l">Qruplar</label><div class="chips">${gs.map(g=>`<button type="button" class="chip${d.groupIds.includes(g.id)?' on':''}" data-act="xGroup" data-id="${g.id}">${esc(g.name)}</button>`).join('')||'<span class="muted">Qrup yoxdur</span>'}</div></section>
     <section class="box"><h2>1. Sualların PDF-i</h2><p class="hint" style="margin-top:0">Yalnız Azərbaycan dili sualları olan PDF-i (və ya səhifələrin şəkillərini) yükləyin. Suallar oxunur, qapalı/açıq suallar müəyyən edilir və cavab kartı avtomatik qurulur. Kartda nömrələmə 1-dən başlayır.</p>
     ${d.busy?`<div class="status"><span class="spin"></span>${esc(d.msg)}</div>`:d.qs?.length?`<div class="status ok" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="flex:1">✅ Suallar yüklənib: ${d.pages||'?'} səhifə · ${cq.length} qapalı, ${oq.length} açıq sual</span><label class="btn sm ghost" for="pk-qpdf">Yenidən yüklə</label></div>
-    <div class="acts"><button class="btn" data-act="xPdf">📄 Cavab kartını PDF kimi yüklə</button><button class="btn ghost" data-act="xCard">👁 Kartı göstər</button></div>`:`<label class="shoot" for="pk-qpdf" style="width:100%">📄 Sualların PDF-ini yüklə<small>PDF və ya səhifələrin şəkilləri (istəsəniz cavablar faylı ilə birlikdə)</small></label>`}</section>
+    <div class="acts"><button class="btn" data-act="xPdf">📄 Cavab kartını PDF kimi yüklə</button><button class="btn ghost" data-act="xCard">👁 Kartı göstər</button><button class="btn ghost" data-act="xRefresh">🔄 Kartı yenilə</button></div><p class="hint" style="margin:6px 0 0">«Kartı yenilə» — kartın formasını (cədvəldə bütöv sütunlar, nömrəli xanalar, sətir sayı) tətbiqin ən son qaydalarına görə PDF-dəki suala uyğun yenidən qurur. Cavablar, meyarlar və nəticələr dəyişmir.</p>`:`<label class="shoot" for="pk-qpdf" style="width:100%">📄 Sualların PDF-ini yüklə<small>PDF və ya səhifələrin şəkilləri (istəsəniz cavablar faylı ilə birlikdə)</small></label>`}</section>
     ${d.qs?.length?`<section class="box"><h2>2. Qapalı sualların açarı</h2><p class="hint" style="margin-top:0">Hər sualın düzgün variantını seçin. Mötərizədə sualın PDF-dəki nömrəsi göstərilir.</p>
     ${cq.map(q=>`<div class="row"><span class="qn" style="width:auto;min-width:64px;text-align:left">${q.n} <small class="muted">(${esc(q.pdf)})</small></span><div class="opts">${LETTERS.map(l=>`<button type="button" class="bub${q.key===l?' on':''}" data-act="xKey" data-n="${q.n}" data-v="${l}">${l}</button>`).join('')}</div></div>`).join('')}
     <details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Açarı mətn kimi yapışdır</summary><textarea rows="2" id="xPaste" placeholder="B D A C E ..." style="margin-top:8px"></textarea><div class="acts"><button class="btn sm ghost" data-act="xPaste">Tətbiq et</button></div></details></section>
@@ -964,6 +978,8 @@ const ACT={
   xKey:el=>{const q=XD.qs.find(z=>z.n===Number(el.dataset.n));if(q){q.key=q.key===el.dataset.v?'':el.dataset.v;render()}},
   xPaste(){const t=($('#xPaste')?.value||'').toUpperCase().match(/[A-E]/g)||[];const cq=closedQs(XD);cq.forEach((q,i)=>{if(t[i])q.key=t[i]});toast(Math.min(t.length,cq.length)+' cavab yazıldı.');render()},
   xCard(){showCard(XD)},
+  async xRefresh(){const n=refreshLayout(XD);if(!n){toast('Bu sınaqda yenilənəsi cədvəl tapılmadı. Formanı aşağıda əl ilə dəyişə bilərsiniz.');return}
+    if(XD.id){const e=examById(XD.id);if(e){try{await put('exams',{...e,qs:clean(XD.qs)})}catch(err){return}}}toast(n+' cədvəl yeniləndi'+(XD.id?' və saxlandı.':'. «Yadda saxla» basın.'));render();showCard(XD)},
   xPdf(){downloadCard(XD)},
   async xSave(){const d=XD;if(!d.name.trim())return toast('Sınağın adını yazın.','err');if(!(d.qs||[]).length)return toast('Əvvəl sualların PDF-ini yükləyin.','err');
     const e={id:d.id||newId(),name:d.name.trim(),date:d.date||today(),groupIds:d.groupIds,qs:d.qs,trans:d.trans,pages:d.pages||0,rules:d.rules||'',created:d.created||new Date().toISOString()};
