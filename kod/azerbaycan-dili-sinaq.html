@@ -498,7 +498,7 @@ For each OPEN question also design the space on a printed answer card where the 
 - "task": one or two Azerbaijani sentences describing exactly what the task asks and which words/sentences/table it refers to (so it can be graded later).
 - "layout": one of
   {"type":"items","items":["▲","█","●"]} — when the answer is several separate short answers labelled by the symbols or numbers used in the question (use exactly those labels, or "1.","2." when the question has numbered blanks);
-  {"type":"table","cols":["column header 1","column header 2"],"rows":N,"w":[relative widths]} — when the question asks to complete a table: copy the column headers of the EMPTY columns the student must fill exactly as printed (include a first column like "İfadə" or "Söz" if the student must write it), rows = number of empty rows in the printed table (1–4);
+  {"type":"table","cols":["column header 1","column header 2"],"rows":N,"w":[relative widths],"merge":[true,false],"num":[false,true]} — merge[k]=true when column k's body is ONE undivided cell spanning all rows (no horizontal lines inside it in the printed table), otherwise false; num[k]=true when the empty cells of column k are pre-numbered "1.", "2.", … in the printed table; when the question asks to complete a table: copy the column headers of the EMPTY columns the student must fill exactly as printed (include a first column like "İfadə" or "Söz" if the student must write it), rows = number of empty rows in the printed table (1–4);
   {"type":"lines"} — when the student must write sentences (rewrite or correct sentences, etc.).
 - "size": "S" (a few words), "M" (one or two sentences) or "L" (several sentences or a big table).
 Reply with only JSON: {"questions":[{"pdf_n":27,"kind":"closed"},{"pdf_n":42,"kind":"open","hint":"","task":"","layout":{"type":"items","items":["▲","█","●"]},"size":"S"}]}
@@ -520,7 +520,7 @@ ${trans}
     d.qs=raw.map((q,i)=>{const kind=q?.kind==='open'?'o':'c';const lay=q?.layout||{};const t=['items','table','lines'].includes(lay.type)?lay.type:'lines';
       const prev=old.find(x=>String(x.pdf)===String(q?.pdf_n)&&x.kind===kind);
       return {n:i+1,pdf:q?.pdf_n??'',kind,key:prev?.key||'',crit:prev?.crit||'',hint:kind==='o'?exactHint(q).slice(0,300):'',task:kind==='o'?String(q?.task||'').slice(0,600):'',
-        lay:kind==='o'?{type:t,size:['S','M','L'].includes(q?.size)?q.size:'M',items:Array.isArray(lay.items)?lay.items.map(String).slice(0,6):[],cols:Array.isArray(lay.cols)?lay.cols.map(String).slice(0,5):[],w:Array.isArray(lay.w)?lay.w.map(Number).slice(0,5):[],rows:Math.max(1,Math.min(5,Number(lay.rows)||2))}:null}});
+        lay:kind==='o'?{type:t,size:['S','M','L'].includes(q?.size)?q.size:'M',items:Array.isArray(lay.items)?lay.items.map(String).slice(0,6):[],cols:Array.isArray(lay.cols)?lay.cols.map(String).slice(0,5):[],w:Array.isArray(lay.w)?lay.w.map(Number).slice(0,5):[],rows:Math.max(1,Math.min(5,Number(lay.rows)||2)),merge:Array.isArray(lay.merge)?lay.merge.map(v=>v===true).slice(0,5):[],num:Array.isArray(lay.num)?lay.num.map(v=>v===true).slice(0,5):[]}:null}});
     d.trans=trans;d.pages=pages.length;d.msg='';ok=true;toast(`${closedQs(d).length} qapalı, ${openQs(d).length} açıq sual tapıldı.`);
   }catch(e){d.msg='';toast(e?.message&&!e.code?e.message:sErr(e),'err')}
   d.busy=false;render();
@@ -644,7 +644,9 @@ function drawCardPage(ex,page){
         x.fillStyle='#EEF0F4';x.fillRect(tx*mm,ty*mm,tw*mm,hh*mm);R(tx,ty,tw,th,.5,INK);L(tx,ty+hh,tx+tw,ty+hh,.5,INK);
         let cx=tx;cols.forEach((h,k)=>{const w=tw*cw[k]/ws;if(k)L(cx,ty,cx,ty+th,.5,INK);x.font=`700 ${P12*mm}px ${F}`;const ls=[];let cur='';String(h).split(' ').forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>(w-3)*mm&&cur){ls.push(cur);cur=wd}else cur=t});ls.push(cur);
           const sh=ls.slice(0,3);sh.forEach((t,j)=>T(t,cx+w/2,ty+hh/2+(j-(sh.length-1)/2)*4.4,P12,700,'center',INK));cx+=w});
-        const rows=b.rows||2,rh2=(th-hh)/rows;for(let r=1;r<rows;r++)L(tx,ty+hh+r*rh2,tx+tw,ty+hh+r*rh2,.4,INK);
+        const rows=b.rows||2,rh2=(th-hh)/rows,nm=b.num||[];let sx=tx,mg=(b.merge||[]).slice(0,cols.length);
+        if(mg.length>=cols.length&&mg.every(Boolean))mg=[];
+        cols.forEach((_,k)=>{const w=tw*cw[k]/ws;if(!mg[k]){for(let r=1;r<rows;r++)L(sx,ty+hh+r*rh2,sx+w,ty+hh+r*rh2,.4,INK);if(nm[k])for(let r=0;r<rows;r++)T((r+1)+'.',sx+1.8,ty+hh+r*rh2+4.2,P12,400,'left',INK)}sx+=w});
       }else if(labs.length){labs.forEach((lab,k)=>{const ly=y+head+(k+1)*LS;L(14,ly,196,ly,.35);T(lab,14.5,ly-3,P12,700,'left',INK)})}
       else{for(let ly=y+head+LS;ly<y+bh-1.5;ly+=LS)L(14,ly,196,ly,.35)}
       y+=bh+gap});
@@ -912,7 +914,7 @@ VIEWS.sinaqlar=()=>{
       <label class="l" style="margin-top:4px">Doğru cavab(lar)</label><textarea rows="${Math.min(8,Math.max(2,String(q.key||'').split('\n').length+1))}" data-oq="${q.n}" data-f="key">${esc(q.key||'')}</textarea>
       <div class="two" style="margin-top:6px"><div><label class="l" style="margin-top:0">Kartda forma</label><select data-oq="${q.n}" data-f="type">${[['lines','Sətirlər'],['items','İşarəli sətirlər'],['table','Cədvəl']].map(([v,t])=>`<option value="${v}"${l.type===v?' selected':''}>${t}</option>`).join('')}</select></div><div><label class="l" style="margin-top:0">Yer ölçüsü</label><select data-oq="${q.n}" data-f="size">${[['S','Kiçik'],['M','Orta'],['L','Böyük']].map(([v,t])=>`<option value="${v}"${l.size===v?' selected':''}>${t}</option>`).join('')}</select></div></div>
       ${l.type==='items'?`<label class="l">İşarələr (vergüllə)</label><input type="text" data-oq="${q.n}" data-f="items" value="${esc((l.items||[]).join(', '))}">`:''}
-      ${l.type==='table'?`<label class="l">Sütun başlıqları ( | ilə ayırın)</label><input type="text" data-oq="${q.n}" data-f="cols" value="${esc((l.cols||[]).join(' | '))}"><label class="l">Sətir sayı</label><input type="number" min="1" max="5" data-oq="${q.n}" data-f="rows" value="${l.rows||2}">`:''}
+      ${l.type==='table'?`<label class="l">Sütun başlıqları ( | ilə ayırın)</label><input type="text" data-oq="${q.n}" data-f="cols" value="${esc((l.cols||[]).join(' | '))}"><label class="l">Sətir sayı</label><input type="number" min="1" max="5" data-oq="${q.n}" data-f="rows" value="${l.rows||2}">${(l.cols||[]).length?`<label class="l">Sütunların forması</label>${(l.cols||[]).map((c,k)=>`<div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:4px 0;font-size:14px"><b style="flex:1 1 100%">${esc(c)}</b><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="merge" data-k="${k}"${l.merge?.[k]?' checked':''}> Bütöv xana (sətirsiz)</label><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="num" data-k="${k}"${l.num?.[k]?' checked':''}> Xanalar nömrəli (1., 2.)</label></div>`).join('')}`:''}`:''}
       <label class="l">Bu sualın meyarları (fayldan götürülür; boşdursa Parametrlərdəki ümumi meyarlar işləyir)</label><textarea rows="${Math.min(8,Math.max(2,String(q.crit||'').split('\n').length+1))}" data-oq="${q.n}" data-f="crit">${esc(q.crit||'')}</textarea>
       <label class="l">Kartdakı başlıq (PDF-dəki tapşırıq mətni)</label><textarea rows="2" data-oq="${q.n}" data-f="hint">${esc(q.hint)}</textarea></div>`}).join('')}
     <label class="l">Bu sınaq üçün əlavə qaydalar (istəyə görə)</label><textarea rows="2" data-bind="XD.rules">${esc(d.rules||'')}</textarea></section>`:''}
@@ -984,6 +986,7 @@ document.addEventListener('change',async e=>{const el=e.target;
   if(el.dataset.sname||el.dataset.sphone){const s=studentById(el.dataset.sname||el.dataset.sphone);if(s){const f=el.dataset.sname?'name':'phone';const v=el.value.trim();if(f==='name'&&!v)return;await put('students',{...s,[f]:v})}return}
   if(el.dataset.qitem){const it=Q.items.find(x=>x.id===el.dataset.qitem);if(it&&el.value){try{await saveItem(it,el.value)}catch(err){}render()}return}
   if(el.dataset.rscore){const r=S.results.find(x=>x.id===el.dataset.rscore);if(!r)return;const open=clean(r.open||[]),k=Number(el.dataset.k);open[k].score=Number(el.value);open[k].edited=true;await put('results',{...r,open,updated:new Date().toISOString()});render();return}
+  if(el.dataset.oqc&&XD){const q=XD.qs.find(z=>z.n===Number(el.dataset.oqc));if(q){const f=el.dataset.f,k=Number(el.dataset.k);const a=Array.isArray(q.lay[f])?q.lay[f].slice():[];while(a.length<=k)a.push(false);a[k]=el.checked;q.lay[f]=a}return}
   if(el.dataset.oq&&XD&&el.tagName==='SELECT'){const q=XD.qs.find(z=>z.n===Number(el.dataset.oq));if(q){q.lay[el.dataset.f]=el.value;render()}return}
   if(el.dataset.bind&&el.tagName==='SELECT'){setBind(el.dataset.bind,el.value);if(el.dataset.rr)render();return}
   if(!el.dataset.file)return;const files=[...(el.files||[])];el.value='';if(!files.length)return;const k=el.dataset.file;
