@@ -64,6 +64,8 @@ textarea{resize:vertical}
 .li .grow b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .li .grow small{color:var(--muted);font-size:12.5px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.spin{width:22px;height:22px;border:3px solid #cfd6e4;border-top-color:var(--c1,#2346A6);border-radius:50%;animation:spn .8s linear infinite}@keyframes spn{to{transform:rotate(360deg)}}
+.tray{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.tp{position:relative;width:72px;height:92px;border:1px solid var(--line);border-radius:8px;background:var(--soft,#eef1f7);display:flex;align-items:center;justify-content:center}.tp img{width:100%;height:100%;object-fit:cover;border-radius:8px}.tn{position:absolute;left:4px;bottom:4px;background:var(--c1,#2346A6);color:#fff;font-weight:700;font-size:12px;border-radius:6px;padding:0 6px}.tx{position:absolute;right:-8px;top:-8px;width:24px;height:24px;border-radius:50%;border:none;background:#d6455d;color:#fff;font-size:13px;line-height:24px;padding:0;cursor:pointer}
 .chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:14px}
 .chip.on{border-color:var(--ink);background:var(--ink);color:var(--card)}
 details.grp{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;background:var(--card)}
@@ -242,7 +244,7 @@ footer{color:var(--muted)}
 <div class="top"><div class="brand" data-tab="yoxla" role="button" tabindex="0" title="Ana səhifə" style="cursor:pointer">SmartExam<small>Müəllim paneli</small></div><span id="status" class="pill">Yüklənir…</span></div>
 <nav class="nav" id="nav" aria-label="Bölmələr"></nav>
 <main id="view"></main>
-<div id="pickers" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0"><input type="file" accept="image/*" multiple id="pk-pics" data-file="pics" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-sheet" data-file="sheet" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-front" data-file="front" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-back" data-file="back" tabindex="-1"><input type="file" accept="image/*" id="pk-ess" data-file="ess" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-words" data-file="words" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-wpics" data-file="wpics" tabindex="-1"></div>
+<div id="pickers" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0"><input type="file" accept="image/*" multiple id="pk-pics" data-file="pics" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-sheet" data-file="sheet" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-front" data-file="front" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-back" data-file="back" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-tray" data-file="tray" tabindex="-1"><input type="file" accept="image/*" id="pk-ess" data-file="ess" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-words" data-file="words" tabindex="-1"><input type="file" accept="image/*" multiple id="pk-wpics" data-file="wpics" tabindex="-1"></div>
 <footer>Created by Samir Balakişiyev<br>WhatsApp: <a href="https://wa.me/994557958625" target="_blank" rel="noopener">055-795-8625</a></footer>
 <script type="text/plain" id="rubric-src">Sən 11-ci sinif şagirdlərinin ingilis dilində esse və paraqraflarını yoxlayan təcrübəli müəllimsən. Yazını yalnız aşağıdakı meyarlarla qiymətləndir. Maksimum ümumi bal 5-dir.
 Özündən əlavə meyar, səhv sayına əsaslanan cərimə sistemi və ya bal çıxma qaydası yaratma. Ədalətli qiymətləndir: kiçik səhvlərə görə həddindən artıq bal azaltma, meyarlarda nəzərdə tutulmayan əlavə bal vermə.
@@ -647,6 +649,11 @@ function tapBubble(b){
 }
 
 /* ---------- images ---------- */
+/* ---------- vərəqin 2 üzü (Paraqraf bölməsi) ---------- */
+let twoSide=(()=>{try{return localStorage.getItem('se_twoSide')==='1'}catch(e){return false}})(),tray=[],trayBusy=0;const TRAY_MAX=4;
+async function stitch(blobs){const ims=await Promise.all(blobs.map(loadImg));const W=Math.min(2000,Math.max(...ims.map(i=>i.naturalWidth)));let H=0;const sz=ims.map(i=>{const h=Math.round(i.naturalHeight*W/i.naturalWidth);H+=h;return h});const sc=Math.min(1,3000/H);const c=document.createElement('canvas');c.width=Math.round(W*sc);c.height=Math.round(H*sc);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);let y=0;ims.forEach((im,i)=>{x.drawImage(im,0,y,c.width,Math.round(sz[i]*sc));y+=Math.round(sz[i]*sc)});return new Promise(ok=>c.toBlob(ok,'image/jpeg',.88))}
+async function pageImgs(blob,extra){let imgs=Array.isArray(blob)?blob.slice():[blob];if(imgs.length>1&&imgs.length+extra>maxImages){try{imgs=[await stitch(imgs)]}catch(e){imgs=[imgs[0]]}}return imgs}
+const pagesNote=n=>n>1?`The student's work is on ${n} photos (images 1–${n}): the sides/pages of the SAME sheet, in order. Read them together as ONE text; the name is usually on the first one. `:'';
 function loadImg(blob){return new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>ok(im);im.onerror=()=>no(new Error('img'));im.src=fr.result};fr.onerror=()=>no(fr.error);fr.readAsDataURL(blob)})}
 async function shrink(blob,max=1900){
   const im=await loadImg(blob);let w=im.naturalWidth,h=im.naturalHeight,s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
@@ -738,7 +745,8 @@ Reply with only JSON:
 const snap=(v,allowed)=>{v=Number(v);if(!isFinite(v))return null;return allowed.reduce((b,x)=>Math.abs(x-v)<Math.abs(b-v)?x:b,allowed[0])};
 async function aiBack(ex,blob){
   if(wKind(ex)==='9')return aiBack9(ex,blob);
-  const prompt=`${isPW(ex)?'The paragraph is written on a sheet of paper or in a notebook (there is no answer card); the student\'s name may be written at the top or anywhere on the page, or may be missing — then use null. ':''}${ex.addW&&!builtW(ex)?'The paragraph is written on a separate sheet of paper (not on the answer card); the name may be written at the top or may be missing — then use null. ':''}This photo shows a student's exam sheet with a handwritten English paragraph (it may be only the lower part of the page; then the student's name is not visible — use null for the name). On a one-page sheet the paragraph is in the large lined box at the bottom, below the printed answer grid — ignore the answer grid. The topic is printed or handwritten after "TOPIC / MÖVZU" (or "Topic:").
+  const imgs=await pageImgs(blob,0);
+  const prompt=`${pagesNote(imgs.length)}${isPW(ex)?'The paragraph is written on a sheet of paper or in a notebook (there is no answer card); the student\'s name may be written at the top or anywhere on the page, or may be missing — then use null. ':''}${ex.addW&&!builtW(ex)?'The paragraph is written on a separate sheet of paper (not on the answer card); the name may be written at the top or may be missing — then use null. ':''}This photo shows a student's exam sheet with a handwritten English paragraph (it may be only the lower part of the page; then the student's name is not visible — use null for the name). On a one-page sheet the paragraph is in the large lined box at the bottom, below the printed answer grid — ignore the answer grid. The topic is printed or handwritten after "TOPIC / MÖVZU" (or "Topic:").
 Expected topic (set by the teacher): ${ex.topic?.trim()||'(not set; use the topic the student wrote)'}
 Grade against the teacher's expected topic when it is set; small differences in how the student copied the topic do not matter.
 Step 1. Read the student's name (AD and SOYAD boxes, or the "AD, SOYAD" line at the top of the page) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
@@ -764,7 +772,7 @@ If a full stop is missing at the end of a sentence, list it as a separate mistak
 Set "personal_example" to true only if the student uses examples about himself/herself, his/her own family members or friends as reasons or examples (e.g. "my mother cooks good dolma", "because my father doesn't like it"); otherwise false. This is only a note for the student: it does NOT change any score.
 "grammar_errors" = the number of grammar mistakes and "lexical_errors" = the number of lexical (word choice / vocabulary) mistakes in the paragraph; a mistake of the same rule repeated several times counts as 1; spelling and punctuation are not counted here. Give "C" and "D" by the rubric's level descriptions only — the error-count limits are applied separately by the program from grammar_errors and lexical_errors.
 If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
-  const opts={images:[blob]};if(essayTier)opts.modelTier=essayTier;
+  const opts={images:imgs};if(essayTier)opts.modelTier=essayTier;
   const r=await sample.json(prompt,opts);
   const status=['ok','off_topic','not_english','unreadable'].includes(r?.status)?r.status:'ok';
   const e={status,words:Number.isFinite(Number(r?.words))&&r?.words!==null?Math.round(Number(r.words)):null,A:snap(r?.A,[0,.5,1])??0,B:snap(r?.B,[0,1,2]),C:snap(r?.C,[0,.5,1]),D:snap(r?.D,[0,.5,1]),
@@ -776,7 +784,7 @@ If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
   e.gErr=cnt(r?.grammar_errors);e.lErr=cnt(r?.lexical_errors);
   if(status!=='ok'){e.A=0}
   if(e.A===0){e.B=e.C=e.D=null}else if(e.B===0){e.C=e.D=null}
-  if(status==='ok'&&e.A>0&&e.mistakes.length)await verifyMist([blob],e,'11',essayTier);
+  if(status==='ok'&&e.A>0&&e.mistakes.length)await verifyMist(imgs,e,'11',essayTier);
   /* səhv sayına görə tavan: 0–2 → 1, 3–5 → 0.5, 6+ → 0; səviyyə ilə toplanmır, kiçik olan götürülür */
   const capErr=n=>n===null?1:n>=6?0:n>=3?.5:1;
   if(e.C!==null)e.C=Math.min(e.C,capErr(e.gErr));
@@ -787,10 +795,11 @@ If A is 0, set B, C, D to null. If B is 0, set C and D to null.`;
 
 function dataUrlBlob(u){const [h,b]=u.split(',');const bin=atob(b);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:(h.match(/data:([^;]+)/)||[])[1]||'image/jpeg'})}
 async function aiBack9(ex,blob){
-  const prompt=`${isPW(ex)?'The story is written on a sheet of paper or in a notebook (there is no answer card); the student\'s name may be written at the top or anywhere on the page, or may be missing — then use null. ':''}${ex.addW&&!builtW(ex)?'The story is written on a separate sheet of paper (not on the answer card); the name may be written at the top or may be missing — then use null. ':''}Image 1 shows a 9th-grade student's exam sheet with a handwritten English story (it may be only the lower part of the page; then the name is not visible — use null for the name). On a one-page sheet the story is in the large lined box at the bottom, below the printed answer grid and the printed pictures — ignore the answer grid. Image 2 shows the three pictures (in order, left to right) that the story must be based on.
+  const imgs=await pageImgs(blob,ex.pics?1:0);
+  const prompt=`${pagesNote(imgs.length)}${isPW(ex)?'The story is written on a sheet of paper or in a notebook (there is no answer card); the student\'s name may be written at the top or anywhere on the page, or may be missing — then use null. ':''}${ex.addW&&!builtW(ex)?'The story is written on a separate sheet of paper (not on the answer card); the name may be written at the top or may be missing — then use null. ':''}Image 1 shows a 9th-grade student's exam sheet with a handwritten English story (it may be only the lower part of the page; then the name is not visible — use null for the name). On a one-page sheet the story is in the large lined box at the bottom, below the printed answer grid and the printed pictures — ignore the answer grid. Image 2 shows the three pictures (in order, left to right) that the story must be based on.
 Step 1. Read the student's name (AD and SOYAD boxes, or the "AD, SOYAD" line at the top) and group ("QRUP") and match it to ONE student from this class list (names may be in Latin or Cyrillic, with spelling differences):
 ${rosterText(ex)}
-Step 2. Look carefully at the three pictures, then grade the story strictly by the teacher's rubric below (A2 level). ${ex.pics?'The pictures ARE provided (image 2).':'The three pictures are not provided separately. If they are visible on the sheet, use them; otherwise judge A by whether the text is a complete, logical story with a clear sequence of events (do not give 0 only because the pictures are missing).'} Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
+Step 2. Look carefully at the three pictures, then grade the story strictly by the teacher's rubric below (A2 level). ${ex.pics?`The pictures ARE provided (image ${imgs.length+1}).`:'The three pictures are not provided separately. If they are visible on the sheet, use them; otherwise judge A by whether the text is a complete, logical story with a clear sequence of events (do not give 0 only because the pictures are missing).'} Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
 """
 ${rubric9()}
 """
@@ -811,7 +820,7 @@ For every mistake: "sentence" = the whole sentence from the transcript that cont
 If a full stop is missing at the end of a sentence, list it as a separate mistake: "original" = the last word of that sentence as written, "correction" = the same word with the full stop, "explanation" = "Bu cümlənin sonunda nöqtə olmalı idi.", type "Cümlə quruluşu". If the next sentence must then start with a capital letter, show that in the mistake for that sentence. Listing missing full stops is only feedback for the student: it does not change the scores or error_count.
 Set "personal_example" to true only if the student uses examples about himself/herself, his/her own family members or friends as reasons or examples (e.g. "my mother cooks good dolma", "because my father doesn't like it"); otherwise false. This is only a note for the student: it does NOT change any score.
 If A is 0, set B, C, D to null.`;
-  const opts={images:ex.pics?[blob,dataUrlBlob(ex.pics)]:[blob]};if(essayTier)opts.modelTier=essayTier;
+  const opts={images:ex.pics?[...imgs,dataUrlBlob(ex.pics)]:imgs};if(essayTier)opts.modelTier=essayTier;
   const r=await sample.json(prompt,opts);
   const status=['ok','off_topic','not_english','unreadable'].includes(r?.status)?r.status:'ok';
   const ec=Number.isFinite(Number(r?.error_count))&&r?.error_count!==null?Math.max(0,Math.round(Number(r.error_count))):null;
@@ -823,7 +832,7 @@ If A is 0, set B, C, D to null.`;
     personal:r?.personal_example===true,feedback:String(r?.feedback||'')};
   if(status!=='ok'){e.A=0}
   if(e.A===0){e.B=e.C=e.D=null;e.pen=0}
-  else if(status==='ok'&&e.mistakes.length){await verifyMist([blob],e,'9',essayTier);e.pen=e.errors===null?0:e.errors>=6?1:e.errors>=3?.5:0}
+  else if(status==='ok'&&e.mistakes.length){await verifyMist(imgs,e,'9',essayTier);e.pen=e.errors===null?0:e.errors>=6?1:e.errors>=3?.5:0}
   e.total=essayTotal(e);
   return {essay:e,student:pickStudent(ex,r?.student_number,r?.name_as_written,r?.group_as_written),written:String(r?.name_as_written||'')};
 }
@@ -869,6 +878,19 @@ Reply with only JSON: {"items":[{"n":1,"keep":true,"written":""}]}`;
 /* ---------- queue ---------- */
 const PERSONAL_NOTE="⚠️ Qeyd: yazınızda özünüz, ailə üzvləriniz və ya dostlarınız haqqında nümunə var. Bu dəfə bal kəsilməyib, amma imtahanda belə nümunələrə görə bal kəsilə bilər. Ümumi nümunələr gətirin (məs. «many people…», «students can…»).";
 const missingEssay=ex=>({status:'missing',kind:wKind(ex),A:0,B:null,C:null,D:null,total:0,pen:0,errors:0,words:null,comments:{A:'',B:'',C:'',D:''},feedback:'',mistakes:[],transcript:''});
+function wReady(ex){
+  if(picsAtCheck(ex)&&!ex.pics){toast('Əvvəl esse üçün 3 şəkli yükləyin — esse həmin şəkillərə görə yoxlanır.','err');return false}
+  if((isGW(ex)||isPW(ex))&&exType(ex)!=='9'&&!ex.topic?.trim()){toast('Əvvəl paraqrafın mövzusunu yazıb «Saxla» basın — paraqraf həmin mövzuya görə yoxlanır.','err');return false}
+  return true}
+async function trayAdd(files){
+  const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');if(!wReady(ex))return;
+  for(const f of files){if(tray.length+trayBusy>=TRAY_MAX){toast('Bir şagird üçün ən çox '+TRAY_MAX+' şəkil.','err');break}
+    trayBusy++;render();try{tray.push(await shrink(f,2100))}catch(e){toast('Şəkil açılmadı.','err')}finally{trayBusy--}}
+  render()}
+function traySend(){
+  if(!tray.length)return;const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');if(!wReady(ex))return;
+  Q.items.push({id:newId(),kind:'back',examId:ex.id,blob:tray[0].blob,pages:tray.map(x=>x.blob),thumb:tray[0].thumb,state:'wait',msg:'Növbədədir'+(tray.length>1?` (${tray.length} şəkil)`:''),studentId:'',written:'',payload:null});
+  tray=[];render();runQueue();toast('Göndərildi — növbəti şagirdin vərəqini çəkin.')}
 async function addToQueue(kind,files){
   const ex=examById(Q.examId);if(!ex)return toast('Əvvəl sınağı seçin.','err');
   if(isPW(ex)&&kind!=='back')kind='back';
@@ -919,7 +941,7 @@ async function processItem(it){
     if(st){await saveItem(it,st.id);if(err2){it.state='err';it.msg+=` · ${wn} yoxlanmadı: ${it.payload.err2}`}}
     else{it.state='need';it.msg='Şagird tanınmadı'+(it.written?`: «${it.written}»`:'')+'. Siyahıdan seçin.'}
   }
-  else{const p=await aiBack(ex,it.blob);it.payload={essay:p.essay};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
+  else{const p=await aiBack(ex,it.pages&&it.pages.length>1?it.pages:it.blob);it.payload={essay:p.essay};it.written=p.written;if(p.student)await saveItem(it,p.student.id);else{it.state='need';it.msg='Şagird tanınmadı'+(p.written?`: «${p.written}»`:'')+'. Siyahıdan seçin.'}}
 }
 async function saveItem(it,sid){
   const ex=examById(it.examId);const old=findResult(ex.id,sid);const now=new Date().toISOString();
@@ -1345,7 +1367,7 @@ function yoxlaBody(pw=false){
   ${pw?`<p class="hint"><b>${tplName(ex)}</b>. ${esc(gName(Q.groupId))} qrupu — yoxlanıb: ${doneB.size}/${sts.length}.</p>`:`<p class="hint"><b>${tplName(ex)}${ex.addW&&!builtW(ex)?' + '+wName(ex).toLocaleLowerCase('az')+' ('+maxTot(ex)+' bal)':''}</b>. ${esc(gName(Q.groupId))} qrupu — cavablar: ${doneF.size}/${sts.length}${hasW(ex)?`, ${wName(ex).toLocaleLowerCase('az')}: ${doneB.size}/${sts.length}`:''}.</p>`}
   ${!all.length?`<div class="notice">Hələ şagird yoxdur. Şagirdlər bölməsində qrup yaradıb şagirdləri əlavə edin.</div>`:!sts.length?`<div class="notice">Bu qrupda şagird yoxdur. Vərəqlər digər qruplarda axtarılacaq.</div>`:''}
   ${!canImages?`<div class="notice">Foto oxuma bu görünüşdə işləmir. Nəticəni əl ilə daxil edə bilərsiniz.</div>`:''}
-  ${pw?`<label class="shoot" for="pk-back" style="width:100%">📷 ${exType(ex)==='9'?'Esselərin şəkli':'Paraqrafların şəkli'}<small>Hər şəkildə bir şagirdin ${exType(ex)==='9'?'essesi':'paraqrafı'}. Bir və ya bir neçə şəkil seçin — ad vərəqdən oxunur</small></label>`:builtW(ex)?`<label class="shoot" for="pk-sheet" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small></label>
+  ${pw?`<div class="chips" style="margin:4px 0 10px"><button type="button" class="chip${twoSide?' on':''}" data-act="twoSide">📄📄 Vərəqin 2 üzü${twoSide?' — yanılı':''}</button></div>${twoSide?`<p class="hint"><b>Bir şagirdin vərəqinin hər üzünü ardıcıl çəkin, sonra «Göndər» basın.</b> Ad vərəqdən oxunur.</p><label class="shoot" for="pk-tray" style="width:100%">📷 ${tray.length?(tray.length>=TRAY_MAX?'Şəkil əlavə et':(tray.length+1)+(['','-ci','-ci','-cü','-cü'][tray.length+1])+' üzü çək / əlavə et'):'1-ci üzü çək / əlavə et'}<small>Bir şagird üçün ${TRAY_MAX} şəklə qədər</small></label>${tray.length||trayBusy?`<div class="tray">${tray.map((x,i)=>`<div class="tp"><img src="${x.thumb}" alt=""><span class="tn">${i+1}</span><button type="button" class="tx" data-act="trayDel" data-i="${i}" aria-label="Sil">✕</button></div>`).join('')}${trayBusy?'<div class="tp"><span class="spin"></span></div>':''}</div><div class="acts"><button class="btn" data-act="traySend" ${tray.length&&!trayBusy?'':'disabled'}>📤 Göndər (${tray.length} şəkil)</button></div>`:''}`:`<label class="shoot" for="pk-back" style="width:100%">📷 ${exType(ex)==='9'?'Esselərin şəkli':'Paraqrafların şəkli'}<small>Hər şəkildə bir şagirdin ${exType(ex)==='9'?'essesi':'paraqrafı'}. Bir və ya bir neçə şəkil seçin — ad vərəqdən oxunur</small></label>`}`:builtW(ex)?`<label class="shoot" for="pk-sheet" style="width:100%">📷 Vərəqin şəkli<small>Bir səhifəlik kart: cavablar və ${wName(ex).toLocaleLowerCase('az')} bir şəkildə. Bir və ya bir neçə şəkil</small></label>
   ${isGW(ex)?'':`<details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:14px">Köhnə 2 səhifəlik kart (ön və arxa üz ayrıca)</summary><div class="big2" style="margin-top:8px"><label class="shoot" for="pk-front">📷 Ön üz<small>Cavablar</small></label><label class="shoot" for="pk-back">📝 Arxa üz<small>${wName(ex)}</small></label></div></details>`}`:`<label class="shoot" for="pk-front" style="width:100%">📷 Kartın şəkli<small>${fmtName(exFmt(ex))} kartı — hər şəkildə bir kart. Bir və ya bir neçə şəkil</small></label>`}
   <p class="hint">Vərəqin hamısı kadrda olsun, işıq yaxşı düşsün. Şagirdin adı vərəqdən oxunur: əvvəl seçdiyiniz qrupda, tapılmasa digər qruplarda axtarılır və nəticə şagirdin öz qrupuna yazılır.</p>
   <div class="acts">${pw?`<button class="btn sm ghost" data-act="pqRes" data-id="${ex.id}">📊 Nəticələr və göndərmə</button>`:`<button class="btn sm" data-act="card" data-id="${ex.id}">📄 Cavab kartı (PDF)</button>`}<button class="btn ghost sm" data-act="manual">Əl ilə nəticə daxil et</button>${pw?`<button class="btn danger sm" data-act="pqDel" data-id="${ex.id}">🗑 Sil</button>`:''}${Q.paused&&Q.items.some(x=>x.state==='wait')?`<button class="btn sm" data-act="resume">Davam et</button>`:''}</div></section>
@@ -1882,6 +1904,9 @@ const ACT={
     if(!await confirmBox(`${rs.length} nəticə silinsin?`,`${gName(g)} qrupu · «${ex.name}»: ${names.slice(0,8).join(', ')}${names.length>8?` və daha ${names.length-8} nəfər`:''}. Sınaq və şagirdlər qalır. Bu geri qaytarılmır.`))return;
     let k=0;for(const r of rs){try{await del('results',r.id)}catch(e){}k++;if(k%5===0)toast(`Silinir: ${k}/${rs.length}`)}
     RD.on=false;RD.sel.clear();toast(`${k} nəticə silindi.`);render()},
+  twoSide(){twoSide=!twoSide;try{localStorage.setItem('se_twoSide',twoSide?'1':'0')}catch(e){}if(!twoSide)tray=[];render()},
+  trayDel(el){tray.splice(Number(el.dataset.i),1);render()},
+  traySend(){traySend()},
   setNoPrint(el){examDraft.noPrint=el.dataset.v==='1';render()},
   addEss(el){Q.wFor=el.dataset.id;toast('3 şəkli seçin (şagirdlərin qarşısına qoyduğunuz şəkillər).');document.getElementById('pk-wpics').click()},
   async addPar(el){const ex=examById(el.dataset.id);if(!ex)return;try{await put('exams',{...ex,addW:true,wk:'11',pics:'',model:''});toast('Paraqraf əlavə olundu — indi '+(qN(ex)+5)+' bal üzərindən hesablanır.')}catch(err){}render()},
@@ -2086,6 +2111,7 @@ document.addEventListener('change',async e=>{
     toast(wName(ex)+' yoxlanılır…');try{const sh=await shrink(files[0],2100);const p=await aiBack(ex,sh.blob);const cur=S.results.find(x=>x.id===r.id)||r;await put('results',{...clean(cur),essay:p.essay,updated:new Date().toISOString()});toast(wName(ex)+': '+fmt(p.essay.total)+'/5 — nəticə yeniləndi.')}catch(err){toast(wName(ex)+' yoxlanmadı: '+sErr(err),'err')}render()}
   else if(k==='ess'){const it=Q.items.find(x=>x.id===Q.essFor);Q.essFor='';if(!it||it.state!=='hold')return;try{const r=await shrink(files[0],2100);it.essBlob=r.blob;it.state='wait';it.msg='Növbədədir';render();runQueue()}catch(err){toast('Şəkil açılmadı.','err')}}
   else if(k==='wpics'){const ex=examById(Q.wFor||Q.examId);Q.wFor='';if(!ex)return;let pics;try{pics=await picsData(files.slice(0,3))}catch(err){return toast('Şəkil açılmadı.','err')}try{if(builtW(ex)||isPW(ex)){await put('exams',{...ex,pics,model:''});toast('3 şəkil saxlandı — esse bu şəkillərə görə yoxlanacaq.')}else{await put('exams',{...ex,addW:true,wk:'9',pics,model:''});toast('Esse əlavə olundu — indi '+(qN(ex)+5)+' bal üzərindən hesablanır.')}}catch(err){}render()}
+  else if(k==='tray')trayAdd(files);
   else if(k==='words')wqAdd(files);
   else if(k==='tagphotos')tagFromPhotos(files);
   else if(k==='pics'){try{examDraft.pics=await picsData(files.slice(0,3))}catch(err){return toast('Şəkil açılmadı.','err')}const e=examDraft.id&&examById(examDraft.id);if(e){try{await put('exams',{...e,pics:examDraft.pics,model:''});toast(noPrint(e)?'Şəkillər saxlandı — kartda çap olunmur, yoxlamada istifadə olunacaq.':'Şəkillər saxlandı — kartda çap olunur.')}catch(err){}}else toast('Şəkillər əlavə olundu.');render()}
