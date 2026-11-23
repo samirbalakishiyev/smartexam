@@ -521,6 +521,19 @@ ${trans}
       const prev=old.find(x=>String(x.pdf)===String(q?.pdf_n)&&x.kind===kind);
       return {n:i+1,pdf:q?.pdf_n??'',kind,key:prev?.key||'',crit:prev?.crit||'',hint:kind==='o'?exactHint(q).slice(0,300):'',task:kind==='o'?String(q?.task||'').slice(0,600):'',
         lay:kind==='o'?{type:t,size:['S','M','L'].includes(q?.size)?q.size:'M',items:Array.isArray(lay.items)?lay.items.map(String).slice(0,6):[],cols:Array.isArray(lay.cols)?lay.cols.map(String).slice(0,5):[],w:Array.isArray(lay.w)?lay.w.map(Number).slice(0,5):[],rows:Math.max(1,Math.min(5,Number(lay.rows)||2)),merge:Array.isArray(lay.merge)?lay.merge.map(v=>v===true).slice(0,5):[],num:Array.isArray(lay.num)?lay.num.map(v=>v===true).slice(0,5):[]}:null}});
+    /* cavab yerinin forması: PDF-in özünə baxıb cədvəli/sətirləri olduğu kimi köçür */
+    const oq0=d.qs.filter(q=>q.kind==='o');
+    if(oq0.length){const vis={};
+      for(let i=0;i<pages.length;i+=chunk){const part=pages.slice(i,i+chunk);d.msg=`Cavab yerlərinin forması PDF-dən götürülür… (${Math.min(i+chunk,pages.length)}/${pages.length} səhifə)`;render();
+        try{const o3={images:part};if(tier)o3.modelTier=tier;
+          const r3=await sample.json(`The attached image${part.length>1?'s are pages':' is page'} of a grade 11 Azerbaijani-language exam booklet. Find every OPEN question on ${part.length>1?'these pages':'this page'} — a question WITHOUT answer options A)–E) that has an empty answer area (labelled lines, blank lines or a table). For each one describe its printed ANSWER AREA exactly as it is drawn, so it can be copied onto an answer card:
+- a table → {"pdf_n":55,"type":"table","head":["exact header text of column 1","exact header text of column 2"],"w":[relative column widths as printed, e.g. 1,2],"cells":[[cells of body row 1],[cells of body row 2],…]}. Body rows top to bottom (not the header row). For each body cell give exactly the text printed in it, word for word: symbols like "♦", "▲", "●", dots "...", numbers like "1.", whole sentences; wrap italic text in <i>…</i>; "" for an empty cell. If a cell is merged with the cell above it (one tall cell — NO horizontal line between them) give null for each lower position. Look carefully at the drawn lines of every column: a column that is one tall undivided cell has null in every row after the first.
+- labelled answer lines (a symbol or number followed by a line to write on) → {"pdf_n":42,"type":"items","items":["▲","█","●"]}
+- only blank lines to write on → {"pdf_n":43,"type":"lines","lines":3}
+Copy header texts exactly (keep colons, brackets, line content). Only questions whose answer area is visible on ${part.length>1?'these pages':'this page'}.
+Reply with only JSON: {"areas":[…]}`,o3);
+          (Array.isArray(r3?.areas)?r3.areas:[]).forEach(x=>{const k=String(x?.pdf_n??'').replace(/\D/g,'');if(k&&!vis[k])vis[k]=x})}catch(e){}}
+      oq0.forEach(q=>{const x=vis[String(q.pdf).replace(/\D/g,'')];if(x)applyArea(q,x)})}
     d.trans=trans;d.pages=pages.length;d.msg='';ok=true;toast(`${closedQs(d).length} qapalı, ${openQs(d).length} açıq sual tapıldı.`);
   }catch(e){d.msg='';toast(e?.message&&!e.code?e.message:sErr(e),'err')}
   d.busy=false;render();
@@ -536,11 +549,15 @@ function tableShape(trans,pdf){const num=String(pdf).replace(/\D/g,'');if(!num||
   if(rows.length<2)return null;const body=rows.slice(1),nc=Math.max(...rows.map(r=>r.length));
   const cell=(r,c)=>(r[c]||'').trim();const merge=[],numd=[];
   for(let c=0;c<nc;c++){
-    merge.push(body.length>=2&&body.slice(1).every(r=>!cell(r,c))&&body.slice(1).some(r=>r.some((v,j)=>j!==c&&v.trim())));
     const ne=body.map(r=>cell(r,c)).filter(Boolean);numd.push(ne.length>=2&&ne.every(v=>/^\d+\s*[.)]?$/.test(v)))}
-  return {rows:Math.max(1,Math.min(5,body.length)),merge,num:numd}}
-function refreshLayout(d){let n=0;(d.qs||[]).forEach(q=>{if(q.kind!=='o'||q.lay?.type!=='table')return;const s=tableShape(d.trans,q.pdf);if(!s)return;
-  const cl=(q.lay.cols||[]).length||s.merge.length;q.lay={...q.lay,rows:s.rows,merge:s.merge.slice(0,cl),num:s.num.slice(0,cl)};n++});return n}
+  for(let c=0;c<nc;c++){const restEmpty=body.length>=2&&body.slice(1).every(r=>!cell(r,c)),other=body.slice(1).some(r=>r.some((v,j)=>j!==c&&v.trim()));
+    merge.push(restEmpty&&other&&(!!cell(body[0],c)||numd.some((x,j)=>x&&j!==c)))}
+  const cells=body.slice(0,8).map((r,ri)=>Array.from({length:nc},(_,c)=>ri>0&&merge[c]&&!cell(r,c)?null:cell(r,c)));
+  return {rows:Math.max(1,Math.min(5,body.length)),merge,num:numd,head:rows[0].map(x=>x.trim()),cells}}
+function refreshLayout(d){let n=0;(d.qs||[]).forEach(q=>{if(q.kind!=='o'||!q.lay||!['table','items'].includes(q.lay.type))return;const s=tableShape(d.trans,q.pdf);if(!s)return;
+  const nc=s.head.length,cols=s.head.filter(Boolean).length===nc?s.head:(q.lay.cols||[]);if(!cols.length)return;
+  const cells=s.cells.map(r=>Array.from({length:cols.length},(_,k)=>r[k]===undefined?'':r[k]));
+  q.lay={...q.lay,type:'table',cols,cells,rows:cells.length,merge:[],num:[],w:(q.lay.w||[]).length===cols.length?q.lay.w:[]};n++});return n}
 /* ---------- answers file → keys ---------- */
 async function docxText(file){
   const buf=new Uint8Array(await file.arrayBuffer()),dv=new DataView(buf.buffer);
@@ -594,10 +611,22 @@ const CARD={F:"'Times New Roman', Times, 'Liberation Serif', 'Noto Serif', serif
 let _mc=null;function mctx(){if(!_mc)_mc=document.createElement('canvas').getContext('2d');return _mc}
 const MMPX=200/25.4;
 function wrapN(text,widthMm,bold){const x=mctx();x.font=`${bold?700:400} ${CARD.P(12)*MMPX}px ${CARD.F}`;const ws=String(text||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean),out=[];let cur='';ws.forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>widthMm*MMPX&&cur){out.push(cur);cur=wd}else cur=t});if(cur)out.push(cur);return out}
+/* cədvəl xanaları: PDF-dəki kimi (çap olunmuş mətn, birləşmiş xanalar = null) */
+const cellTxt=v=>String(v==null?'':v).replace(/<\/?i>/g,'').replace(/\s+/g,' ').trim();
+const cellIt=v=>/<i>/.test(String(v||''));
+function normCells(c,n){if(!Array.isArray(c)||!c.length||!n)return null;return c.slice(0,8).map((row,ri)=>{const a=Array.isArray(row)?row:[];return Array.from({length:n},(_,k)=>{const v=a[k];if(v===null&&ri>0)return null;return String(v==null?'':v).slice(0,240)})})}
+function tblRowMin(b,cwMm){const cl=b.cells;return cl.map((row,r)=>{let h=CARD.ROW;row.forEach((v,k)=>{if(v===null||v===undefined)return;const t=cellTxt(v);if(!t)return;let sp=1;while(r+sp<cl.length&&cl[r+sp][k]===null)sp++;const need=(wrapN(t,(cwMm[k]||30)-3).length*4.4+2.6)/sp;if(need>h)h=need});return h})}
+function applyArea(q,a){const t=a?.type,L=q.lay||{type:'lines',size:'M'};
+  if(t==='table'){const head=(Array.isArray(a.head)?a.head:[]).map(cellTxt).slice(0,5),n=head.length,cells=normCells(a.cells,n);if(!n||!cells)return false;
+    q.lay={...L,type:'table',cols:head,w:(Array.isArray(a.w)?a.w.map(Number):[]).slice(0,n),cells,rows:cells.length,merge:[],num:[]};return true}
+  if(t==='items'){const it=(Array.isArray(a.items)?a.items:[]).map(cellTxt).filter(Boolean).slice(0,6);if(!it.length)return false;q.lay={...L,type:'items',items:it,cells:null};return true}
+  if(t==='lines'){q.lay={...L,type:'lines',cells:null};return true}
+  return false}
 function boxInfo(q){const hl=wrapN(q.hint,170).slice(0,4),head=8+Math.max(0,hl.length-1)*CARD.HL,b=q.lay||{type:'lines'},labs=b.type==='items'?(b.items||[]):[];
   let hh=0;if(b.type==='table'&&(b.cols||[]).length){const cw=b.cols.map((_,k)=>Number(b.w?.[k])>0?Number(b.w[k]):1),ws=cw.reduce((a,v)=>a+v,0);hh=4+Math.max(...b.cols.map((h,k)=>Math.min(3,wrapN(h,184*cw[k]/ws-3,true).length)))*4.4}
-  const min=labs.length?head+labs.length*CARD.LS+3:hh?head+.5+hh+(b.rows||2)*CARD.ROW+3:head+2*CARD.LS+3;
-  return {hl,head,b,labs,hh,min,fixed:!!labs.length}}
+  let rowMin=null;if(hh&&Array.isArray(b.cells)&&b.cells.length){const cw=b.cols.map((_,k)=>Number(b.w?.[k])>0?Number(b.w[k]):1),ws=cw.reduce((a,v)=>a+v,0);rowMin=tblRowMin(b,cw.map(v=>184*v/ws))}
+  const min=labs.length?head+labs.length*CARD.LS+3:hh?head+.5+hh+(rowMin?rowMin.reduce((a,v)=>a+v,0):(b.rows||2)*CARD.ROW)+3:head+2*CARD.LS+3;
+  return {hl,head,b,labs,hh,min,rowMin,fixed:!!labs.length}}
 function openTop(ex,page){if(page!==1)return 34;const n=closedQs(ex).length;return n?46+4.5+Math.ceil(n/4)*7.2+3+6+4:50}
 function splitOpen(ex){const o=openQs(ex);let h=Math.ceil(o.length/2);const avail=288-openTop(ex,1);
   const need=k=>o.slice(0,k).reduce((a,q)=>a+boxInfo(q).min,0)+2.4*Math.max(0,k-1);
@@ -658,9 +687,19 @@ function drawCardPage(ex,page){
         x.fillStyle='#EEF0F4';x.fillRect(tx*mm,ty*mm,tw*mm,hh*mm);R(tx,ty,tw,th,.5,INK);L(tx,ty+hh,tx+tw,ty+hh,.5,INK);
         let cx=tx;cols.forEach((h,k)=>{const w=tw*cw[k]/ws;if(k)L(cx,ty,cx,ty+th,.5,INK);x.font=`700 ${P12*mm}px ${F}`;const ls=[];let cur='';String(h).split(' ').forEach(wd=>{const t=cur?cur+' '+wd:wd;if(x.measureText(t).width>(w-3)*mm&&cur){ls.push(cur);cur=wd}else cur=t});ls.push(cur);
           const sh=ls.slice(0,3);sh.forEach((t,j)=>T(t,cx+w/2,ty+hh/2+(j-(sh.length-1)/2)*4.4,P12,700,'center',INK));cx+=w});
+        if(Array.isArray(b.cells)&&b.cells.length){const cl=b.cells,nr=cl.length,xs=[];let ax=tx;cols.forEach((_,k)=>{xs.push(ax);ax+=tw*cw[k]/ws});xs.push(tx+tw);
+          const rm=(i.rowMin||cl.map(()=>CARD.ROW)),body=th-hh,sum=rm.reduce((a,v)=>a+v,0);
+          const wr=cl.map(row=>row.some(v=>v!==null&&(!cellTxt(v)||/^(\.{3,}|…+)$/.test(cellTxt(v))))),nw=wr.filter(Boolean).length,ext=Math.max(0,body-sum);
+          const rh=rm.map((v,rr)=>v+(nw?(wr[rr]?ext/nw:0):ext/nr)),ry=[ty+hh];rh.forEach(v=>ry.push(ry[ry.length-1]+v));
+          for(let rr=1;rr<nr;rr++)cols.forEach((_,k)=>{if(cl[rr][k]!==null)L(xs[k],ry[rr],xs[k+1],ry[rr],.4,INK)});
+          cl.forEach((row,rr)=>row.forEach((v,k)=>{if(v===null||v===undefined)return;const t=cellTxt(v);if(!t)return;let sp=1;while(rr+sp<nr&&cl[rr+sp][k]===null)sp++;const w=xs[k+1]-xs[k],top=ry[rr],bot=ry[rr+sp];
+            if(/^\d+\s*[.)]$/.test(t)){T(t,xs[k]+1.8,top+4.2,P12,400,'left',INK);return}
+            const ls=wrapN(t,w-3).slice(0,8),wt=cellIt(v)?'italic 400':'400';ls.forEach((s2,j)=>T(s2,xs[k]+w/2,(top+bot)/2+(j-(ls.length-1)/2)*4.4,P12,wt,'center',INK))}));
+        }else{
         const rows=b.rows||2,rh2=(th-hh)/rows,nm=b.num||[];let sx=tx,mg=(b.merge||[]).slice(0,cols.length);
         if(mg.length>=cols.length&&mg.every(Boolean))mg=[];
         cols.forEach((_,k)=>{const w=tw*cw[k]/ws;if(!mg[k]){for(let r=1;r<rows;r++)L(sx,ty+hh+r*rh2,sx+w,ty+hh+r*rh2,.4,INK);if(nm[k])for(let r=0;r<rows;r++)T((r+1)+'.',sx+1.8,ty+hh+r*rh2+4.2,P12,400,'left',INK)}sx+=w});
+        }
       }else if(labs.length){labs.forEach((lab,k)=>{const ly=y+head+(k+1)*LS;L(14,ly,196,ly,.35);T(lab,14.5,ly-3,P12,700,'left',INK)})}
       else{for(let ly=y+head+LS;ly<y+bh-1.5;ly+=LS)L(14,ly,196,ly,.35)}
       y+=bh+gap});
@@ -742,7 +781,7 @@ async function aiOpen(ex,p1,p2){
   const oq=openQs(ex),[o1,o2]=splitOpen(ex);
   let b1=p1;try{b1=await cropBlob(p1,.28,1)}catch(e){}
   const imgs=p2?[b1,p2]:[b1];
-  const desc=q=>{const l=q.lay||{};return l.type==='items'?`separate answers labelled ${(l.items||[]).join(' ')}`:l.type==='table'?`a table with columns: ${(l.cols||[]).join(' | ')}`:'free lines'};
+  const desc=q=>{const l=q.lay||{};return l.type==='items'?`separate answers labelled ${(l.items||[]).join(' ')}`:l.type==='table'?`a table with columns: ${(l.cols||[]).join(' | ')}${Array.isArray(l.cells)&&l.cells.length?`; body rows as printed on the card ("" = empty cell for the student, null = merged with the cell above): ${JSON.stringify(l.cells.map(row=>row.map(v=>v===null?null:cellTxt(v))))}`:''}`:'free lines'};
   const o={images:imgs};if(tier)o.modelTier=tier;
   const r=await sample.json(`You are an experienced teacher of the Azerbaijani language grading the OPEN questions of a grade 11 exam.
 Image 1 shows side 1 of the student's answer card (open answer boxes ${o1.map(q=>q.n).join(', ')})${p2?`; image 2 shows side 2 (boxes ${o2.map(q=>q.n).join(', ')})`:''}. Each box has its number in a black label in the top-left corner.
@@ -928,7 +967,7 @@ VIEWS.sinaqlar=()=>{
       <label class="l" style="margin-top:4px">Doğru cavab(lar)</label><textarea rows="${Math.min(8,Math.max(2,String(q.key||'').split('\n').length+1))}" data-oq="${q.n}" data-f="key">${esc(q.key||'')}</textarea>
       <div class="two" style="margin-top:6px"><div><label class="l" style="margin-top:0">Kartda forma</label><select data-oq="${q.n}" data-f="type">${[['lines','Sətirlər'],['items','İşarəli sətirlər'],['table','Cədvəl']].map(([v,t])=>`<option value="${v}"${l.type===v?' selected':''}>${t}</option>`).join('')}</select></div><div><label class="l" style="margin-top:0">Yer ölçüsü</label><select data-oq="${q.n}" data-f="size">${[['S','Kiçik'],['M','Orta'],['L','Böyük']].map(([v,t])=>`<option value="${v}"${l.size===v?' selected':''}>${t}</option>`).join('')}</select></div></div>
       ${l.type==='items'?`<label class="l">İşarələr (vergüllə)</label><input type="text" data-oq="${q.n}" data-f="items" value="${esc((l.items||[]).join(', '))}">`:''}
-      ${l.type==='table'?`<label class="l">Sütun başlıqları ( | ilə ayırın)</label><input type="text" data-oq="${q.n}" data-f="cols" value="${esc((l.cols||[]).join(' | '))}"><label class="l">Sətir sayı</label><input type="number" min="1" max="5" data-oq="${q.n}" data-f="rows" value="${l.rows||2}">${(l.cols||[]).length?`<label class="l">Sütunların forması</label>${(l.cols||[]).map((c,k)=>`<div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:4px 0;font-size:14px"><b style="flex:1 1 100%">${esc(c)}</b><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="merge" data-k="${k}"${l.merge?.[k]?' checked':''}> Bütöv xana (sətirsiz)</label><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="num" data-k="${k}"${l.num?.[k]?' checked':''}> Xanalar nömrəli (1., 2.)</label></div>`).join('')}`:''}`:''}
+      ${l.type==='table'?`<label class="l">Sütun başlıqları ( | ilə ayırın)</label><input type="text" data-oq="${q.n}" data-f="cols" value="${esc((l.cols||[]).join(' | '))}">${Array.isArray(l.cells)&&l.cells.length?`<label class="l">Cədvəlin sətirləri — PDF-dəki kimi (hər sətir ayrı; xanalar | ilə; çap olunmuş mətni olduğu kimi yazın; yuxarıdakı xana ilə birləşən xana: ^; boş xana: boş saxlayın)</label><textarea rows="${Math.min(8,l.cells.length+1)}" data-oq="${q.n}" data-f="cells">${esc(l.cells.map((row,ri)=>row.map(v=>v===null?'^':String(v).replace(/\s+/g,' ').trim()).join(' | ')).join('\n'))}</textarea>`:`<label class="l">Sətir sayı</label><input type="number" min="1" max="5" data-oq="${q.n}" data-f="rows" value="${l.rows||2}">${(l.cols||[]).length?`<label class="l">Sütunların forması</label>${(l.cols||[]).map((c,k)=>`<div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin:4px 0;font-size:14px"><b style="flex:1 1 100%">${esc(c)}</b><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="merge" data-k="${k}"${l.merge?.[k]?' checked':''}> Bütöv xana (sətirsiz)</label><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-oqc="${q.n}" data-f="num" data-k="${k}"${l.num?.[k]?' checked':''}> Xanalar nömrəli (1., 2.)</label></div>`).join('')}`:''}`}`:''}
       <label class="l">Bu sualın meyarları (fayldan götürülür; boşdursa Parametrlərdəki ümumi meyarlar işləyir)</label><textarea rows="${Math.min(8,Math.max(2,String(q.crit||'').split('\n').length+1))}" data-oq="${q.n}" data-f="crit">${esc(q.crit||'')}</textarea>
       <label class="l">Kartdakı başlıq (PDF-dəki tapşırıq mətni)</label><textarea rows="2" data-oq="${q.n}" data-f="hint">${esc(q.hint)}</textarea></div>`}).join('')}
     <label class="l">Bu sınaq üçün əlavə qaydalar (istəyə görə)</label><textarea rows="2" data-bind="XD.rules">${esc(d.rules||'')}</textarea></section>`:''}
@@ -997,7 +1036,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.grp')){if(d.open)openGrp.add(d.dataset.g);else openGrp.delete(d.dataset.g)}},true);
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset.bind&&el.tagName!=='SELECT')setBind(el.dataset.bind,el.value);
-  if(el.dataset.oq&&XD&&el.tagName!=='SELECT'){const q=XD.qs.find(z=>z.n===Number(el.dataset.oq));if(!q)return;const f=el.dataset.f;if(f==='key')q.key=el.value;else if(f==='crit')q.crit=el.value;else if(f==='hint')q.hint=el.value.slice(0,300);else if(f==='items')q.lay.items=el.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,6);else if(f==='cols')q.lay.cols=el.value.split('|').map(x=>x.trim()).filter(Boolean).slice(0,5);else if(f==='rows')q.lay.rows=Math.max(1,Math.min(5,Number(el.value)||2))}});
+  if(el.dataset.oq&&XD&&el.tagName!=='SELECT'){const q=XD.qs.find(z=>z.n===Number(el.dataset.oq));if(!q)return;const f=el.dataset.f;if(f==='key')q.key=el.value;else if(f==='crit')q.crit=el.value;else if(f==='hint')q.hint=el.value.slice(0,300);else if(f==='items')q.lay.items=el.value.split(',').map(x=>x.trim()).filter(Boolean).slice(0,6);else if(f==='cols')q.lay.cols=el.value.split('|').map(x=>x.trim()).filter(Boolean).slice(0,5);else if(f==='rows')q.lay.rows=Math.max(1,Math.min(5,Number(el.value)||2));else if(f==='cells'){const n=Math.max(1,(q.lay.cols||[]).length),rows=el.value.split('\n').filter(l=>l.trim()).slice(0,8).map((l,ri)=>{const a=l.split('|').map(x=>x.trim());return Array.from({length:n},(_,k)=>a[k]==='^'&&ri>0?null:(a[k]||'').replace(/^\^$/,''))});if(rows.length){q.lay.cells=rows;q.lay.rows=rows.length}}}});
 document.addEventListener('change',async e=>{const el=e.target;
   if(el.dataset.sname||el.dataset.sphone){const s=studentById(el.dataset.sname||el.dataset.sphone);if(s){const f=el.dataset.sname?'name':'phone';const v=el.value.trim();if(f==='name'&&!v)return;await put('students',{...s,[f]:v})}return}
   if(el.dataset.qitem){const it=Q.items.find(x=>x.id===el.dataset.qitem);if(it&&el.value){try{await saveItem(it,el.value)}catch(err){}render()}return}
