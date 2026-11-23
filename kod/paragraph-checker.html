@@ -149,6 +149,15 @@ details.grp .inner{padding:0 14px 12px}
 footer{text-align:center;padding:20px 14px 30px;color:var(--muted);font-size:13px}
 footer a{color:inherit}
 [hidden]{display:none!important}
+.gpick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gpick button{border:2px solid var(--line);background:var(--soft);border-radius:16px;padding:26px 10px;cursor:pointer;font:inherit;color:var(--ink);text-align:center}
+.gpick button b{display:block;font-size:20px}.gpick button small{color:var(--muted);font-size:14px}
+.gpick button:hover{border-color:var(--accent)}
+.ghead{display:flex;align-items:center;gap:10px;margin-bottom:12px}.ghead b{font-size:16px}
+.tlist{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:360px;overflow:auto}
+.tli{display:flex;gap:6px;align-items:center}
+.tsel{flex:1;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer}
+.tsel:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -428,7 +437,7 @@ const hash=s=>{let h=5381;for(const ch of String(s))h=((h*33)^ch.codePointAt(0))
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}};
 const tx=id=>document.getElementById(id).textContent.trim();
 const DEFAULT_RUBRIC=tx('rubric-src'),DEFAULT_RUBRIC9=tx('rubric9-src'),MODEL11=tx('model11-src'),MODEL9=tx('model9-src');
-const DEF_SET={teacherName:'',logo:'S.B.',sign:'',rubric:'',rubric9:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',extraRules9:'',topic11:'',exam9:'',pics9:'',picsId:'',picsDate:'',vtest:'',vtotal:20};
+const DEF_SET={teacherName:'',logo:'S.B.',sign:'',rubric:'',rubric9:'',extraRules:'B meyarında əleyhinə tərəf qısa da olsa qeyd olunubsa, bu şərt ödənilmiş sayılır.',extraRules9:'',topic11:'',topics11:[],exam9:'',pics9:'',picsId:'',picsDate:'',vtest:'',vtotal:20};
 const CRIT={
   '11':[['A','Tapşırığın yerinə yetirilməsi',1,[0,.5,1]],['B','Mövzunun əhatə edilməsi',2,[0,1,2]],['C','Qrammatika',1,[0,.5,1]],['D','Söz ehtiyatı',1,[0,.5,1]]],
   '9':[['A','Məzmun və tapşırığın yerinə yetirilməsi',2,[0,1,2]],['B','Ardıcıllıq və məntiqi rabitə',1,[0,.5,1]],['C','Qrammatika',1,[0,.5,1]],['D','Söz ehtiyatı',1,[0,.5,1]]]
@@ -448,7 +457,11 @@ let S={groups:[],students:[],checks:[],models:[],vchecks:[],settings:{...DEF_SET
 let mode='loading',store=null,sample=null,downloads=null,canImages=false,maxImages=1,tier=null;
 let tab='yoxla',prevTab='yoxla',curId='',profileId='',pendingRender=false,toastT=null;
 let selGid=ls(GKEY),selStu='';
-const D={topic:'',topicEdited:false,picsBusy:false,askTopic:''};
+const D={topic:'',topicEdited:false,picsBusy:false,askTopic:'',tmode:''};
+let yGrade=ls('pc-ygrade');if(!['9','11'].includes(yGrade))yGrade='';
+const T11=()=>Array.isArray(S.settings.topics11)?S.settings.topics11.filter(x=>typeof x==='string'&&x.trim()):[];
+const tNorm=t=>String(t||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+async function addTopic11(t){t=String(t||'').replace(/\s+/g,' ').trim();if(!t)return false;const L=T11();if(L.some(x=>tNorm(x)===tNorm(t)))return false;return await saveSettings({...S.settings,topics11:[...L,t]})}
 let Q=[],qRunning=0,qPaused=false,qSeq=0;const QPAR=2;
 let twoSide=ls(TSKEY)==='1',tray=[],trayBusy=0;const TRAY_MAX=4;
 const rf={gid:'',topic:'',sid:''};
@@ -559,6 +572,44 @@ const multiTxt=np=>np>1?`IMPORTANT: The student wrote on ${np} sides of the shee
 const nameStep=gid=>`Read the student's first name and surname written on the sheet (e.g. "AD" and "SOYAD" boxes, "Name", or a name line at the top) and match it to ONE student from this class list (names may be written in Latin or Cyrillic, with spelling differences, or only first name + surname initial):
 ${rosterTxt(gid)}
 If you are not sure which student it is, set student_number to null.`;
+/* ---------- əl yazısını diqqətlə oxuma + səhvlərin ikinci yoxlaması ---------- */
+const READ_RULES=`READING THE HANDWRITING (very important — read with maximum care):
+- Before grading, transcribe the text slowly, word by word and letter by letter. Use the meaning of the sentence to recognise unclear words.
+- Students' handwriting is often unclear: a/e/o, u/v/w, n/h/r, i/l/e, c/e, m/n, final -s/-es, apostrophes and capital/small letters can look alike.
+- When a letter or word could reasonably be read as the correct form, read it as the correct form (benefit of the doubt to the student). Report a spelling or grammar mistake ONLY when the handwriting clearly shows the wrong form. Never "correct" a word the student actually wrote correctly.`;
+const isStop=m=>/nöqtə olmalı/.test(m?.explanation||'');
+async function verifyMist(images,e,kind,tr){
+  const ms=e.mistakes||[];if(!ms.length||!sample)return;
+  const list=ms.map((m,i)=>`${i+1}. sentence: "${m.sentence}"\n   read as: "${m.original}" → suggested correction: "${m.correction}"${isStop(m)?' (missing full stop)':''}`).join('\n');
+  const prompt=`The attached image${images.length>1?'s show':' shows'} a student's handwritten English text${kind==='9'?' (ignore the printed task pictures)':''}. Another reader transcribed it and marked the possible mistakes listed below. Your only job is to check the READING of the handwriting, not to grade.
+For EACH item, find that exact place in the handwriting, look very closely and read it again letter by letter (for a missing full stop, check whether a full stop is actually there).
+Handwriting is often unclear: a/e/o, u/v/w, n/h/r, i/l/e, c/e, m/n, final -s, apostrophes and capital/small letters can look alike.
+- "keep": true only if the handwriting CLEARLY shows the wrong form that was read.
+- "keep": false if the student actually wrote the correct form, or if the letters are unclear and could reasonably be the correct form (benefit of the doubt to the student).
+- "written": what is actually written there, as exactly as you can read it.
+Items:
+${list}
+Reply with only JSON: {"items":[{"n":1,"keep":true,"written":""}]}`;
+  const o={images};if(tr)o.modelTier=tr;
+  let r;try{r=await sample.json(prompt,o)}catch(err){return}
+  const arr=Array.isArray(r?.items)?r.items:[];const drop=new Set();
+  arr.forEach(x=>{const n=Number(x?.n);if(x&&x.keep===false&&Number.isInteger(n)&&n>=1&&n<=ms.length)drop.add(n-1)});
+  if(!drop.size)return;
+  const sq=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
+  let dG=0,dL=0,dAll=0;
+  drop.forEach(i=>{const m=ms[i],w=String(arr.find(x=>Number(x?.n)===i+1)?.written||'');
+    if(!isStop(m)&&m.original&&m.sentence&&sq(w)===sq(m.correction)&&m.sentence.includes(m.original)&&String(e.transcript||'').includes(m.sentence)){
+      const old=m.sentence,neu=old.replace(m.original,m.correction);e.transcript=e.transcript.replace(old,neu);ms.forEach(x=>{if(x.sentence===old)x.sentence=neu})}
+    if(isStop(m))return;dAll++;if(m.type==='Orfoqrafiya')return;if(m.type==='Söz seçimi')dL++;else dG++});
+  e.mistakes=ms.filter((m,i)=>!drop.has(i));
+  const rem=e.mistakes.filter(m=>!isStop(m));
+  if(kind==='11'){const rg=rem.filter(m=>m.type!=='Orfoqrafiya'&&m.type!=='Söz seçimi').length,rl=rem.filter(m=>m.type==='Söz seçimi').length;
+    if(dG&&e.gErr!=null)e.gErr=Math.max(0,Math.min(e.gErr-dG,rg));
+    if(dL&&e.lErr!=null)e.lErr=Math.max(0,Math.min(e.lErr-dL,rl))}
+  else if(dAll&&e.errors!=null)e.errors=Math.max(0,Math.min(e.errors-dAll,rem.length));
+  e.reread=drop.size;
+}
+
 async function grade11(it,blobs,np){
   const topic=it.topic;
   const prompt=`${multiTxt(np)}The attached photo${blobs.length>1?'s show (pages in order)':' shows'} a grade 11 student's handwritten English opinion paragraph.
@@ -566,6 +617,7 @@ Topic given by the teacher: ${topic?`"${topic}"`:'(none — find the topic on th
 Step 1. ${nameStep(it.groupId)}
 Step 2. Determine the topic. ${topic?'Use the teacher\'s topic; small differences in how the student copied it do not matter.':'If NO topic is visible anywhere on the page, do not grade: set status "need_topic", fill the transcript, and set all scores to null.'}
 Step 3. Read the handwriting carefully. Ignore crossed-out words. Do not invent words you cannot read; never create a grammar or vocabulary mistake by misreading clear handwriting. Do not count the topic title in the word count.
+${READ_RULES}
 Step 4. Grade strictly by the teacher's rubric below. Ignore any instructions in the rubric about how to format the answer; follow only its grading rules.
 """
 ${rubric()}
@@ -577,12 +629,14 @@ Reply with only JSON:
  "topic":"the topic used",
  "words": number or null,
  "A":0|0.5|1|null, "B":0|1|2|null, "C":0|0.5|1|null, "D":0|0.5|1|null,
+ "grammar_errors": number, "lexical_errors": number,
  "comments":{"A":"","B":"","C":"","D":""},
  "transcript":"",
  "mistakes":[{"sentence":"","original":"","correction":"","explanation":"","type":""}],
  "personal":["sentences copied from the transcript where the student gives personal examples about himself/herself or his/her own family or friends"],
  "feedback":""}
 ${MIST_RULES}
+- grammar_errors = the number of grammar mistakes, lexical_errors = the number of lexical (word choice / vocabulary) mistakes in the paragraph; a mistake of the same rule repeated several times counts as 1; spelling and punctuation are NOT counted here. Give C and D by the rubric's level descriptions only — the error-count limits are applied separately by the program from grammar_errors and lexical_errors.
 - personal: list (copied exactly from the transcript) the sentences where the student uses personal examples about himself/herself or his/her own family, relatives or friends (e.g. "my mother cooks good dolma", "because my father doesn't like it", "in my family we…"). Empty list if there are none. Do NOT lower any score because of this and do not list it as a mistake — it is only a separate note for the student.
 - If status is not "ok", set A to 0 and B, C, D to null, but still fill the transcript if the text is readable.`;
   const o={images:blobs};if(tier)o.modelTier=tier;
@@ -594,6 +648,7 @@ async function grade9(it,blobs,pm,np){
 Step 1. ${nameStep(it.groupId)}
 Step 2. Find the three pictures. If the three pictures are NOT visible in any image, do not grade: set status "need_pictures", fill the transcript, and set all scores to null.
 Step 3. Look carefully at the three pictures, then read the handwriting carefully. Ignore crossed-out words and the printed task text. Do not invent words you cannot read; never create a mistake by misreading clear handwriting. Do not count the printed instructions in the word count.
+${READ_RULES}
 Step 4. Grade strictly by the teacher's rubric below (A2 level). The pictures ARE provided. Ignore any instructions in the rubric about how to format the answer or to ask for anything; follow only its grading rules.
 """
 ${rubric9()}
@@ -627,10 +682,17 @@ function normalize(r,g){
     personal:(Array.isArray(r?.personal)?r.personal:[]).map(x=>String(x||'').trim().slice(0,300)).filter(Boolean).slice(0,5),
     feedback:String(r?.feedback||''),topic:String(r?.topic||'').slice(0,200),pictures:String(r?.pictures||'').slice(0,600),
     written:String(r?.name_as_written||'').slice(0,80),num:r?.student_number??null};
+  if(g==='11'){const cnt=v=>Number.isFinite(Number(v))&&v!==null&&v!==''?Math.max(0,Math.round(Number(v))):null;c.gErr=cnt(r?.grammar_errors);c.lErr=cnt(r?.lexical_errors)}
   if(g==='9'){const ec=Number.isFinite(Number(r?.error_count))&&r?.error_count!==null?Math.max(0,Math.round(Number(r.error_count))):null;c.errors=ec;c.pen=ec===null?0:ec>=6?1:ec>=3?.5:0}
   if(status==='ok'){if(c.A===null)c.A=0}else c.A=0;
   if(c.A===0){c.B=c.C=c.D=null;c.pen=0}else if(g==='11'&&c.B===0){c.C=c.D=null}
+  /* 11: səhv sayına görə tavan — 0–2 → 1, 3–5 → 0.5, 6+ → 0; səviyyə ilə toplanmır, kiçik olan götürülür */
+  c.C0=c.C;c.D0=c.D;capPC(c,g);
   return c;
+}
+function capPC(c,g){
+  if(g==='11'){const cap=n=>n==null?1:n>=6?0:n>=3?.5:1;if(c.C0!==null&&c.C0!==undefined)c.C=Math.min(c.C0,cap(c.gErr));if(c.D0!==null&&c.D0!==undefined)c.D=Math.min(c.D0,cap(c.lErr))}
+  else if(c.A>0)c.pen=c.errors===null?0:c.errors>=6?1:c.errors>=3?.5:0;
 }
 function pickStudent(gid,num,written){
   const all=studentsOf(gid),n=Number(num),w=norm(written),wt=w?w.split(' '):[];
@@ -726,13 +788,14 @@ async function processItem(it){
   else blobs=await fitPages(pages,maxImages);
   const r=it.grade==='9'?await grade9(it,blobs,pm,np):await grade11(it,blobs,np);
   const n=normalize(r,it.grade);
+  if(n.status==='ok'&&n.A>0&&n.mistakes.length){await verifyMist(blobs,n,it.grade,tier);capPC(n,it.grade)}
   if(n.status==='need_topic'){if(!it.topic&&S.settings.topic11){it.topic=S.settings.topic11;it.state='wait';it.msg='Növbədədir';return}if(!it.topic){it.state='need_topic';it.msg='Mövzu tanınmadı';return}n.status='ok'}
   if(n.status==='need_pictures'){if(!it.pb&&S.settings.pics9){it.pb=picsBlob();it.picsId=S.settings.picsId;it.state='wait';it.msg='Növbədədir';return}if(!it.pb){it.state='need_pics';it.msg='3 şəkil görünmür';return}n.status='ok'}
   let topic=it.topic;
   if(it.grade==='11'&&!topic&&n.topic){topic=n.topic;if(!S.settings.topic11){D.topic=topic;saveSettings({...S.settings,topic11:topic})}}
   const st=it.studentId?studentById(it.studentId):pickStudent(it.groupId,n.num,n.written);
   const c={id:newId(),date:new Date().toISOString(),grade:it.grade,groupId:it.groupId,studentId:'',topic:topic||'',picsId:it.pb?it.picsId:'',
-    status:n.status,words:n.words,A:n.A,B:n.B,C:n.C,D:n.D,pen:n.pen??0,errors:n.errors??null,comments:n.comments,transcript:n.transcript,mistakes:n.mistakes,personal:n.personal||[],feedback:n.feedback,pictures:n.pictures,written:n.written};
+    status:n.status,words:n.words,A:n.A,B:n.B,C:n.C,D:n.D,pen:n.pen??0,errors:n.errors??null,gErr:n.gErr??null,lErr:n.lErr??null,comments:n.comments,transcript:n.transcript,mistakes:n.mistakes,personal:n.personal||[],feedback:n.feedback,pictures:n.pictures,written:n.written};
   c.total=total5(c);
   it.payload=c;it.written=n.written;
   if(!st){it.state='need';it.msg=needMsg(n.written);return}
@@ -945,8 +1008,9 @@ function waMsg(c){
   L.push(g==='9'?`«${topicLabel(c)}» — hekayənin nəticəsi:`:`«${topicLabel(c)}» mövzusunda paraqrafının nəticəsi:`,'');
   L.push(`${wName(g)}: ${scTxt(c)}`);
   if(c.status!=='ok')L.push(STATUS_TXT[c.status]||'');
-  else{CRIT[g].forEach(([k,name,mx])=>L.push(`${k}. ${name}: ${c[k]==null?'yoxlanılmadı':fmt(c[k])+'/'+mx}`));
-    if(g==='9'&&c.A)L.push(`Cərimə: ${c.pen?'−'+fmt(c.pen):'0'}${c.errors!=null?` (${c.errors} səhv)`:''}`)}
+  else{const wc=x=>String(x||'').replace(/[*~_]/g,'').trim();L.push('','📝 *Meyarlar üzrə izah:*');
+    CRIT[g].forEach(([k,name,mx])=>{L.push('',`*${k}. ${name}: ${c[k]==null?'yoxlanılmadı':fmt(c[k])+'/'+mx}*`);if(wc(c.comments?.[k]))L.push(wc(c.comments[k]))});
+    if(g==='9'&&c.A)L.push('',`*Cərimə: ${c.pen?'−'+fmt(c.pen):'0'}*${c.errors!=null?` (${c.errors} səhv)`:''}`);L.push('');if(g==='11'&&c.C!=null&&(c.gErr!=null||c.lErr!=null))L.push(`Qrammatik səhv: ${c.gErr??'–'} · Leksik səhv: ${c.lErr??'–'}`)}
   if(c.words)L.push(`Söz sayı: ${c.words}`);
   if(c.status==='ok'){const ms=goodMs(c);
     if(ms.length){L.push('',`${wDaki(g)} səhvlər:`);waMistakeBlocks(ms,c.transcript).forEach(b=>L.push('',...b))}
@@ -960,7 +1024,7 @@ function waMsg(c){
 const waHref=c=>{const ph=waPhone(studentById(c.studentId)?.phone);return ph?`https://wa.me/${ph}?text=${encodeURIComponent(waMsg(c))}`:''};
 
 /* ---------- views ---------- */
-const TABS=[['yoxla','Yoxla'],['sozler','Sözlər'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['parametrler','Parametrlər']];
+const TABS=[['yoxla','Yoxla'],['neticeler','Nəticələr'],['sagirdler','Şagirdlər'],['parametrler','Parametrlər']];
 const SUB=['res','send','profile','vres','vsend'];
 function toTop(){try{window.scrollTo(0,0)}catch(e){}}
 function go(t){if(!SUB.includes(t))prevTab=t;tab=t;render();toTop()}
@@ -979,22 +1043,29 @@ function render(){
 const VIEWS={};
 function notes(){return `${mode==='local'?`<div class="notice">Məlumatlar yalnız bu brauzerdə saxlanır. Parametrlərdən ehtiyat nüsxə yükləyin.</div>`:''}${mode==='slow'?`<div class="notice">Bağlantı gecikir. Bir az gözləyin və ya səhifəni yeniləyin.</div>`:''}${mode!=='loading'&&(!sample||!canImages)?`<div class="box status err">Foto yoxlama bu görünüşdə işləmir. Səhifəni Claude tətbiqində və ya claude.ai-da açın.</div>`:''}`}
 VIEWS.yoxla=()=>{
-  const gs=groupsSorted();
-  if(!gs.length)return notes()+`<section class="box"><h2>Paraqraf yoxlaması</h2><p class="muted">Əvvəl <b>Şagirdlər</b> bölməsində qrup yaradın (9-cu və ya 11-ci sinif) və şagirdləri əlavə edin.</p><button class="btn" data-act="go" data-to="sagirdler">Qrup yarat</button></section>`;
-  if(!groupById(selGid)){selGid=gs[0].id;ls(GKEY,selGid)}
+  const all=groupsSorted();
+  if(!all.length)return notes()+`<section class="box"><h2>Paraqraf yoxlaması</h2><p class="muted">Əvvəl <b>Şagirdlər</b> bölməsində qrup yaradın (9-cu və ya 11-ci sinif) və şagirdləri əlavə edin.</p><button class="btn" data-act="go" data-to="sagirdler">Qrup yarat</button></section>`;
+  if(!yGrade)return notes()+`<section class="box"><h2>Sinfi seçin</h2><div class="gpick"><button type="button" data-act="pickGrade" data-g="11"><b>11-ci sinif</b><small>paraqraf</small></button><button type="button" data-act="pickGrade" data-g="9"><b>9-cu sinif</b><small>hekayə</small></button></div></section>${queueHTML()}`;
+  const gs=all.filter(x=>x.grade===yGrade);
+  const ghead=`<div class="ghead"><button type="button" class="btn ghost sm" data-act="pickGrade" data-g="">← Sinif</button><b>${yGrade==='11'?'11-ci sinif · paraqraf':'9-cu sinif · hekayə'}</b></div>`;
+  if(!gs.length)return notes()+`<section class="box">${ghead}<p class="muted">${yGrade==='11'?'11-ci':'9-cu'} sinif üçün qrup yoxdur. <b>Şagirdlər</b> bölməsində qrup yaradın.</p><button class="btn" data-act="go" data-to="sagirdler">Qrup yarat</button></section>${queueHTML()}`;
+  if(!gs.find(x=>x.id===selGid))return notes()+`<section class="box">${ghead}<h2>1. Qrupu seçin</h2><div class="chips">${gs.map(x=>`<button type="button" class="chip" data-act="pickGroup" data-id="${x.id}">${esc(x.name)}</button>`).join('')}</div></section>${queueHTML()}`;
   const g=curGroup(),gr=g.grade,sts=studentsOf(g.id);
   const tp=gr==='11'?(D.topic.trim()||S.settings.topic11||''):((S.settings.exam9||'').trim());
   const done=new Set(S.checks.filter(c=>c.groupId===g.id&&tp&&tKey(c)===gr+'|'+norm(tp)).map(c=>c.studentId));
-  return notes()+`<section class="box">
+  const tl=T11(),tm=D.tmode||(tl.length?'list':'write');
+  return notes()+`<section class="box">${ghead}
     <h2>1. Qrupu seçin</h2>
-    <div class="chips">${gs.map(x=>`<button type="button" class="chip ${x.id===g.id?'on':''}" data-act="pickGroup" data-id="${x.id}">${esc(x.name)}<small>${x.grade==='9'?'9-cu · hekayə':'11-ci · paraqraf'}</small></button>`).join('')}</div>
+    <div class="chips">${gs.map(x=>`<button type="button" class="chip ${x.id===g.id?'on':''}" data-act="pickGroup" data-id="${x.id}">${esc(x.name)}</button>`).join('')}</div>
     ${gr==='11'?(S.settings.topic11?`<div class="exam"><div class="exrow"><div><b>Mövzu:</b> ${esc(S.settings.topic11)}<span class="hint" style="display:block;margin:2px 0 0">Bütün vərəqlər bu mövzu ilə yoxlanır</span></div></div><div class="acts"><button class="btn danger sm" data-act="endExam">🏁 İmtahan bitdi</button></div></div>`
-      :`<label class="l" for="topic">Paraqrafın mövzusu <span class="hint" style="font-weight:400">(bir dəfə yazın — «İmtahan bitdi» basana qədər yadda qalır; boş qalsa, vərəqdən oxunacaq)</span></label><input type="text" id="topic" data-f="topic" value="${esc(D.topic)}" placeholder="məs. Would you like to have lessons in nature?" autocomplete="off">`)
+      :`<h2 style="margin-top:18px">2. Mövzu</h2><div class="chips"><button type="button" class="chip ${tm==='write'?'on':''}" data-act="tmode" data-m="write">✍️ Mövzunun adını yaz</button><button type="button" class="chip ${tm==='list'?'on':''}" data-act="tmode" data-m="list">📋 Listədən seç${tl.length?` (${tl.length})`:''}</button></div>
+      ${tm==='list'?`<div class="tlist">${tl.map((t,i)=>`<div class="tli"><button type="button" class="tsel" data-act="useTopic" data-i="${i}">${esc(t)}</button><button type="button" class="btn ghost sm" data-act="tEdit" data-i="${i}" aria-label="Dəyiş">✏️</button><button type="button" class="btn ghost sm" data-act="tDel" data-i="${i}" aria-label="Sil">🗑</button></div>`).join('')||'<p class="empty" style="margin:6px 0">Listə hələ boşdur — mövzuları əlavə edin.</p>'}</div><div class="acts"><button type="button" class="btn ghost sm" data-act="tAdd">➕ Mövzu əlavə et</button></div><p class="hint">Mövzuya toxunun — imtahan həmin mövzu ilə başlayır.</p>`
+      :`<label class="l" for="topic">Paraqrafın mövzusu <span class="hint" style="font-weight:400">(bir dəfə yazın — «İmtahan bitdi» basana qədər yadda qalır və sonra listəyə əlavə olunur; boş qalsa, vərəqdən oxunacaq)</span></label><input type="text" id="topic" data-f="topic" value="${esc(D.topic)}" placeholder="məs. Would you like to have lessons in nature?" autocomplete="off">`}`)
     :`<label class="l" for="exam9">İmtahanın adı <span class="hint" style="font-weight:400">(nəticələrdə və mesajda görünür)</span></label><input type="text" id="exam9" value="${esc(S.settings.exam9||'')}" placeholder="məs. Hekayə · ${today()}" autocomplete="off">
       <div class="exam">${S.settings.pics9?`<div class="exrow"><img src="${S.settings.pics9}" alt="Tapşırığın şəkilləri"><div><b>Tapşırığın 3 şəkli yadda saxlanıb</b><span class="hint" style="display:block;margin:2px 0 0">${today(S.settings.picsDate)} · bütün vərəqlər bu şəkillərlə yoxlanır</span></div></div>
       <div class="acts"><label class="btn ghost sm" style="position:relative;background:var(--card);border:1px solid var(--line)">🔄 Şəkli dəyiş<input type="file" accept="image/*" multiple data-pics style="position:absolute;width:1px;height:1px;opacity:0"></label><button class="btn danger sm" data-act="endExam">🏁 İmtahan bitdi</button></div>`
       :`<b>Tapşırığın 3 şəkli</b><p class="hint">Şəkilləri bir dəfə yükləyin (bir foto və ya 3 ayrı şəkil, soldan sağa) — bu imtahanın bütün vərəqləri onlarla yoxlanacaq.</p><label class="filebtn">${D.picsBusy?'<span class="spin"></span>Yüklənir…':'🖼️ 3 şəkli yüklə'}<input type="file" accept="image/*" multiple data-pics></label>`}</div>`}
-    <h2 style="margin-top:18px">2. Vərəqlərin şəklini çəkin</h2>
+    <h2 style="margin-top:18px">${gr==='11'?3:2}. Vərəqlərin şəklini çəkin</h2>
     <div class="chips" style="margin-bottom:10px"><button type="button" class="chip ${twoSide?'on':''}" data-act="twoSide">📄📄 Vərəqin 2 üzü${twoSide?' — yanılı':''}</button></div>
     <p class="hint">${gr==='9'?(S.settings.pics9?'Yalnız şagirdin hekayəsini çəkin.':'3 şəkil və hekayə birlikdə görünsün — və ya yuxarıda şəkilləri bir dəfə yükləyin.'):'Paraqraf və şagirdin adı görünsün.'} ${twoSide?'<b>Bir şagirdin vərəqinin hər üzünü ardıcıl çəkin, sonra «Göndər» basın.</b>':'<b>Hər foto — bir şagird.</b> Ardıcıl çəkin: hamısı növbəyə düşür. Şagirdin adı vərəqdən oxunur; oxunmasa, növbədə sizdən qrupdan seçməyiniz istənəcək.'}</p>
     ${sts.length?'':`<div class="notice">Bu qrupda şagird yoxdur. <b>Şagirdlər</b> bölməsində əlavə edin.</div>`}
@@ -1017,7 +1088,7 @@ function queueHTML(){
     return `<div class="qi ${it.state}" ${it.state==='done'?`data-act="${it.kind==='vocab'?'openV':'openCheck'}" data-id="${it.checkId}"`:''}>
     ${it.thumb?`<img src="${it.thumb}" alt="">`:'<span class="ph"></span>'}
     <div class="grow"><b>#${it.no} ${esc(it.student||'')}</b><small>${it.pages&&it.pages.length>1?`📄×${it.pages.length} · `:''}${ico[it.state]||''} ${it.state==='done'?esc(it.msg)+' — baxmaq üçün toxunun':esc(it.msg)} · ${esc(gName(it.groupId))}</small>
-    ${it.state==='need'?`<select data-qneed="${it.id}"><option value="">👤 Şagirdi seçin</option>${opts.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>`:''}</div>
+    ${it.state==='need'?`<select data-qneed="${it.id}"><option value="">👤 Şagirdi seçin</option>${opts.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>`:''}${it.state==='done'&&it.kind!=='vocab'&&it.checkId?`<select data-qmove="${it.checkId}" onclick="event.stopPropagation()" style="margin-top:6px;max-width:100%"><option value="">✏️ Şagirdi dəyiş</option>${opts.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>`:''}</div>
     ${it.state==='done'?`<span class="sc" style="color:${it.kind==='vocab'?vCol(vById(it.checkId)):scCol(total5(checkById(it.checkId)||{}))}">${esc(it.score)}</span>`:''}
     ${it.state==='err'?`<button class="btn sm" data-act="qretry" data-id="${it.id}">↻</button>`:''}
     ${it.state!=='busy'?`<button class="btn ghost sm" data-act="qrm" data-id="${it.id}" aria-label="Növbədən sil">×</button>`:''}
@@ -1028,7 +1099,8 @@ function queueHTML(){
 function critHTML(c){
   return CRIT[c.grade].map(([k,name,mx])=>{const v=c[k];const p=v?v/mx:0;
     return `<div class="arow"><div class="t"><span>${k}. ${esc(name)}</span><span>${v===null||v===undefined?'yoxlanılmadı':fmt(v)+' / '+mx}</span></div><div class="bar ${p>=1?'':p>=.5?'mid':'low'}"><i style="width:${Math.round(p*100)}%"></i></div>${c.comments?.[k]?`<p class="cm">${esc(c.comments[k])}</p>`:''}</div>`}).join('')
-   +(c.grade==='9'&&c.A?`<div class="arow"><div class="t"><span>Cərimə${c.errors!=null?` (${c.errors} səhv)`:''}</span><span>${c.pen?'−'+fmt(c.pen):'0'}</span></div><p class="cm">0–2 səhv → 0, 3–5 → −0,5, 6+ → −1</p></div>`:'');
+   +(c.grade==='9'&&c.A?`<div class="arow"><div class="t"><span>Cərimə${c.errors!=null?` (${c.errors} səhv)`:''}</span><span>${c.pen?'−'+fmt(c.pen):'0'}</span></div><p class="cm">0–2 səhv → 0, 3–5 → −0,5, 6+ → −1</p></div>`:'')
+   +(c.grade==='11'&&c.C!=null&&(c.gErr!=null||c.lErr!=null)?`<div class="arow"><div class="t"><span>Qrammatik səhv: ${c.gErr??'–'} · Leksik səhv: ${c.lErr??'–'}</span></div><p class="cm">3–5 səhv → C/D ən çox 0,5; 6+ → 0 (səviyyə balı ilə toplanmır)</p></div>`:'');
 }
 function markedHTML(c){const ms=goodMs(c);const {segs}=markSegs(String(c.transcript||''),ms);return segs.map(s=>s.k===undefined?esc(s.t):`<s>${esc(s.t)}</s> <ins>${esc(ms[s.k].correction)}<sup>${s.k+1}</sup></ins>`).join('')}
 function modelBox(c,editable){
@@ -1037,11 +1109,16 @@ function modelBox(c,editable){
   return `<section class="box"><h2>${mName(c.grade)}</h2>${md.title?`<p><b>${esc(md.title)}</b></p>`:''}<div class="model">${boldHTML(md.text)}</div><p class="hint" style="margin-top:8px">Söz sayı: ${md.words||wcount(md.text)} · bu mövzunun bütün şagirdlərinə gedir</p>
   ${editable?`<div class="acts"><button class="btn ghost sm" data-act="modelEdit" data-id="${c.id}">✏️ Düzəlt</button><button class="btn ghost sm" data-act="modelGen" data-id="${c.id}" ${busy?'disabled':''}>${busy?'<span class="spin"></span>Yazılır…':'↻ Yenisini yaz'}</button><button class="btn ghost sm" data-act="modelCopy" data-id="${c.id}">Kopyala</button></div>`:''}</section>`;
 }
+async function moveCheck(id,sid){const c=checkById(id);if(!c||!sid)return;if(c.studentId===sid){render();return}
+  const dup=S.checks.find(x=>x.id!==c.id&&x.studentId===sid&&tKey(x)===tKey(c));
+  if(dup&&!await confirmBox('Bu şagirdin bu mövzuda nəticəsi var',`${sName(sid)} — ${scTxt(dup)}. Köhnə nəticə yenisi ilə əvəz olunsun?`)){render();return}
+  try{if(dup)await del('checks',dup.id);await put('checks',{...c,studentId:sid})}catch(e){render();return}
+  Q.forEach(it=>{if(it.checkId===c.id)it.student=sName(sid)});toast('Nəticə köçürüldü: '+sName(sid));render()}
 VIEWS.res=()=>{
   const c=checkById(curId);if(!c)return `<button class="back" data-act="back">← Geri</button><div class="box empty">Nəticə tapılmadı.</div>`;
   const st=studentById(c.studentId),ms=goodMs(c),href=waHref(c);
   return `<button class="back" data-act="back">← Geri</button>
-  <section class="box"><div class="score"><span class="pen" style="color:${scCol(total5(c))};border-color:${scCol(total5(c))}">${scTxt(c)}</span><div class="meta"><b>${esc(st?.name||'Şagird')}</b> · ${esc(gName(c.groupId))}<br>${esc(GNAME[c.grade])}<br>${c.grade==='9'?'İmtahan':'Mövzu'}: <b>${esc(topicLabel(c))}</b><br>${today(c.date)}${c.words?` · ${c.words} söz`:''}</div></div>
+  <section class="box"><div class="score"><span class="pen" style="color:${scCol(total5(c))};border-color:${scCol(total5(c))}">${scTxt(c)}</span><div class="meta"><b>${esc(st?.name||'Şagird')}</b> · ${esc(gName(c.groupId))}<br><select data-qmove="${c.id}" style="margin:4px 0;max-width:100%"><option value="">✏️ Başqa şagirdə köçür</option>${studentsOf(c.groupId).filter(s=>s.id!==c.studentId).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select><br>${esc(GNAME[c.grade])}<br>${c.grade==='9'?'İmtahan':'Mövzu'}: <b>${esc(topicLabel(c))}</b><br>${today(c.date)}${c.words?` · ${c.words} söz`:''}</div></div>
     ${c.status!=='ok'?`<div class="status err">${esc(STATUS_TXT[c.status]||'')}</div>`:''}
     ${critHTML(c)}
     ${c.feedback?`<p class="hint" style="margin-top:12px">${esc(c.feedback)}</p>`:''}
@@ -1064,7 +1141,7 @@ VIEWS.neticeler=()=>{
   if(!gs.length)return `<section class="box"><h2>Nəticələr</h2><p class="empty">Əvvəl Şagirdlər bölməsində qrup yaradın.</p></section>`;
   if(rf.gid&&!groupById(rf.gid))rf.gid='';
   if(!rf.gid&&groupById(selGid))rf.gid=selGid;
-  const tps=rf.gid?topicsOf(rf.gid):[],vts=rf.gid?vTestsOf(rf.gid):[];
+  const tps=rf.gid?topicsOf(rf.gid):[],vts=[];rf.sid='';
   if(rf.topic&&!(rf.topic.startsWith('v:')?vts.find(t=>'v:'+t.key===rf.topic):tps.find(t=>t.key===rf.topic)))rf.topic='';
   if(!rf.topic&&rf.gid){const a=tps[0],b=vts[0];if(a||b)rf.topic=(!b||(a&&a.last>=b.last))?a.key:'v:'+b.key}
   const sts=rf.gid?studentsOf(rf.gid):[];if(rf.sid&&!sts.find(s=>s.id===rf.sid))rf.sid='';
@@ -1072,7 +1149,7 @@ VIEWS.neticeler=()=>{
   const flt=`<section class="box"><h2>Nəticələr</h2>
     <label class="l" style="margin-top:0">1. Qrup</label><select data-rf="gid">${O('','Qrupu seçin',!rf.gid)}${gs.map(g=>O(g.id,g.name+' · '+(g.grade==='9'?'9-cu':'11-ci'),g.id===rf.gid)).join('')}</select>
     <label class="l">2. Mövzu</label><select data-rf="topic"${!rf.gid||rf.sid?' disabled':''}>${O('',rf.sid?'Şagird seçilib — bütün mövzular görünür':tps.length||vts.length?'Mövzunu seçin':'Bu qrupda nəticə yoxdur',!rf.topic||rf.sid)}${rf.sid?'':(tps.length&&vts.length?'<optgroup label="Yazılar">':'')+tps.map(t=>O(t.key,t.label+' ('+today(t.last)+')',t.key===rf.topic)).join('')+(tps.length&&vts.length?'</optgroup>':'')+(vts.length?'<optgroup label="Söz imtahanları">'+vts.map(t=>O('v:'+t.key,'📝 '+t.label+' ('+today(t.last)+')','v:'+t.key===rf.topic)).join('')+'</optgroup>':'')}</select>
-    <label class="l">3. Şagird <span class="hint" style="font-weight:400">(istəyə görə)</span></label><select data-rf="sid"${!rf.gid?' disabled':''}>${O('','Hamısı',!rf.sid)}${sts.map(s=>O(s.id,s.name,s.id===rf.sid)).join('')}</select></section>`;
+</section>`;
   if(!rf.gid)return flt;
   if(rf.sid){const vb=vProfileBox(rf.sid);const rs=S.checks.filter(c=>c.studentId===rf.sid).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
     return flt+`<section class="box"><h2>${esc(sName(rf.sid))}</h2>${rs.length?`<div class="list">${rs.map(c=>`<div class="li click" data-act="openCheck" data-id="${c.id}"><div class="grow"><b>${esc(topicLabel(c))}</b><small>${today(c.date)} · ${wName(c.grade)}</small></div><span class="sc" style="color:${scCol(total5(c))}">${scTxt(c)}</span></div>`).join('')}</div>`:(vb?'':'<p class="empty">Bu şagirdin hələ nəticəsi yoxdur.</p>')}</section>${vb}`}
@@ -1116,7 +1193,7 @@ VIEWS.sagirdler=()=>{
   ${sel?'<p class="hint" style="margin-bottom:0">Silmək istədiyiniz şagirdlərə basın və ya qrupda «Hamısını seç» düyməsini basın.</p>':''}</section>
   ${gs.map(g=>{const st=studentsOf(g.id);const allSel=sel&&st.length&&st.every(s=>sel.has(s.id));const ed=stuEdit.has(g.id)&&!sel;return `<details class="grp" data-g="${g.id}"${sel||ed||openGrp.has(g.id)?' open':''}><summary>${esc(g.name)}<span class="pill">${g.grade==='9'?'9-cu · hekayə':'11-ci · paraqraf'}</span><span class="pill">${st.length} şagird</span></summary><div class="inner">
   ${ed&&st.length?'<p class="hint" style="margin-top:0">Adı və ya nömrəni dəyişin — xanadan çıxanda avtomatik saxlanır.</p>':''}
-  ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"></div>`;const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:`<span class="rank">${i+1}</span>`}<div class="grow"><b>${esc(s.name)}</b>${s.phone?`<small>${esc(s.phone)}</small>`:'<small style="color:var(--pen)">nömrə yoxdur</small>'}</div>${sel?'':'<span class="muted" style="font-size:20px">›</span>'}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
+  ${st.length?`<div class="list">${st.map((s,i)=>{if(ed)return `<div class="li srow" data-n="${esc(norm(s.name))}" style="gap:6px"><span class="rank">${i+1}</span><input type="text" data-sname="${s.id}" value="${esc(s.name)}" style="flex:1.5;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin adı"><input type="tel" inputmode="tel" data-sphone="${s.id}" value="${esc(s.phone||'')}" placeholder="Telefon" style="flex:1;min-width:0;padding:8px 9px" aria-label="${i+1}. şagirdin telefonu"><button type="button" class="btn sm danger" data-act="delStudent" data-id="${s.id}" title="Şagirdi sil" aria-label="${esc(s.name)} — sil" style="padding:6px 10px;flex:none">🗑</button></div>`;const on=sel&&sel.has(s.id);return `<div class="li click srow${on?' selon':''}" data-act="${sel?'selStu':'profile'}" data-id="${s.id}" data-n="${esc(norm(s.name))}">${sel?`<span class="ck${on?' on':''}">${on?'✓':''}</span>`:`<span class="rank">${i+1}</span>`}<div class="grow"><b>${esc(s.name)}</b>${s.phone?`<small>${esc(s.phone)}</small>`:'<small style="color:var(--pen)">nömrə yoxdur</small>'}</div>${sel?'':`<button type="button" class="btn sm danger" data-act="delStudent" data-id="${s.id}" title="Şagirdi sil" aria-label="${esc(s.name)} — sil" style="padding:6px 10px;flex:none">🗑</button><span class="muted" style="font-size:20px">›</span>`}</div>`}).join('')}</div>`:`<p class="empty">Bu qrupda şagird yoxdur.</p>`}
   <div class="acts">${!sel&&st.length?`<button class="btn sm${ed?'':' ghost'}" data-act="stuEditToggle" data-id="${g.id}">${ed?'✓ Bitdi':'✏️ Adları və nömrələri düzəlt'}</button>`:''}${sel&&st.length?`<button class="btn sm ghost" data-act="selGroup" data-id="${g.id}">${allSel?'Seçimi götür':'Hamısını seç'}</button>`:''}<button class="btn sm ghost" data-act="editGroup" data-id="${g.id}">Qrupu düzəlt</button><button class="btn sm danger" data-act="delGroup" data-id="${g.id}">Qrupu sil</button></div></div></details>`}).join('')}
   <section class="box"><h2>Yeni qrup</h2><input type="text" data-bind="forms.group" value="${esc(forms.group)}" placeholder="Məsələn, 11A" aria-label="Qrup adı">
   <div class="chips" style="margin-top:10px"><button type="button" class="chip ${forms.grade==='11'?'on':''}" data-act="newGrade" data-id="11">11-ci sinif<small>Paraqraf</small></button><button type="button" class="chip ${forms.grade==='9'?'on':''}" data-act="newGrade" data-id="9">9-cu sinif<small>Hekayə (3 şəkil)</small></button></div>
@@ -1178,6 +1255,7 @@ function applySearch(inp){
 async function endExam(){
   const ok=await modal({title:'İmtahan bitdi?',html:`<p class="muted">Yadda saxlanmış ${[S.settings.topic11&&'11-ci sinif mövzusu',S.settings.pics9&&'9-cu sinif şəkilləri',S.settings.exam9&&'9-cu sinif imtahanının adı'].filter(Boolean).join(', ')||'məlumat'} silinəcək. Yoxlanmış nəticələr qalır.</p>`,ok:'Bəli, bitdi'});
   if(!ok)return;
+  {const t=(S.settings.topic11||'').trim();if(t){const L=T11();if(!L.some(x=>tNorm(x)===tNorm(t)))S.settings.topics11=[...L,t]}}
   if(await saveSettings({...S.settings,pics9:'',picsId:'',picsDate:'',topic11:'',exam9:''})){D.topic='';D.topicEdited=false;toast('İmtahan bağlandı. Yeni mövzu/şəkil əlavə edin.');render()}
 }
 async function setPics(files){D.picsBusy=true;render();try{const u=await picsData(files.slice(0,3));const o={...S.settings,pics9:u,picsId:newId(),picsDate:new Date().toISOString()};if(!(o.exam9||'').trim())o.exam9='Hekayə · '+today();if(await saveSettings(o)){toast('Şəkillər yadda saxlandı');const pb=picsBlob();requeue(it=>it.state==='need_pics'||(it.state==='wait'&&it.grade==='9'&&!it.pb),it=>{it.pb=pb;it.picsId=o.picsId})}}catch(e){toast('Şəkil açılmadı.','err')}finally{D.picsBusy=false;render()}}
@@ -1198,6 +1276,12 @@ const ACT={
   go:el=>go(el.dataset.to),
   back:()=>go(prevTab),
   pickGroup(el){selGid=el.dataset.id;ls(GKEY,selGid);selStu='';tray=[];render()},
+  pickGrade(el){yGrade=el.dataset.g||'';ls('pc-ygrade',yGrade);tray=[];if(yGrade&&groupById(selGid)?.grade!==yGrade){selGid='';ls(GKEY,'')}render()},
+  tmode(el){D.tmode=el.dataset.m;render()},
+  async useTopic(el){const t=T11()[Number(el.dataset.i)];if(!t)return;D.topic=t;D.topicEdited=false;if(await saveSettings({...S.settings,topic11:t}))toast('Mövzu seçildi: '+t);render()},
+  async tAdd(){const v=await modal({title:'Mövzu əlavə et',html:'<p class="hint">Bir və ya bir neçə mövzu yazın — hər sətirdə bir mövzu.</p>',fields:[{label:'Mövzu(lar)',value:'',type:'textarea',rows:6}]});if(!v)return;const add=String(v[0]||'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);if(!add.length)return;const L=T11();add.forEach(t=>{if(!L.some(x=>tNorm(x)===tNorm(t)))L.push(t)});if(await saveSettings({...S.settings,topics11:L}))toast('Listədə '+L.length+' mövzu var.');D.tmode='list';render()},
+  async tEdit(el){const i=Number(el.dataset.i),L=T11();if(!L[i])return;const v=await modal({title:'Mövzunu dəyiş',fields:[{label:'Mövzunun adı',value:L[i]}]});if(!v)return;const t=String(v[0]||'').replace(/\s+/g,' ').trim();if(!t)return;L[i]=t;if(await saveSettings({...S.settings,topics11:L}))toast('Dəyişdirildi.');render()},
+  async tDel(el){const i=Number(el.dataset.i),L=T11();if(!L[i])return;if(!await confirmBox('Mövzu silinsin?',L[i]))return;L.splice(i,1);if(await saveSettings({...S.settings,topics11:L}))toast('Silindi.');render()},
   pickStu(el){selStu=selStu===el.dataset.id?'':el.dataset.id;render()},
   twoSide(){twoSide=!twoSide;ls(TSKEY,twoSide?'1':'0');render()},
   trayDel(el){tray.splice(Number(el.dataset.i),1);render()},
@@ -1285,6 +1369,7 @@ document.addEventListener('change',async e=>{
   if(el.id==='topic'){const t=el.value.trim();if(t!==(S.settings.topic11||''))saveSettings({...S.settings,topic11:t}).then(()=>scheduleRender());return}
   if(el.id==='exam9'){const t=el.value.trim();if(t!==(S.settings.exam9||''))saveSettings({...S.settings,exam9:t}).then(()=>scheduleRender());return}
   if(el.dataset.rf){const k=el.dataset.rf;rf[k]=el.value;if(k==='gid'){rf.topic='';rf.sid=''}if(k==='sid'&&!el.value){}render();return}
+  if(el.dataset.qmove){if(el.value)await moveCheck(el.dataset.qmove,el.value);return}
   if(el.dataset.qneed){const it=Q.find(x=>x.id===el.dataset.qneed);if(it&&el.value){try{await (it.kind==='vocab'?saveV(it,el.value):saveCheck(it,el.value))}catch(err){}render()}return}
   if(el.dataset.sname||el.dataset.sphone){
     const s=studentById(el.dataset.sname||el.dataset.sphone);if(!s)return;const v=el.value.trim();
